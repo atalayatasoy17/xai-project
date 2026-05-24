@@ -1,0 +1,36 @@
+# ── Ham veri — büyük dosyalar, git'e dahil edilmez ────────────────────────────
+data/raw/
+data/processed/
+
+# ── API anahtarları ve gizli bilgiler ─────────────────────────────────────────
+.env
+.env.*
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ── Sanal ortam ───────────────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+
+# ── Çıktılar (isteğe bağlı — büyük figürler commit edilmeyebilir) ─────────────
+# outputs/figures/
+# outputs/reports/
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
