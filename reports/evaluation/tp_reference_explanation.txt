@@ -1,0 +1,15 @@
+
+1. Prediction summary
+The model assigned this patient a very high predicted probability of in-hospital mortality (0.9995).
+
+2. Main risk-increasing factors
+The prediction was mainly driven upward by severe physiological instability. The strongest risk-increasing evidence was d1_heartrate_min = 0, which had the largest positive SHAP contribution. This value should be interpreted cautiously because a zero-valued heart rate may represent either an extreme clinical event or a recording artifact. Other major risk-increasing factors included very low minimum oxygen saturation (d1_spo2_min = 31), mechanical ventilation, very low systolic blood pressure (d1_sysbp_min = 41), low GCS motor score, low bicarbonate values, and low platelet count.
+
+3. Main risk-decreasing factors
+A few features slightly decreased the predicted risk, including d1_wbc_min, d1_bun_max, hematocrit-related features, BMI, and height. However, these negative contributions were much smaller than the strong risk-increasing signals.
+
+4. Caution notes
+The main caution flag is d1_heartrate_min = 0. This may reflect a true extreme clinical event, but it may also represent a data quality issue or recording artifact. Therefore, this feature should be interpreted carefully.
+
+5. Overall interpretation
+Overall, the model's high-risk prediction is clinically understandable based on the provided evidence. The patient had multiple strong risk-increasing signals related to hypoxemia, mechanical ventilation, hypotension, impaired neurological response, possible metabolic acidosis, and thrombocytopenia. These factors collectively pushed the prediction strongly toward mortality risk.

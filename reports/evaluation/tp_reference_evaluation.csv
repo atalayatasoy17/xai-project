@@ -1,0 +1,6 @@
+,score,rationale
+faithfulness_no_hallucination,5,"The explanation uses only the provided evidence, accurately reflects the SHAP direction of the main features, and does not introduce unsupported clinical facts."
+completeness,5,"The explanation covers the main risk-increasing factors, mentions risk-decreasing factors, includes caution notes, and provides an overall interpretation."
+clinical_plausibility,5,"The clinical interpretation is coherent and plausible, linking hypoxemia, mechanical ventilation, hypotension, impaired GCS, low bicarbonate, and thrombocytopenia to increased mortality risk."
+caution_awareness,5,The explanation explicitly identifies d1_heartrate_min = 0 as a caution flag and avoids overinterpreting it.
+clarity,5,"The explanation is structured, concise, and easy to follow."

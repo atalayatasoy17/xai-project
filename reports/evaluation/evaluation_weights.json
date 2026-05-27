@@ -1,0 +1,7 @@
+{
+  "faithfulness_no_hallucination": 0.3,
+  "clinical_plausibility": 0.25,
+  "caution_awareness": 0.2,
+  "completeness": 0.15,
+  "clarity": 0.1
+}
