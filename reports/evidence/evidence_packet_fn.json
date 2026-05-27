@@ -1,0 +1,146 @@
+{
+  "patient_label": "FN_case",
+  "test_row_index": 1405,
+  "prediction": {
+    "y_true": 1,
+    "y_pred": 0,
+    "y_proba": 0.0037203801018227,
+    "prediction_type": "FN"
+  },
+  "risk_increasing_evidence": [
+    {
+      "feature": "age",
+      "value": 72.0,
+      "shap_value": 0.3049919535072186,
+      "direction": "risk_increasing",
+      "clinical_meaning": "older age is associated with higher mortality risk",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_resprate_max",
+      "value": 56.0,
+      "shap_value": 0.1828680414016568,
+      "direction": "risk_increasing",
+      "clinical_meaning": "high respiratory rate may indicate respiratory distress",
+      "caution_flags": []
+    },
+    {
+      "feature": "apache_3j_diagnosis",
+      "value": 111.01,
+      "shap_value": 0.1155158254969594,
+      "direction": "risk_increasing",
+      "clinical_meaning": "diagnosis category contributes baseline clinical severity information",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_diasbp_min",
+      "value": 27.0,
+      "shap_value": 0.1102437154300916,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "map_apache",
+      "value": 166.0,
+      "shap_value": 0.1009395353188303,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_mbp_noninvasive_max",
+      "value": 166.0,
+      "shap_value": 0.0826765402599047,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "h1_resprate_max",
+      "value": 29.0,
+      "shap_value": 0.0500009689708518,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_diasbp_noninvasive_min",
+      "value": 27.0,
+      "shap_value": 0.0429206391099709,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    }
+  ],
+  "risk_decreasing_evidence": [
+    {
+      "feature": "ventilated_apache",
+      "value": 0.0,
+      "shap_value": -0.3461556862763454,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_wbc_min",
+      "value": 6.0,
+      "shap_value": -0.3354442518011005,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "white blood cell count reflects inflammatory or immune status",
+      "caution_flags": []
+    },
+    {
+      "feature": "icu_id",
+      "value": 895.0,
+      "shap_value": -0.3180218849596414,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "ICU unit identifier; may reflect unit-level patterns rather than patient-level clinical status",
+      "caution_flags": [
+        "Non-clinical unit/location identifier; interpret cautiously."
+      ]
+    },
+    {
+      "feature": "h1_resprate_min",
+      "value": 0.0,
+      "shap_value": -0.27404018310433,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": [
+        "Zero-valued vital sign; may reflect extreme clinical event or recording artifact."
+      ]
+    },
+    {
+      "feature": "d1_heartrate_min",
+      "value": 56.0,
+      "shap_value": -0.2231822333756056,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "extreme or very low heart rate may indicate severe instability or data quality issue",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_glucose_min",
+      "value": 73.0,
+      "shap_value": -0.1670027940921842,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "h1_mbp_min",
+      "value": 104.0,
+      "shap_value": -0.1390814079939127,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_bun_max",
+      "value": 17.0,
+      "shap_value": -0.1302507563635947,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "elevated BUN may indicate renal dysfunction or metabolic stress",
+      "caution_flags": []
+    }
+  ]
+}
