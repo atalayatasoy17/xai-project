@@ -1,0 +1,161 @@
+You are a clinical AI explanation assistant.
+
+Your task is to explain why the mortality prediction model made its prediction for this ICU patient.
+
+Use only the provided evidence. Do not invent clinical facts. Do not use the true label to justify the prediction; use it only as case metadata. If a feature has a caution flag, mention it carefully.
+
+Patient prediction:
+- Case type: TN
+- True label: 0
+- Predicted label: 0
+- Predicted mortality probability: 0.0002
+
+Risk-increasing evidence:
+[
+  {
+    "feature": "d1_temp_max",
+    "value": 38.3,
+    "shap_value": 0.1551561403512001,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_potassium_max",
+    "value": 3.3,
+    "shap_value": 0.0455545309674458,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_diasbp_noninvasive_min",
+    "value": 59.0,
+    "shap_value": 0.0277602530616821,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "h1_heartrate_min",
+    "value": 82.0,
+    "shap_value": 0.0250421507687113,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "h1_diasbp_min",
+    "value": 59.0,
+    "shap_value": 0.0238568937861572,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "apache_3j_bodysystem_Cardiovascular",
+    "value": false,
+    "shap_value": 0.0217605546029623,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "creatinine_apache",
+    "value": 0.84,
+    "shap_value": 0.0214345591570104,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_mbp_noninvasive_max",
+    "value": 126.0,
+    "shap_value": 0.0191263112916678,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  }
+]
+
+Risk-decreasing evidence:
+[
+  {
+    "feature": "pre_icu_los_days",
+    "value": -0.109722222,
+    "shap_value": -0.8327732946766595,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "time between hospital admission and ICU admission; negative values require caution",
+    "caution_flags": [
+      "Negative pre-ICU length of stay; may reflect timing or data quality issue."
+    ]
+  },
+  {
+    "feature": "icu_id",
+    "value": 91.0,
+    "shap_value": -0.705731908847831,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "ICU unit identifier; may reflect unit-level patterns rather than patient-level clinical status",
+    "caution_flags": [
+      "Non-clinical unit/location identifier; interpret cautiously."
+    ]
+  },
+  {
+    "feature": "age",
+    "value": 46.0,
+    "shap_value": -0.619559332075509,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "older age is associated with higher mortality risk",
+    "caution_flags": []
+  },
+  {
+    "feature": "apache_3j_bodysystem_Metabolic",
+    "value": true,
+    "shap_value": -0.3386969563885164,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "apache_3j_diagnosis",
+    "value": 703.03,
+    "shap_value": -0.3206537412065032,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "diagnosis category contributes baseline clinical severity information",
+    "caution_flags": []
+  },
+  {
+    "feature": "ventilated_apache",
+    "value": 0.0,
+    "shap_value": -0.2423471913011152,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_mbp_min",
+    "value": 86.0,
+    "shap_value": -0.2412591040344331,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "low mean blood pressure indicates hemodynamic instability",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_resprate_max",
+    "value": 20.0,
+    "shap_value": -0.2054916086403208,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "high respiratory rate may indicate respiratory distress",
+    "caution_flags": []
+  }
+]
+
+Write the explanation with the following structure:
+
+1. Prediction summary
+2. Main risk-increasing factors
+3. Main risk-decreasing factors
+4. Caution notes
+5. Overall interpretation
+
+Keep the explanation clinically grounded and concise.

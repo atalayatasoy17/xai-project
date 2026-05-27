@@ -1,0 +1,161 @@
+You are a clinical AI explanation assistant.
+
+Your task is to explain why the mortality prediction model made its prediction for this ICU patient.
+
+Use only the provided evidence. Do not invent clinical facts. Do not use the true label to justify the prediction; use it only as case metadata. If a feature has a caution flag, mention it carefully.
+
+Patient prediction:
+- Case type: FP
+- True label: 0
+- Predicted label: 1
+- Predicted mortality probability: 0.9954
+
+Risk-increasing evidence:
+[
+  {
+    "feature": "d1_heartrate_min",
+    "value": 0.0,
+    "shap_value": 2.115243139115996,
+    "direction": "risk_increasing",
+    "clinical_meaning": "extreme or very low heart rate may indicate severe instability or data quality issue",
+    "caution_flags": [
+      "Zero-valued vital sign; may reflect extreme clinical event or recording artifact."
+    ]
+  },
+  {
+    "feature": "age",
+    "value": 84.0,
+    "shap_value": 0.6824602692814827,
+    "direction": "risk_increasing",
+    "clinical_meaning": "older age is associated with higher mortality risk",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_sysbp_min",
+    "value": 61.0,
+    "shap_value": 0.6071994809861627,
+    "direction": "risk_increasing",
+    "clinical_meaning": "low systolic blood pressure indicates hemodynamic instability",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_spo2_max",
+    "value": 90.0,
+    "shap_value": 0.416093696979029,
+    "direction": "risk_increasing",
+    "clinical_meaning": "low maximum oxygen saturation may indicate persistent oxygenation impairment",
+    "caution_flags": []
+  },
+  {
+    "feature": "gcs_motor_apache",
+    "value": 4.0,
+    "shap_value": 0.3706077515026537,
+    "direction": "risk_increasing",
+    "clinical_meaning": "low GCS motor score indicates impaired neurological response",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_temp_max",
+    "value": 35.9,
+    "shap_value": 0.3299957095977676,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_resprate_min",
+    "value": 0.0,
+    "shap_value": 0.2356240319144439,
+    "direction": "risk_increasing",
+    "clinical_meaning": "extreme or very low respiratory rate may indicate respiratory instability or data quality issue",
+    "caution_flags": [
+      "Zero-valued vital sign; may reflect extreme clinical event or recording artifact."
+    ]
+  },
+  {
+    "feature": "gcs_verbal_apache",
+    "value": 1.0,
+    "shap_value": 0.2295069604710034,
+    "direction": "risk_increasing",
+    "clinical_meaning": "low GCS verbal score indicates impaired neurological response",
+    "caution_flags": []
+  }
+]
+
+Risk-decreasing evidence:
+[
+  {
+    "feature": "ventilated_apache",
+    "value": 0.0,
+    "shap_value": -0.2628558411183459,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_diasbp_noninvasive_max",
+    "value": 46.0,
+    "shap_value": -0.1833185972892735,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_resprate_max",
+    "value": 24.0,
+    "shap_value": -0.1130107439251801,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "high respiratory rate may indicate respiratory distress",
+    "caution_flags": []
+  },
+  {
+    "feature": "h1_diasbp_noninvasive_max",
+    "value": 43.0,
+    "shap_value": -0.1124607729617193,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_spo2_min",
+    "value": 90.0,
+    "shap_value": -0.1060046794668976,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "low minimum oxygen saturation indicates hypoxemia",
+    "caution_flags": []
+  },
+  {
+    "feature": "diabetes_mellitus",
+    "value": 1.0,
+    "shap_value": -0.0750908187977174,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "gcs_eyes_apache",
+    "value": 4.0,
+    "shap_value": -0.0518849145808764,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "low GCS eye score indicates impaired neurological response",
+    "caution_flags": []
+  },
+  {
+    "feature": "resprate_apache",
+    "value": 12.0,
+    "shap_value": -0.0503092436468959,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  }
+]
+
+Write the explanation with the following structure:
+
+1. Prediction summary
+2. Main risk-increasing factors
+3. Main risk-decreasing factors
+4. Caution notes
+5. Overall interpretation
+
+Keep the explanation clinically grounded and concise.
