@@ -1,0 +1,66 @@
+# Error Analysis and Sensitivity Notes
+
+## Global SHAP Observations
+
+- The global SHAP analysis identified clinically meaningful high-importance features such as `age`, `ventilated_apache`, `d1_spo2_min`, `gcs_motor_apache`, vital signs, and laboratory values.
+- `icu_id` also appeared among the top global SHAP features. Since this is likely a unit/location identifier rather than a direct clinical measurement, it should not be interpreted as a patient-level clinical risk factor.
+
+## Local True Positive Case
+
+- The selected true positive case had true mortality (`y_true = 1`) and received an extremely high predicted mortality probability (`p = 0.9995`).
+- Risk-increasing signals included severe hypoxemia (`d1_spo2_min = 31`), mechanical ventilation, very low systolic and mean blood pressure, low GCS motor score, low bicarbonate values, and low platelets.
+- `d1_heartrate_min = 0` had the largest positive SHAP contribution. This value is physiologically extreme and may represent a true critical event, recording artifact, or data quality issue.
+- In the test set, 129 patients had `d1_heartrate_min = 0`, corresponding to 0.7% of the test cohort. Their observed mortality rate was 65.1%, compared with 8.2% among patients with `d1_heartrate_min > 0`.
+
+## False Negative Case
+
+- The selected false negative case had true mortality (`y_true = 1`) but received a very low predicted mortality probability (`p = 0.0037`).
+- Risk-increasing signals included older age, high maximum respiratory rate, low diastolic blood pressure, and diagnosis-related information.
+- Risk-decreasing signals included absence of mechanical ventilation, normal WBC, relatively non-extreme heart rate values, low/normal BUN, and higher early mean blood pressure values.
+- This suggests that the model may miss mortality cases when classical high-risk indicators are not strongly present.
+
+## False Positive Case
+
+- The selected false positive case survived (`y_true = 0`) but received a very high predicted mortality probability (`p = 0.9954`).
+- Risk-increasing signals included `d1_heartrate_min = 0`, advanced age, low systolic blood pressure, low maximum SpO2, impaired GCS motor and verbal scores, low body temperature, low respiratory rate, and low bicarbonate values.
+- Although the patient survived, the high-risk prediction is clinically understandable because several features suggested severe physiological instability.
+- This case may represent a patient with strong early risk signals who survived due to clinical intervention, recovery, or transient instability.
+- The case reinforces the need to interpret zero-valued vital signs cautiously, since both `d1_heartrate_min = 0` and `d1_resprate_min = 0` contributed to the high-risk prediction.
+
+## True Negative Case
+
+- The selected true negative case survived (`y_true = 0`) and received a very low predicted mortality probability (`p = 0.0002`).
+- Risk-decreasing signals included younger age, absence of mechanical ventilation, stable mean blood pressure, non-extreme respiratory rate, normal minimum heart rate, and diagnosis-related information.
+- The explanation also showed strong negative contributions from `icu_id` and `pre_icu_los_days`.
+- `pre_icu_los_days` can contain negative values and should be reviewed as a potential data quality or interpretation issue.
+
+## Local Waterfall Summary
+
+- The local waterfall explanations generally supported the tabular SHAP explanations.
+- The true positive case was driven by severe clinical signals, including hypoxemia, mechanical ventilation, hypotension, impaired GCS response, low bicarbonate values, and thrombocytopenia.
+- The true negative case was driven by lower-risk signals, including younger age, absence of mechanical ventilation, stable vital signs, and less extreme clinical measurements.
+- The false negative case suggests that the model may miss mortality cases when strong classical high-risk indicators are absent or outweighed by survival-associated features.
+- The false positive case was clinically understandable despite being incorrect, because the patient had multiple severe early risk signals but ultimately survived.
+- Across local waterfall explanations, `icu_id`, zero-valued vital signs, and negative `pre_icu_los_days` repeatedly appeared as variables requiring cautious interpretation.
+
+## Group-Level SHAP Patterns
+
+- Group-level SHAP analysis compared average feature contributions across TP, FN, FP, and TN groups.
+- TP cases were characterized by strong positive SHAP contributions from clinically severe signals such as mechanical ventilation, impaired GCS motor response, diagnosis information, low SpO2, heart rate abnormalities, low systolic blood pressure, and older age.
+- FN cases had risk-increasing signals, but these were weaker on average than in TP cases. This suggests that missed mortality cases may have less obvious or less extreme high-risk patterns.
+- FP cases showed risk-increasing patterns similar to TP cases, including ventilation, older age, impaired GCS, low SpO2, low blood pressure, BUN, and heart rate features. This suggests that many false positives may be clinically understandable high-risk survivors rather than arbitrary model errors.
+- TN cases had very small positive SHAP values, indicating that the model did not detect strong mortality-increasing signals in correctly predicted survivors.
+- Mean SHAP values were used to understand direction of effect, while mean absolute SHAP values were used to understand feature influence regardless of direction.
+
+## Variables Requiring Caution
+
+- `icu_id` appears in local explanations and should be interpreted cautiously because it is likely a unit/location identifier rather than a direct clinical measurement.
+- Zero-valued vital signs such as `d1_heartrate_min = 0` and `h1_resprate_min = 0` may represent true extreme clinical events, recording artifacts, or data quality issues.
+- Negative values in `pre_icu_los_days` should be interpreted carefully and may require additional preprocessing review.
+
+## Future Sensitivity Analyses
+
+- Compare model performance with and without `icu_id`.
+- Evaluate model behavior after treating physiologically implausible zero vital signs as missing or outlier values.
+- Review and potentially transform or flag negative `pre_icu_los_days` values.
+- Check whether false negative cases share common hidden patterns not captured by the current feature set.
