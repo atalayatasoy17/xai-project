@@ -1,0 +1,14 @@
+1. Prediction summary  
+The model predicts a very low mortality probability (0.0002) for this ICU patient.
+
+2. Main risk-increasing factors  
+Slightly elevated maximum temperature (38.3) and low potassium (3.3) modestly increase risk. Lower diastolic blood pressures (59.0) and minimum heart rate (82.0) also contribute small increments to risk. Additional minor risk contributions come from creatinine level (0.84), maximum mean blood pressure (126.0), and absence of cardiovascular body system involvement.
+
+3. Main risk-decreasing factors  
+Younger age (46 years) strongly decreases risk. A diagnosis related to the metabolic body system and a specific diagnosis category further reduce risk. Absence of mechanical ventilation, higher minimum mean blood pressure (86.0), and a moderate maximum respiratory rate (20.0) also lower risk. The ICU unit identifier is associated with decreased risk, likely reflecting unit-level patterns.
+
+4. Caution notes  
+The negative pre-ICU length of stay value may indicate timing or data quality issues and should be interpreted cautiously. The ICU unit identifier is a non-clinical feature and its influence should be considered with caution.
+
+5. Overall interpretation  
+While some vital signs and lab values slightly increase risk, strong protective factors such as younger age, metabolic diagnosis, and stable respiratory and hemodynamic parameters dominate, resulting in a very low predicted mortality risk for this patient.

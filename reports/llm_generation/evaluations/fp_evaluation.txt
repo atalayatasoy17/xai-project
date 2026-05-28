@@ -1,0 +1,29 @@
+```json
+{
+  "scores": {
+    "faithfulness_no_hallucination": {
+      "score": 3,
+      "rationale": "The explanation is mostly grounded in the evidence but includes minor unsupported phrasing, such as 'low maximum temperature' without a predefined clinical interpretation. It accurately reflects SHAP directions but does not fully integrate caution flags."
+    },
+    "clinical_plausibility": {
+      "score": 4,
+      "rationale": "The explanation is generally plausible and interprets most important signals clearly, though it lacks depth in discussing the clinical implications of some features."
+    },
+    "caution_awareness": {
+      "score": 4,
+      "rationale": "Correctly mentions and explains relevant caution flags for zero-valued vital signs but could integrate them more fully into the overall interpretation."
+    },
+    "completeness": {
+      "score": 4,
+      "rationale": "Covers most important risk-increasing and risk-decreasing factors with a clear overall interpretation, but could provide more detail on risk-decreasing evidence."
+    },
+    "clarity": {
+      "score": 5,
+      "rationale": "The explanation is very clear, concise, and well-structured, making it easy to follow."
+    }
+  },
+  "overall_feedback": "The explanation is mostly faithful to the evidence and clinically plausible, with clear structure and good caution awareness. However, it includes minor unsupported phrasing and could better integrate caution flags into the overall interpretation.",
+  "revision_needed": true,
+  "revision_instructions": "Ensure all statements are fully supported by the evidence, particularly regarding temperature. Integrate caution flags more thoroughly into the overall interpretation. Avoid any unsupported clinical interpretations."
+}
+```

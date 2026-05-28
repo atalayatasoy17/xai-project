@@ -1,0 +1,14 @@
+1. Prediction summary  
+The model predicted a high mortality risk with a probability of 0.9954 for this ICU patient.
+
+2. Main risk-increasing factors  
+Key contributors to increased risk include an extremely low minimum heart rate (0.0), which may indicate severe instability or a data artifact; advanced age (84 years), associated with higher mortality; low minimum systolic blood pressure (61), reflecting hemodynamic instability; low maximum oxygen saturation (90), suggesting impaired oxygenation; low Glasgow Coma Scale (GCS) motor (4) and verbal (1) scores, indicating impaired neurological response; low maximum temperature (35.9); and an extremely low minimum respiratory rate (0.0), which may reflect respiratory instability or data issues.
+
+3. Main risk-decreasing factors  
+Factors slightly reducing risk include absence of mechanical ventilation, higher maximum diastolic blood pressures, higher maximum respiratory rate (24), presence of diabetes mellitus, a low GCS eye score (4), and a moderate respiratory rate (12).
+
+4. Caution notes  
+The zero values for minimum heart rate and minimum respiratory rate carry caution flags, as they may represent either extreme clinical events or recording artifacts, requiring careful interpretation.
+
+5. Overall interpretation  
+The prediction is driven predominantly by indicators of severe physiological instability, advanced age, and impaired neurological status, with some mitigating factors present. The zero-valued vital signs warrant cautious consideration due to potential data quality issues.

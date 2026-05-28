@@ -1,0 +1,5 @@
+case_type,weighted_score,revision_needed,faithfulness_no_hallucination,clinical_plausibility,caution_awareness,completeness,clarity,revision_rounds,parse_error,forbidden_true_label_phrases
+TP,4.7,True,4,5,5,5,5,3,,[]
+FN,3.8000000000000003,True,3,4,4,4,5,1,,[]
+FP,3.8000000000000003,True,3,4,4,4,5,1,,[]
+TN,4.0,True,3,4,5,4,5,1,,[]

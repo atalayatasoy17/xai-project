@@ -1,0 +1,29 @@
+```json
+{
+  "scores": {
+    "faithfulness_no_hallucination": {
+      "score": 3,
+      "rationale": "The explanation is mostly grounded in the evidence but includes minor unsupported phrasing, such as 'modest risk reduction from immune and renal-related markers,' which is not explicitly supported by the evidence. The SHAP directions are mostly reflected correctly."
+    },
+    "clinical_plausibility": {
+      "score": 4,
+      "rationale": "The explanation is clinically plausible and interprets most important signals clearly, such as the implications of low heart rate and oxygen saturation. However, it could provide more depth in some areas."
+    },
+    "caution_awareness": {
+      "score": 5,
+      "rationale": "Correctly mentions and explains the caution flag related to the zero-valued heart rate, integrating it appropriately into the interpretation."
+    },
+    "completeness": {
+      "score": 4,
+      "rationale": "Covers most important risk-increasing and risk-decreasing factors with a clear overall interpretation. However, the explanation could give slightly more attention to the risk-decreasing evidence."
+    },
+    "clarity": {
+      "score": 5,
+      "rationale": "The explanation is very clear, concise, and well-structured, making it easy to follow."
+    }
+  },
+  "overall_feedback": "The explanation is mostly faithful to the evidence and clinically plausible, with excellent clarity and caution awareness. However, it includes minor unsupported phrasing and could slightly improve in covering risk-decreasing factors.",
+  "revision_needed": true,
+  "revision_instructions": "Remove any unsupported claims or vague phrasing, such as 'modest risk reduction from immune and renal-related markers.' Ensure all statements are directly supported by the evidence provided. Consider providing a bit more detail on the risk-decreasing factors."
+}
+```

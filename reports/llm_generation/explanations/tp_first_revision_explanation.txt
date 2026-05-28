@@ -1,0 +1,14 @@
+1. Prediction summary  
+The model predicted a very high mortality risk (probability 0.9995) for this ICU patient.
+
+2. Main risk-increasing factors  
+Key contributors to increased risk include an extremely low minimum heart rate (0.0), which may indicate severe instability or a data artifact; very low minimum oxygen saturation (31.0) indicating hypoxemia; mechanical ventilation reflecting severe respiratory failure or critical illness; low bicarbonate levels (minimum 8.0, maximum 12.0) suggesting metabolic acidosis; very low minimum systolic blood pressure (41.0) indicating hemodynamic instability; impaired neurological response with a low GCS motor score (1.0); and low platelet count (58.0), which may reflect severe illness or coagulation abnormalities.
+
+3. Main risk-decreasing factors  
+Factors slightly reducing risk include a low white blood cell count (1.1), which reflects inflammatory or immune status, and an elevated BUN (18.0), which may indicate renal dysfunction or metabolic stress. Additional features such as hematocrit, mean blood pressure, diastolic blood pressure, BMI, and height also contributed modestly to lowering risk, although no specific clinical interpretations are provided for these parameters in this context.
+
+4. Caution notes  
+The zero-valued minimum heart rate carries a caution flag indicating it may represent either an extreme clinical event or a recording artifact. This uncertainty requires careful clinical correlation when interpreting its impact on risk.
+
+5. Overall interpretation  
+The prediction is driven primarily by multiple indicators of severe physiological instability, including respiratory failure, metabolic acidosis, hemodynamic compromise, neurological impairment, and possible coagulation abnormalities. The zero heart rate value flagged for caution introduces uncertainty about whether this reflects a true critical event or a data quality issue, emphasizing the need for careful clinical review. Meanwhile, the modest risk reduction from immune and renal-related markers and other less defined parameters suggests some mitigating factors, but overall the model identifies critical derangements associated with high mortality risk.

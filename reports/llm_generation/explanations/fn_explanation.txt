@@ -1,0 +1,14 @@
+1. Prediction summary  
+The model predicted a very low mortality probability (0.37%) for this ICU patient.
+
+2. Main risk-increasing factors  
+Older age (72 years) and a very high maximum respiratory rate on day 1 (56) increased mortality risk, as older age is linked to higher risk and elevated respiratory rate may indicate respiratory distress. Additional risk was contributed by the diagnosis category (apache_3j_diagnosis 111.01) and low minimum diastolic blood pressure on day 1 (27), though no specific clinical interpretation is provided for these. Elevated mean arterial pressure and maximum noninvasive mean blood pressure (both 166) also increased risk without predefined clinical meaning.
+
+3. Main risk-decreasing factors  
+Absence of mechanical ventilation strongly decreased risk, as ventilation indicates severe illness. A normal minimum white blood cell count (6) suggested lower inflammatory or immune activation. The ICU unit identifier was associated with lower risk but should be interpreted cautiously. A minimum respiratory rate of zero and a low minimum heart rate (56) also decreased risk, though these values may reflect instability or data issues. Lower minimum glucose (73), higher minimum mean blood pressure (104), and lower maximum BUN (17) further decreased risk.
+
+4. Caution notes  
+The ICU unit identifier is a non-clinical feature and may reflect unit-level patterns rather than patient status. The zero minimum respiratory rate may represent an extreme clinical event or recording artifact and requires careful interpretation.
+
+5. Overall interpretation  
+The model balanced several risk-increasing factors, notably advanced age and high respiratory rate, against strong risk-decreasing evidence such as no mechanical ventilation and normal white blood cell count. Some vital sign values with unclear clinical meaning and caution flags suggest the prediction should be interpreted with attention to potential data limitations.

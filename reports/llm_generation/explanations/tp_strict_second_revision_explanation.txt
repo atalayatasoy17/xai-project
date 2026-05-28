@@ -1,0 +1,14 @@
+1. Prediction summary  
+The model predicted a very high mortality risk (probability 0.9995) for this ICU patient.
+
+2. Main risk-increasing factors  
+Key contributors to increased risk include an extremely low minimum heart rate (0.0), which may indicate severe instability or a data quality issue; very low minimum oxygen saturation (31.0) indicating hypoxemia; mechanical ventilation reflecting severe respiratory failure or critical illness; low bicarbonate levels (minimum 8.0, maximum 12.0) suggesting metabolic acidosis; very low minimum systolic blood pressure (41.0) indicating hemodynamic instability; low Glasgow Coma Scale motor score (1.0) indicating impaired neurological response; and low platelet count (58.0).
+
+3. Main risk-decreasing factors  
+Factors that reduced the predicted risk include low minimum white blood cell count (1.1), elevated maximum blood urea nitrogen (18.0), and several features without specific clinical interpretation provided: minimum hematocrit (19.5), maximum mean blood pressure (122.0), maximum diastolic blood pressure (108.0), hematocrit from APACHE score (19.5), body mass index (33.26), and height (154.9).
+
+4. Caution notes  
+The zero-valued minimum heart rate has a caution flag indicating it may represent either an extreme clinical event or a recording artifact, requiring careful interpretation.
+
+5. Overall interpretation  
+The prediction is primarily driven by multiple indicators of severe physiological instability, including respiratory failure, hypoxemia, metabolic acidosis, hemodynamic compromise, neurological impairment, and low platelet count. The zero heart rate value flagged for caution introduces uncertainty about whether this reflects a true critical event or a data quality issue. Risk-decreasing features contributed to lowering the predicted risk but without detailed clinical interpretation for most of these parameters.

@@ -1,0 +1,29 @@
+```json
+{
+  "scores": {
+    "faithfulness_no_hallucination": {
+      "score": 4,
+      "rationale": "The explanation is mostly grounded in the evidence and accurately reflects SHAP directions. However, it uses the true label to justify the prediction, which is not allowed."
+    },
+    "clinical_plausibility": {
+      "score": 5,
+      "rationale": "The explanation is clinically strong, coherent, and appropriately cautious, interpreting the evidence in a reasonable way."
+    },
+    "caution_awareness": {
+      "score": 5,
+      "rationale": "Correctly mentions and explains the caution flag related to the zero-valued heart rate."
+    },
+    "completeness": {
+      "score": 5,
+      "rationale": "Comprehensively covers the main evidence, including risk-increasing factors, risk-decreasing factors, caution-relevant evidence, and overall interpretation."
+    },
+    "clarity": {
+      "score": 5,
+      "rationale": "The explanation is very clear, concise, and well structured."
+    }
+  },
+  "overall_feedback": "The explanation is well-structured and clinically plausible, with appropriate caution awareness. However, it improperly uses the true label to justify the prediction.",
+  "revision_needed": true,
+  "revision_instructions": "Remove any justification of the prediction using the true label. Ensure the explanation remains grounded in the provided evidence without referencing the true outcome."
+}
+```

@@ -1,0 +1,4 @@
+version,weighted_score,revision_needed,faithfulness_no_hallucination,clinical_plausibility,caution_awareness,completeness,clarity,forbidden_true_label_phrases
+initial_generated,3.8000000000000003,True,3,4,4,4,5,
+first_revision,4.0,True,3,4,5,4,5,
+strict_second_revision,4.7,True,4,5,5,5,5,[]
