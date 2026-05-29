@@ -262,6 +262,42 @@ generated draft explanation
 
 Bu yaklaşım notebook 08'de kurulan agentic review mantığıyla uyumludur. LLM açıklaması üretilebilir, fakat klinik bağlamda final kabul edilmeden önce faithfulness, hallucination ve caution awareness açısından değerlendirilmelidir.
 
+## LLM Revision Loop
+
+Validation katmanı eklendikten sonra pipeline'a otomatik revision loop da eklendi. Amaç, LLM'in ilk açıklamasında flag'lenen ifadeler varsa bu açıklamayı doğrudan final kabul etmemek ve ikinci bir LLM çağrısıyla daha sıkı bir revizyon üretmektir.
+
+Yeni akış şu şekildedir:
+
+```text
+initial LLM explanation
+→ forbidden phrase validation
+→ if flagged phrases exist, build revision prompt
+→ revised LLM explanation
+→ revised validation
+```
+
+İlk LLM çıktısında validator şu ifadeleri yakaladı:
+
+```text
+stable
+adequate
+abnormal
+```
+
+Bu ifadeler açıklamanın bazı bölümlerinde evidence'tan daha yorumlayıcı dile kayabileceğini gösterdi. Bunun üzerine revision prompt oluşturuldu. Revision prompt, LLM'e flag'lenen ifadeleri kaldırmasını veya evidence'a daha uygun şekilde yeniden yazmasını söyledi.
+
+Revision sonrası validation sonucu:
+
+```text
+Revised forbidden phrases: []
+```
+
+Bu sonuç, otomatik revision loop'un ilk açıklamadaki sorunlu ifadeleri azaltabildiğini gösterir.
+
+Ayrıca validator başlangıçta basit substring matching kullanıyordu. Bu yaklaşım `instability` gibi desteklenen klinik ifadelerin içinde geçen `stability` kelimesini yanlışlıkla flag'leyebilirdi. Bu nedenle validator whole-word matching kullanacak şekilde güncellendi. Böylece `stability` tek başına geçtiğinde yakalanır, ancak `instability` gibi farklı bir kelimenin içinde geçtiğinde false positive üretilmez.
+
+Bu adım projenin agentic kısmı için önemlidir. Pipeline artık yalnızca LLM explanation üretmekle kalmaz; aynı zamanda çıktıyı denetler, problemli ifade bulursa revizyon ister ve revize edilmiş açıklamayı tekrar kontrol eder.
+
 ## Neden Unlabeled En Sona Bırakıldı?
 
 `data/raw/unlabeled.csv` gerçek deployment demosu için uygundur; çünkü ham formatta gelir ve `hospital_death` değerleri boştur. Ancak etiketsiz olduğu için prediction doğruluğunu kontrol edemeyiz.
