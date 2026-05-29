@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -88,12 +89,86 @@ def generate_explanation(
     return response.output_text
 
 
+def build_revision_prompt(
+    original_prompt: str,
+    generated_explanation: str,
+    forbidden_phrases: list[str],
+) -> str:
+    """Build a stricter revision prompt when validation flags generated text."""
+    forbidden_text = ", ".join(forbidden_phrases) if forbidden_phrases else "None"
+
+    return f"""
+The following ICU mortality explanation was generated from structured evidence, but validation flagged unsupported or cautionary wording.
+
+Original evidence and prompt:
+{original_prompt}
+
+Generated explanation:
+{generated_explanation}
+
+Flagged phrases:
+{forbidden_text}
+
+Revise the explanation to remove or rephrase the flagged wording.
+
+Rules:
+- Use only the original evidence.
+- Do not add new clinical facts.
+- Do not mention the true label.
+- Do not say whether the prediction was correct or incorrect.
+- Do not add measurement units unless explicitly present in the evidence.
+- Do not invent normal ranges, diagnoses, mechanisms, or clinical details beyond the provided clinical_meaning.
+- If clinical_meaning is "No predefined clinical interpretation available.", do not infer a clinical interpretation for that feature.
+- For features without explicit clinical_meaning, use this exact style: "<feature> = <value> increased/decreased the model's predicted risk."
+- Do not use flagged wording unless it is explicitly supported by the provided clinical_meaning.
+- Preserve the same section structure:
+  1. Prediction summary
+  2. Main risk-increasing factors
+  3. Main risk-decreasing factors
+  4. Caution notes
+  5. Overall interpretation
+""".strip()
+
+
+def revise_explanation(
+    original_prompt: str,
+    generated_explanation: str,
+    forbidden_phrases: list[str],
+    client: OpenAI | None = None,
+    model: str = "gpt-4.1-mini",
+    temperature: float = 0.0,
+) -> str:
+    """Ask the LLM to revise an explanation based on validation feedback."""
+    if client is None:
+        client = load_openai_client()
+
+    revision_prompt = build_revision_prompt(
+        original_prompt=original_prompt,
+        generated_explanation=generated_explanation,
+        forbidden_phrases=forbidden_phrases,
+    )
+
+    response = client.responses.create(
+        model=model,
+        instructions=GENERATOR_SYSTEM_MESSAGE,
+        input=revision_prompt,
+        temperature=temperature,
+    )
+
+    return response.output_text
+
+
 def check_forbidden_phrases(
     text: str,
     forbidden_phrases: list[str] | None = None,
 ) -> list[str]:
     """Return forbidden or cautionary phrases found in generated text."""
     phrases = forbidden_phrases or DEFAULT_FORBIDDEN_PHRASES
-    lower_text = text.lower()
+    flags = []
 
-    return [phrase for phrase in phrases if phrase.lower() in lower_text]
+    for phrase in phrases:
+        pattern = r"\b" + re.escape(phrase.lower()) + r"\b"
+        if re.search(pattern, text.lower()):
+            flags.append(phrase)
+
+    return flags
