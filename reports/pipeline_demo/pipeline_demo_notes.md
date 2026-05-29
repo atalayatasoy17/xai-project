@@ -207,6 +207,61 @@ raw test patient
 → LLM prompt
 ```
 
+## LLM Generation ve Validation
+
+Prompt üretimi doğrulandıktan sonra pipeline'a opsiyonel LLM generation adımı eklendi.
+
+Script:
+
+```text
+scripts/run_test_patient_llm_demo.py
+```
+
+Bu script aynı test hastası için şu akışı çalıştırır:
+
+```text
+raw test patient
+→ preprocessing
+→ prediction
+→ SHAP explanation
+→ evidence packet
+→ LLM prompt
+→ OpenAI explanation generation
+→ lightweight validation
+```
+
+LLM generation için `gpt-4.1-mini` kullanıldı. API anahtarı `.env` dosyasındaki `OPENAI_API_KEY` üzerinden okunur. API key yoksa LLM adımı anlaşılır bir hata mesajı verir.
+
+Bu adım sonunda şu dosyalar oluşturuldu:
+
+- `reports/pipeline_demo/test_patient_0_llm_evidence.json`
+- `reports/pipeline_demo/test_patient_0_llm_prompt.txt`
+- `reports/pipeline_demo/test_patient_0_llm_explanation.txt`
+- `reports/pipeline_demo/test_patient_0_llm_validation.json`
+
+Generated explanation okunabilir ve genel akışı takip edebilir durumdadır; ancak LLM'in evidence dışına taşma riski tamamen ortadan kalkmamıştır. Bu nedenle açıklama üretildikten sonra lightweight validation uygulanmıştır.
+
+Validation katmanı açıklamada geçmesini istemediğimiz veya dikkat gerektiren ifadeleri tarar. Bu test hasta çıktısında validator şu ifadeleri işaretledi:
+
+```text
+stable
+stability
+adequate
+```
+
+Bu ifadeler, açıklamanın bazı yerlerinde evidence'tan daha yorumlayıcı bir dile kaydığını gösterir. Bu kötü bir sonuç olarak değil, pipeline'ın LLM çıktısını körlemesine kabul etmediğinin kanıtı olarak yorumlandı.
+
+Bu nedenle LLM çıktısı şu şekilde ele alınmalıdır:
+
+```text
+generated draft explanation
+→ validation check
+→ review/revision if needed
+→ final explanation
+```
+
+Bu yaklaşım notebook 08'de kurulan agentic review mantığıyla uyumludur. LLM açıklaması üretilebilir, fakat klinik bağlamda final kabul edilmeden önce faithfulness, hallucination ve caution awareness açısından değerlendirilmelidir.
+
 ## Neden Unlabeled En Sona Bırakıldı?
 
 `data/raw/unlabeled.csv` gerçek deployment demosu için uygundur; çünkü ham formatta gelir ve `hospital_death` değerleri boştur. Ancak etiketsiz olduğu için prediction doğruluğunu kontrol edemeyiz.
@@ -226,6 +281,6 @@ Bu aşamada notebook tabanlı analizlerden tekrar kullanılabilir bir Python pip
 
 Bu adım projenin deployment benzeri akışa geçişidir. Sonraki doğal adımlar:
 
-- LLM API çağrısını pipeline'a opsiyonel olarak eklemek
+- LLM explanation çıktısını evaluator/revision katmanıyla daha sıkı denetlemek
 - aynı pipeline'ı `unlabeled.csv` üzerinde en son demo olarak çalıştırmak
 - pipeline kodunu README ve final raporda metodolojik akış olarak özetlemek
