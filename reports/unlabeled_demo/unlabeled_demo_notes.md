@@ -123,10 +123,60 @@ Prompt içinde:
 
 yer alır.
 
-Bu aşamada unlabeled hasta için LLM explanation henüz çalıştırılmadı. Önce prediction/evidence/prompt pipeline'ın etiketsiz veri üzerinde doğru çalıştığı gösterildi. İstenirse bir sonraki adımda test patient için kurulan LLM generation + validation + revision loop aynı unlabeled hasta üzerinde de çalıştırılabilir.
+## LLM Generation, Validation ve Revision
+
+Prediction/evidence/prompt pipeline doğrulandıktan sonra test patient için kurulan LLM generation + validation + revision loop aynı unlabeled hasta üzerinde de çalıştırıldı.
+
+Script:
+
+```text
+scripts/run_unlabeled_patient_llm_demo.py
+```
+
+Bu script şu akışı uygular:
+
+```text
+unlabeled evidence packet
+→ LLM prompt
+→ initial LLM explanation
+→ forbidden phrase validation
+→ revision if needed
+→ revised validation
+```
+
+Üretilen LLM çıktıları:
+
+- `unlabeled_patient_0_llm_evidence.json`
+- `unlabeled_patient_0_llm_prompt.txt`
+- `unlabeled_patient_0_llm_explanation.txt`
+- `unlabeled_patient_0_llm_validation.json`
+- `unlabeled_patient_0_llm_revised_explanation.txt`
+- `unlabeled_patient_0_llm_revised_validation.json`
+
+Initial LLM explanation üretildikten sonra validator şu ifadeyi yakaladı:
+
+```text
+adequate
+```
+
+Bu ifade, açıklamanın bazı yerlerinde evidence'tan daha yorumlayıcı bir dile kayabileceğini gösterdi. Bu nedenle revision loop otomatik olarak devreye girdi.
+
+Revision sonrası validation sonucu:
+
+```text
+Revised forbidden phrases: []
+```
+
+Bu sonuç, agentic revision adımının unlabeled hasta üzerinde de çalıştığını gösterir. Yani pipeline LLM çıktısını doğrudan final kabul etmedi; önce validation yaptı, sorunlu ifade bulunca revizyon istedi ve revize edilmiş açıklamayı tekrar kontrol etti.
+
+Unlabeled hasta için revised explanation, modelin düşük mortalite olasılığı tahminini şu şekilde açıklar:
+
+- risk artıran kanıtlar: GCS bileşenleri, düşük sistolik kan basıncı, BUN, diagnosis category ve bazı ek model sinyalleri
+- risk azaltan kanıtlar: yaş, ventilasyon olmaması, bazı solunum/oksijenasyon ve laboratuvar sinyalleri
+- caution note: `icu_id` non-clinical unit/location identifier olduğu için dikkatle yorumlanmalıdır
 
 ## Sonuç
 
-Unlabeled demo başarıyla çalıştı. Pipeline ham etiketsiz hasta verisini kaydedilmiş preprocessing artifact ile model input formatına dönüştürdü, final LightGBM modeli ile ölüm olasılığı tahmini üretti, SHAP tabanlı evidence packet oluşturdu ve LLM açıklaması için prompt hazırladı.
+Unlabeled demo başarıyla çalıştı. Pipeline ham etiketsiz hasta verisini kaydedilmiş preprocessing artifact ile model input formatına dönüştürdü, final LightGBM modeli ile ölüm olasılığı tahmini üretti, SHAP tabanlı evidence packet oluşturdu, LLM açıklaması için prompt hazırladı ve agentic LLM validation/revision loop ile açıklama üretimini tamamladı.
 
 Bu adım, projenin doğrulanmış test pipeline'ından deployment benzeri etiketsiz hasta inference senaryosuna geçtiğini gösterir.
