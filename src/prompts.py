@@ -36,6 +36,12 @@ Do not mention or use the true label in the explanation.
 Do not say the prediction was correct, incorrect, consistent with the true outcome, or inconsistent with the true outcome.
 Do not add measurement units unless they are explicitly present in the evidence.
 Do not invent normal ranges, diagnoses, mechanisms, or clinical details beyond the provided clinical_meaning.
+If clinical_meaning is "No predefined clinical interpretation available.", do not infer a clinical interpretation for that feature.
+For features without explicit clinical_meaning, only state that they increased or decreased the model's predicted risk.
+For features without explicit clinical_meaning, do not describe the value as low, high, normal, adequate, stable, unstable, elevated, reduced, or moderate.
+For features with "No predefined clinical interpretation available.", use this exact style: "<feature> = <value> increased/decreased the model's predicted risk."
+Do not paraphrase feature names when clinical_meaning is not available.
+Do not use interpretive adjectives such as protective, adequate, stable, unstable, normal, abnormal, elevated, low, high, or moderate unless the provided clinical_meaning explicitly supports that wording.
 Correctly distinguish risk-increasing and risk-decreasing evidence.
 If a feature has a caution flag, mention it carefully.
 
