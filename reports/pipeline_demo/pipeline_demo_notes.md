@@ -298,6 +298,84 @@ Ayrıca validator başlangıçta basit substring matching kullanıyordu. Bu yakl
 
 Bu adım projenin agentic kısmı için önemlidir. Pipeline artık yalnızca LLM explanation üretmekle kalmaz; aynı zamanda çıktıyı denetler, problemli ifade bulursa revizyon ister ve revize edilmiş açıklamayı tekrar kontrol eder.
 
+## Saved Artifact Demo
+
+İlk pipeline doğrulamaları sırasında `ICUPreprocessor` her script içinde yeniden train split üzerinde fit ediliyordu. Bu yöntem doğrulama için uygundur; çünkü notebook preprocessing çıktısını yeniden üretmeyi test eder. Ancak deployment benzeri kullanım için daha doğru yapı, preprocessing kurallarını da model gibi kaydetmektir.
+
+Bu nedenle fitted preprocessor artifact olarak kaydedildi:
+
+```text
+models/icu_preprocessor.pkl
+```
+
+Bu artifact şu bilgileri içerir:
+
+- high-missing kolon kararları
+- missing indicator kolonları
+- numeric ve categorical kolon listeleri
+- train median değerleri
+- final feature schema
+
+Artifact kaydetme script'i:
+
+```text
+scripts/save_preprocessor_artifact.py
+```
+
+Bu script yalnızca preprocessor'ı kaydetmekle kalmadı, kaydedilen artifact'i tekrar yükleyip held-out test setini dönüştürdü ve kaydedilmiş `data/processed/X_test.csv` ile karşılaştırdı.
+
+Doğrulama sonucu:
+
+```text
+Feature count: 263
+X_test match : True
+```
+
+Bu, saved preprocessor artifact'inin notebook preprocessing çıktısını birebir yeniden üretebildiğini gösterir.
+
+Ardından deployment-style demo script'i eklendi:
+
+```text
+scripts/run_saved_artifact_patient_demo.py
+```
+
+Bu script artık preprocessing'i yeniden fit etmez. Bunun yerine şu artifact'leri yükler:
+
+```text
+models/icu_preprocessor.pkl
+models/lgbm_tuned_clean.pkl
+models/lgbm_tuned_clean_threshold.json
+```
+
+Sonra raw test hastası üzerinde aynı pipeline'ı çalıştırır:
+
+```text
+saved preprocessor
++ saved model
++ saved threshold
++ raw patient
+→ prediction
+→ SHAP explanation
+→ evidence packet
+→ prompt
+```
+
+Saved artifact demo çıktıları:
+
+- `reports/pipeline_demo/test_patient_0_saved_artifacts_prediction.json`
+- `reports/pipeline_demo/test_patient_0_saved_artifacts_evidence.json`
+- `reports/pipeline_demo/test_patient_0_saved_artifacts_prompt.txt`
+
+Prediction sonucu önceki test patient demo ile aynı çıktı:
+
+```text
+death_probability: 0.0128
+prediction: 0
+threshold: 0.50
+```
+
+Bu adım `unlabeled.csv` demosu için doğrudan temel oluşturur. Çünkü etiketsiz yeni hasta verisinde artık training datasını yeniden fit etmeden, kaydedilmiş preprocessing ve model artifact'leri ile tahmin ve açıklama üretilebilir.
+
 ## Neden Unlabeled En Sona Bırakıldı?
 
 `data/raw/unlabeled.csv` gerçek deployment demosu için uygundur; çünkü ham formatta gelir ve `hospital_death` değerleri boştur. Ancak etiketsiz olduğu için prediction doğruluğunu kontrol edemeyiz.
@@ -313,7 +391,7 @@ Bu doğrulama tamamlandıktan sonra aynı pipeline `unlabeled.csv` üzerinde gü
 
 ## Sonuç
 
-Bu aşamada notebook tabanlı analizlerden tekrar kullanılabilir bir Python pipeline'a geçildi. Pipeline artık ham test hastasını alıp modelin beklediği feature formatına dönüştürebiliyor, final LightGBM modeliyle tahmin üretiyor, local SHAP explanation çıkarıyor, structured evidence packet oluşturuyor ve LLM için evidence-grounded prompt hazırlıyor.
+Bu aşamada notebook tabanlı analizlerden tekrar kullanılabilir bir Python pipeline'a geçildi. Pipeline artık ham test hastasını alıp modelin beklediği feature formatına dönüştürebiliyor, final LightGBM modeliyle tahmin üretiyor, local SHAP explanation çıkarıyor, structured evidence packet oluşturuyor ve LLM için evidence-grounded prompt hazırlıyor. Ayrıca saved preprocessor artifact ile deployment-style kullanım da doğrulandı.
 
 Bu adım projenin deployment benzeri akışa geçişidir. Sonraki doğal adımlar:
 
