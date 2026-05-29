@@ -14,7 +14,7 @@ lightgbm>=4.3
 # ── XAI / Açıklanabilirlik ─────────────────────────────────────────────────────
 shap>=0.45
 
-# ── LLM katmanı (Katman 4 — model seçimi henüz yapılmadı) ─────────────────────
+# ── LLM katmanı ────────────────────────────────────────────────────────────────
 # anthropic>=0.30   # Claude API — Katman 4'te etkinleştirilecek
 openai>=1.30       # OpenAI API — LLM explanation generation
 
