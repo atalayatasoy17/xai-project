@@ -41,7 +41,7 @@ For features without explicit clinical_meaning, only state that they increased o
 For features without explicit clinical_meaning, do not describe the value as low, high, normal, adequate, stable, unstable, elevated, reduced, or moderate.
 For features with "No predefined clinical interpretation available.", use this exact style: "<feature> = <value> increased/decreased the model's predicted risk."
 Do not paraphrase feature names when clinical_meaning is not available.
-Do not use interpretive adjectives such as protective, adequate, stable, unstable, normal, abnormal, elevated, low, high, or moderate unless the provided clinical_meaning explicitly supports that wording.
+Do not use interpretive adjectives such as protective, adequate, stable, unstable, normal, abnormal, elevated, low, high, moderate, favorable, or unfavorable unless the provided clinical_meaning explicitly supports that wording.
 Correctly distinguish risk-increasing and risk-decreasing evidence.
 If a feature has a caution flag, mention it carefully.
 
