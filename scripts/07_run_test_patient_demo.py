@@ -1,9 +1,8 @@
-"""Run a test patient demo using saved preprocessing and model artifacts."""
+"""Run the validated patient pipeline on one held-out test patient."""
 from pathlib import Path
 import json
 import sys
 
-import joblib
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
@@ -13,28 +12,31 @@ sys.path.append(str(ROOT))
 
 from src.pipeline import run_patient_pipeline
 from src.prediction import load_model, load_threshold
+from src.preprocessing import ICUPreprocessor
 from src.prompts import build_explanation_prompt
 
 
 def main() -> None:
-    output_dir = ROOT / "reports/pipeline_demo"
+    output_dir = ROOT / "reports/07_pipeline_demo"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     raw = pd.read_csv(ROOT / "data/raw/training_v2.csv")
 
-    _, raw_test = train_test_split(
+    raw_train, raw_test = train_test_split(
         raw,
         test_size=0.2,
         random_state=42,
         stratify=raw["hospital_death"],
     )
 
-    preprocessor = joblib.load(ROOT / "models/icu_preprocessor.pkl")
+    preprocessor = ICUPreprocessor()
+    preprocessor.fit(raw_train)
+
     model = load_model(ROOT / "models/lgbm_tuned_clean.pkl")
     threshold = load_threshold(ROOT / "models/lgbm_tuned_clean_threshold.json")
 
     patient_position = 0
-    patient_label = "test_patient_0_saved_artifacts"
+    patient_label = "test_patient_0"
     raw_patient = raw_test.iloc[[patient_position]]
 
     result = run_patient_pipeline(
@@ -63,15 +65,12 @@ def main() -> None:
     with open(prediction_path, "w") as f:
         json.dump(result["prediction"], f, indent=2)
 
-    print("=== Saved Artifact Patient Demo Saved ===")
+    print("=== Test Patient Pipeline Demo Saved ===")
     print(f"Patient label   : {patient_label}")
     print(f"Original index  : {int(raw_patient.index[0])}")
-    print(f"Prediction      : {prediction_path.relative_to(ROOT)}")
     print(f"Evidence packet : {evidence_path.relative_to(ROOT)}")
     print(f"Prompt          : {prompt_path.relative_to(ROOT)}")
-    print()
-    print("=== Prediction ===")
-    print(json.dumps(result["prediction"], indent=2))
+    print(f"Prediction      : {prediction_path.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

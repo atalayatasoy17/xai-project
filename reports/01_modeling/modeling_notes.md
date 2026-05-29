@@ -126,7 +126,7 @@ Modelleme aşamasında oluşturulan ana çıktılar:
 
 - `models/lgbm_tuned_clean.pkl`: final seçilen LightGBM modeli
 - `models/lgbm_tuned_clean_threshold.json`: final threshold bilgisi
-- `reports/modeling/final_model_comparison.csv`: tüm ana model sonuçlarının karşılaştırma tablosu
+- `reports/01_modeling/final_model_comparison.csv`: tüm ana model sonuçlarının karşılaştırma tablosu
 
 ## Sonuç
 

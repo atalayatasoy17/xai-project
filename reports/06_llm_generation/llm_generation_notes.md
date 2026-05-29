@@ -190,13 +190,13 @@ The notebook saves:
 
 The main saved files are:
 
-- `reports/llm_generation/final_llm_generation_summary.csv`
-- `reports/llm_generation/tp_agentic_summary.csv`
-- `reports/llm_generation/fn_fp_tn_summary.csv`
-- `reports/llm_generation/tp_agentic_results.json`
-- `reports/llm_generation/fn_fp_tn_case_results.json`
-- `reports/llm_generation/explanations/`
-- `reports/llm_generation/evaluations/`
+- `reports/06_llm_generation/final_llm_generation_summary.csv`
+- `reports/06_llm_generation/tp_agentic_summary.csv`
+- `reports/06_llm_generation/fn_fp_tn_summary.csv`
+- `reports/06_llm_generation/tp_agentic_results.json`
+- `reports/06_llm_generation/fn_fp_tn_case_results.json`
+- `reports/06_llm_generation/explanations/`
+- `reports/06_llm_generation/evaluations/`
 
 ## Final Methodological Note
 

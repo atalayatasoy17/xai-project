@@ -19,7 +19,7 @@ models/lgbm_tuned_clean_threshold.json
 Çalıştırılan script:
 
 ```text
-scripts/run_unlabeled_patient_demo.py
+scripts/11_run_unlabeled_patient_demo.py
 ```
 
 Akış:
@@ -36,7 +36,7 @@ raw unlabeled patient
 
 ## Üretilen Çıktılar
 
-Demo çıktıları `reports/unlabeled_demo/` altında kaydedildi:
+Demo çıktıları `reports/08_unlabeled_demo/` altında kaydedildi:
 
 - `unlabeled_patient_0_prediction.json`
 - `unlabeled_patient_0_evidence.json`
@@ -130,7 +130,7 @@ Prediction/evidence/prompt pipeline doğrulandıktan sonra test patient için ku
 Script:
 
 ```text
-scripts/run_unlabeled_patient_llm_demo.py
+scripts/12_run_unlabeled_patient_llm_demo.py
 ```
 
 Bu script şu akışı uygular:

@@ -35,7 +35,7 @@ raw patient
 Doğrulama script'i:
 
 ```text
-scripts/verify_preprocessing.py
+scripts/01_verify_preprocessing.py
 ```
 
 Kontrol edilenler:
@@ -65,7 +65,7 @@ Preprocessing doğrulandıktan sonra final model prediction adımı test edildi.
 Doğrulama script'i:
 
 ```text
-scripts/verify_prediction.py
+scripts/02_verify_prediction.py
 ```
 
 Bu script:
@@ -101,8 +101,8 @@ Prediction sonrası tek hasta için SHAP explanation üretildi.
 Doğrulama script'leri:
 
 ```text
-scripts/verify_explainability.py
-scripts/verify_evidence.py
+scripts/03_verify_explainability.py
+scripts/04_verify_evidence.py
 ```
 
 Seçilen örnek hasta:
@@ -154,7 +154,7 @@ Evidence packet'ten LLM'e verilecek prompt otomatik üretildi.
 Doğrulama script'i:
 
 ```text
-scripts/verify_prompt.py
+scripts/06_verify_prompt.py
 ```
 
 Prompt içinde:
@@ -187,14 +187,14 @@ Son olarak full test patient demo çalıştırıldı.
 Script:
 
 ```text
-scripts/run_test_patient_demo.py
+scripts/07_run_test_patient_demo.py
 ```
 
 Bu script held-out test setinden bir hasta seçip tüm pipeline'ı çalıştırdı ve çıktıları kaydetti:
 
-- `reports/pipeline_demo/test_patient_0_prediction.json`
-- `reports/pipeline_demo/test_patient_0_evidence.json`
-- `reports/pipeline_demo/test_patient_0_prompt.txt`
+- `reports/07_pipeline_demo/test_patient_0_prediction.json`
+- `reports/07_pipeline_demo/test_patient_0_evidence.json`
+- `reports/07_pipeline_demo/test_patient_0_prompt.txt`
 
 Bu demo, pipeline'ın tek hasta için uçtan uca çalıştığını gösterir:
 
@@ -214,7 +214,7 @@ Prompt üretimi doğrulandıktan sonra pipeline'a opsiyonel LLM generation adım
 Script:
 
 ```text
-scripts/run_test_patient_llm_demo.py
+scripts/08_run_test_patient_llm_demo.py
 ```
 
 Bu script aynı test hastası için şu akışı çalıştırır:
@@ -234,10 +234,10 @@ LLM generation için `gpt-4.1-mini` kullanıldı. API anahtarı `.env` dosyasın
 
 Bu adım sonunda şu dosyalar oluşturuldu:
 
-- `reports/pipeline_demo/test_patient_0_llm_evidence.json`
-- `reports/pipeline_demo/test_patient_0_llm_prompt.txt`
-- `reports/pipeline_demo/test_patient_0_llm_explanation.txt`
-- `reports/pipeline_demo/test_patient_0_llm_validation.json`
+- `reports/07_pipeline_demo/test_patient_0_llm_evidence.json`
+- `reports/07_pipeline_demo/test_patient_0_llm_prompt.txt`
+- `reports/07_pipeline_demo/test_patient_0_llm_explanation.txt`
+- `reports/07_pipeline_demo/test_patient_0_llm_validation.json`
 
 Generated explanation okunabilir ve genel akışı takip edebilir durumdadır; ancak LLM'in evidence dışına taşma riski tamamen ortadan kalkmamıştır. Bu nedenle açıklama üretildikten sonra lightweight validation uygulanmıştır.
 
@@ -319,7 +319,7 @@ Bu artifact şu bilgileri içerir:
 Artifact kaydetme script'i:
 
 ```text
-scripts/save_preprocessor_artifact.py
+scripts/09_save_preprocessor_artifact.py
 ```
 
 Bu script yalnızca preprocessor'ı kaydetmekle kalmadı, kaydedilen artifact'i tekrar yükleyip held-out test setini dönüştürdü ve kaydedilmiş `data/processed/X_test.csv` ile karşılaştırdı.
@@ -336,7 +336,7 @@ Bu, saved preprocessor artifact'inin notebook preprocessing çıktısını bireb
 Ardından deployment-style demo script'i eklendi:
 
 ```text
-scripts/run_saved_artifact_patient_demo.py
+scripts/10_run_saved_artifact_patient_demo.py
 ```
 
 Bu script artık preprocessing'i yeniden fit etmez. Bunun yerine şu artifact'leri yükler:
@@ -362,9 +362,9 @@ saved preprocessor
 
 Saved artifact demo çıktıları:
 
-- `reports/pipeline_demo/test_patient_0_saved_artifacts_prediction.json`
-- `reports/pipeline_demo/test_patient_0_saved_artifacts_evidence.json`
-- `reports/pipeline_demo/test_patient_0_saved_artifacts_prompt.txt`
+- `reports/07_pipeline_demo/test_patient_0_saved_artifacts_prediction.json`
+- `reports/07_pipeline_demo/test_patient_0_saved_artifacts_evidence.json`
+- `reports/07_pipeline_demo/test_patient_0_saved_artifacts_prompt.txt`
 
 Prediction sonucu önceki test patient demo ile aynı çıktı:
 

@@ -6,7 +6,7 @@ This stage prepares structured evidence packets for the future LLM reasoning lay
 
 ## Inputs
 
-- Structured evidence packets from `reports/evidence/evidence_packets.json`
+- Structured evidence packets from `reports/03_evidence/evidence_packets.json`
 - TP, FN, FP, and TN case-level evidence
 - Risk-increasing and risk-decreasing SHAP evidence
 - Clinical meaning fields and caution flags from the evidence construction layer
