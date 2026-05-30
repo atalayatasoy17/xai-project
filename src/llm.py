@@ -122,7 +122,8 @@ Rules:
 - Do not invent normal ranges, diagnoses, mechanisms, or clinical details beyond the provided clinical_meaning.
 - If clinical_meaning is "No predefined clinical interpretation available.", do not infer a clinical interpretation for that feature.
 - For features without explicit clinical_meaning, use this exact style: "<feature> = <value> increased/decreased the model's predicted risk."
-- Do not use flagged wording unless it is explicitly supported by the provided clinical_meaning.
+- Do not use any of the flagged phrases anywhere in the revised explanation.
+- Replace flagged interpretive adjectives with neutral evidence-grounded wording.
 - Preserve the same section structure:
   1. Prediction summary
   2. Main risk-increasing factors
@@ -158,6 +159,42 @@ def revise_explanation(
     )
 
     return response.output_text
+
+
+def revise_until_valid(
+    original_prompt: str,
+    generated_explanation: str,
+    forbidden_phrases: list[str],
+    client: OpenAI | None = None,
+    model: str = "gpt-4.1-mini",
+    temperature: float = 0.0,
+    max_rounds: int = 3,
+) -> tuple[str | None, list[str] | None, int]:
+    """Revise an explanation until validator flags are cleared or max rounds is reached."""
+    if not forbidden_phrases:
+        return None, None, 0
+
+    current_explanation = generated_explanation
+    current_flags = forbidden_phrases
+    revised_explanation = None
+
+    for revision_round in range(1, max_rounds + 1):
+        revised_explanation = revise_explanation(
+            original_prompt=original_prompt,
+            generated_explanation=current_explanation,
+            forbidden_phrases=current_flags,
+            client=client,
+            model=model,
+            temperature=temperature,
+        )
+        current_flags = check_forbidden_phrases(revised_explanation)
+
+        if not current_flags:
+            return revised_explanation, current_flags, revision_round
+
+        current_explanation = revised_explanation
+
+    return revised_explanation, current_flags, max_rounds
 
 
 def check_forbidden_phrases(

@@ -180,6 +180,36 @@ yer aldı.
 
 Bu, LLM açıklamasının evidence-grounded kalması için önemlidir.
 
+### Label Leakage Temizliği
+
+Bu aşamada prompt construction tekrar kontrol edildi ve önemli bir metodolojik ayrım netleştirildi:
+
+```text
+evidence packet = bizim analiz kaydımız
+LLM prompt      = modelin gördüğü bilgi
+```
+
+Evidence packet içinde `y_true` ve `prediction_type` bilgileri kalabilir; çünkü bunlar test hastalarında hata analizi, TP/FN/FP/TN sınıflaması ve raporlama için gereklidir. Ancak bu bilgiler LLM'e açıklama üretimi sırasında verilmemelidir. Aksi halde açıklama, modelin kendi prediction evidence'ı yerine gerçek sonuçtan veya `TP/TN/FN/FP` bilgisinden etkilenebilir.
+
+Bu nedenle `src/prompts.py` güncellendi. Prompt artık şunları içermez:
+
+- `True label`
+- `Case type`
+- `TP`, `FN`, `FP`, `TN` bilgisi
+
+Promptta yalnızca modelin kendi çıktıları ve evidence kalır:
+
+```text
+Predicted label
+Predicted mortality probability
+Decision threshold
+Risk-increasing SHAP evidence
+Risk-decreasing SHAP evidence
+Caution flags
+```
+
+Bu değişiklikten sonra `scripts/06_verify_prompt.py`, `scripts/07_run_test_patient_demo.py`, `scripts/10_run_saved_artifact_patient_demo.py`, `scripts/11_run_unlabeled_patient_demo.py`, `scripts/08_run_test_patient_llm_demo.py` ve `scripts/12_run_unlabeled_patient_llm_demo.py` tekrar çalıştırıldı. Böylece kaydedilmiş demo prompt ve LLM çıktıları temiz prompt yapısıyla güncellendi.
+
 ## Test Hasta Demo Çıktıları
 
 Son olarak full test patient demo çalıştırıldı.

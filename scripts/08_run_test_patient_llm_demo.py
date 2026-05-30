@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
-from src.llm import check_forbidden_phrases, generate_explanation, revise_explanation
+from src.llm import check_forbidden_phrases, generate_explanation, revise_until_valid
 from src.pipeline import run_patient_pipeline
 from src.prediction import load_model, load_threshold
 from src.preprocessing import ICUPreprocessor
@@ -55,15 +55,11 @@ def main() -> None:
     explanation = generate_explanation(prompt)
     forbidden_phrases = check_forbidden_phrases(explanation)
 
-    revised_explanation = None
-    revised_forbidden_phrases = None
-    if forbidden_phrases:
-        revised_explanation = revise_explanation(
-            original_prompt=prompt,
-            generated_explanation=explanation,
-            forbidden_phrases=forbidden_phrases,
-        )
-        revised_forbidden_phrases = check_forbidden_phrases(revised_explanation)
+    revised_explanation, revised_forbidden_phrases, revision_rounds = revise_until_valid(
+        original_prompt=prompt,
+        generated_explanation=explanation,
+        forbidden_phrases=forbidden_phrases,
+    )
 
     explanation_path = output_dir / f"{patient_label}_llm_explanation.txt"
     prompt_path = output_dir / f"{patient_label}_llm_prompt.txt"
@@ -90,7 +86,10 @@ def main() -> None:
 
         with open(revised_validation_path, "w") as f:
             json.dump(
-                {"forbidden_phrases": revised_forbidden_phrases},
+                {
+                    "forbidden_phrases": revised_forbidden_phrases,
+                    "revision_rounds": revision_rounds,
+                },
                 f,
                 indent=2,
             )
@@ -105,6 +104,7 @@ def main() -> None:
     if revised_explanation is not None:
         print(f"Revised explanation: {revised_explanation_path.relative_to(ROOT)}")
         print(f"Revised validation : {revised_validation_path.relative_to(ROOT)}")
+        print(f"Revision rounds    : {revision_rounds}")
         print(f"Revised forbidden phrases found: {revised_forbidden_phrases}")
     print()
     print("=== Generated Explanation Preview ===")

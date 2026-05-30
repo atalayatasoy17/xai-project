@@ -18,10 +18,9 @@ Correctly distinguish risk-increasing and risk-decreasing evidence.
 If a feature has a caution flag, mention it carefully.
 
 Patient prediction:
-- Case type: unknown
-- True label: unknown
 - Predicted label: 0
 - Predicted mortality probability: 0.0291
+- Decision threshold: 0.50
 
 Risk-increasing evidence:
 [

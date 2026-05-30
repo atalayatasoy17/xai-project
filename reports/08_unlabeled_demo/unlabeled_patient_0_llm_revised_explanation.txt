@@ -5,10 +5,10 @@ The model predicted a low mortality probability of 0.0291 for this ICU patient.
 Impaired neurological response indicated by low GCS verbal (1.0), motor (5.0), and eye (2.0) scores increased the predicted risk. Low systolic blood pressure (79.0) suggesting hemodynamic instability and elevated BUN (19.0) indicating possible renal dysfunction or metabolic stress also contributed to increased risk. Additionally, diagnosis category (405.01), minimum glucose (167.0), and respiratory rate (5.0) increased the model’s predicted risk.
 
 3. Main risk-decreasing factors  
-The ICU unit identifier (1105) decreased the predicted risk, though it reflects unit-level patterns rather than patient clinical status. Younger age (56.0) decreased risk, as did absence of mechanical ventilation (0.0). Respiratory rates including minimum at hour 1 (8.0) and maximum on day 1 (20.0), minimum oxygen saturation (96.0), white blood cell count (4.7), and hemoglobin (13.8) also decreased the predicted risk.
+The ICU unit identifier (1105) decreased the predicted risk, though it reflects unit-level patterns rather than patient clinical status. Younger age (56.0) decreased risk, as did absence of mechanical ventilation (0.0). Respiratory rates including minimum at hour 1 (8.0) and maximum on day 1 (20.0), minimum oxygen saturation on day 1 (96.0), white blood cell count minimum on day 1 (4.7), and minimum hemoglobin on day 1 (13.8) also decreased the predicted risk.
 
 4. Caution notes  
-The ICU unit identifier is a non-clinical feature and should be interpreted cautiously as it may reflect unit-level rather than patient-level factors.
+The ICU unit identifier should be interpreted cautiously as it is a non-clinical location variable.
 
 5. Overall interpretation  
-The prediction reflects a combination of neurological impairment and hemodynamic instability increasing risk, balanced by younger age, lack of ventilation, and respiratory and laboratory parameters decreasing risk, resulting in a low overall predicted mortality probability.
+Neurological impairment, low blood pressure, and elevated BUN increased mortality risk, while younger age, lack of ventilation, and the listed respiratory and laboratory parameters decreased the predicted mortality probability in this patient.

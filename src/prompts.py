@@ -9,10 +9,9 @@ def build_explanation_prompt(evidence_packet: dict[str, Any]) -> str:
     """Build an evidence-grounded LLM prompt from an evidence packet."""
     prediction = evidence_packet["prediction"]
 
-    case_type = prediction.get("prediction_type", "unknown")
-    true_label = prediction.get("y_true", "unknown")
     predicted_label = prediction["y_pred"]
     probability = prediction["y_proba"]
+    threshold = prediction["threshold"]
 
     risk_increasing = json.dumps(
         evidence_packet["risk_increasing_evidence"],
@@ -46,10 +45,9 @@ Correctly distinguish risk-increasing and risk-decreasing evidence.
 If a feature has a caution flag, mention it carefully.
 
 Patient prediction:
-- Case type: {case_type}
-- True label: {true_label}
 - Predicted label: {predicted_label}
 - Predicted mortality probability: {probability:.4f}
+- Decision threshold: {threshold:.2f}
 
 Risk-increasing evidence:
 {risk_increasing}

@@ -16,14 +16,26 @@ This stage prepares structured evidence packets for the future LLM reasoning lay
 This notebook creates prompt templates for selected TP, FN, FP, and TN cases. Each prompt includes:
 
 - patient prediction summary
-- true label and predicted label as metadata
+- predicted label as model output
 - predicted mortality probability
 - risk-increasing evidence
 - risk-decreasing evidence
 - caution flags for potentially problematic variables
 - required explanation structure
 
-The prompt explicitly instructs the LLM to use only the provided evidence, avoid inventing clinical facts, and avoid using the true label to justify the model prediction.
+The prompt explicitly instructs the LLM to use only the provided evidence and avoid inventing clinical facts.
+
+## Label-Leakage Correction
+
+A later review identified that sending `true label` or `case_type` to the LLM is not necessary for explanation generation and can create label leakage risk. The evidence packets may still retain `y_true` and TP/FN/FP/TN metadata for internal analysis, but the LLM prompt should only expose model outputs and SHAP-based evidence.
+
+The saved prompt files in this stage were therefore updated to remove:
+
+- `True label`
+- `Case type`
+- TP/FN/FP/TN metadata from the prompt text
+
+The final prompt design keeps only the predicted label, predicted probability, SHAP evidence, clinical meanings, and caution flags.
 
 ## Manual Explanation Prototype
 

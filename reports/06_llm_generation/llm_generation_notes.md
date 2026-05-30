@@ -201,3 +201,15 @@ The main saved files are:
 ## Final Methodological Note
 
 The most important finding from this stage is that explanation generation and explanation evaluation both require guardrails. The generator can hallucinate or over-interpret, but the evaluator can also make imperfect judgments. Therefore, the final explanation workflow should be treated as a decision-support and review pipeline, not as a fully autonomous clinical explanation authority.
+
+## Later Label-Leakage Correction
+
+A later project-level review identified an additional prompt-design issue: the early notebook prompts included `true label` and `case_type` as metadata. Even though the prompt instructed the LLM not to use the true label, a cleaner faithful-explanation design should avoid sending that information to the LLM at all.
+
+The final Python pipeline therefore separates internal analysis metadata from LLM-visible evidence:
+
+- `y_true` and `prediction_type` remain in the evidence packet for evaluation and error analysis.
+- `true label`, `case_type`, and TP/FN/FP/TN information are removed from the generated LLM prompt.
+- The LLM now receives only the predicted label, predicted probability, decision threshold, SHAP evidence, clinical meanings, and caution flags.
+
+This correction makes the final pipeline more faithful to the project goal: explanations should be based on the model prediction and supporting evidence, not on the observed outcome.

@@ -2,11 +2,9 @@ You are a clinical AI explanation assistant.
 
 Your task is to explain why the mortality prediction model made its prediction for this ICU patient.
 
-Use only the provided evidence. Do not invent clinical facts. Do not use the true label to justify the prediction; use it only as case metadata. If a feature has a caution flag, mention it carefully.
+Use only the provided evidence. Do not invent clinical facts. If a feature has a caution flag, mention it carefully.
 
 Patient prediction:
-- Case type: FP
-- True label: 0
 - Predicted label: 1
 - Predicted mortality probability: 0.9954
 
