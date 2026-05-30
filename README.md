@@ -183,6 +183,8 @@ forbidden_phrases: []
 
 Bu yaklaşım, LLM'in evidence dışına taşma riskine karşı hafif ama etkili bir agentic review mekanizması sağlar.
 
+Label leakage'i önlemek için LLM prompt'u özellikle sınırlandırıldı. Test/evaluation amaçlı evidence packet içinde `y_true` ve `prediction_type` tutulabilir; ancak bu bilgiler LLM'e gönderilen prompt'a yazılmaz. LLM yalnızca modelin kendi çıktısını (`predicted label`, `predicted probability`, `threshold`) ve SHAP tabanlı evidence kayıtlarını görür. Böylece açıklama gerçek sonuçtan veya TP/FN/FP/TN bilgisinden etkilenmeden, model evidence'ına dayanır.
+
 ## Repository Structure
 
 ```text
@@ -313,4 +315,3 @@ reports/08_unlabeled_demo/
 - LLM explanations are generated drafts and should be interpreted with validation results.
 - `icu_id` is treated cautiously because it may reflect unit-level patterns rather than patient-level clinical status.
 - Raw data and API keys are intentionally excluded from Git.
-
