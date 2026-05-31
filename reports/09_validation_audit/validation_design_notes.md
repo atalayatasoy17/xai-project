@@ -114,3 +114,8 @@ In the current audit, all revised explanations pass the deterministic validator.
 The validator is intentionally conservative. Feature grounding and direction checks currently work best when the explanation uses exact feature names, such as `d1_spo2_min` or `icu_id`. If an LLM paraphrases a feature as "oxygen saturation" instead of using the technical feature name, this version may not fully evaluate grounding or direction for that phrase.
 
 Alias-aware matching is currently applied only to caution mentions for a small set of caution-flagged features. Broader alias-aware matching for feature grounding and direction consistency can be added later if needed. For now, the prompt encourages exact feature names when predefined clinical meaning is unavailable, which keeps the validation process more reliable.
+
+Two caution-matching trade-offs remain:
+
+- `d1_resprate_min` and `h1_resprate_min` share the generic alias `minimum respiratory rate`. If both are caution-flagged in the same case and the explanation only uses this generic phrase, attribution may be ambiguous.
+- The caution identity term and caution language are required to appear in the same sentence. This reduces false passes, but it may create a false positive if the feature is named in one sentence and the caution wording appears in the next sentence.
