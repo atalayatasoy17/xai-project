@@ -1,0 +1,13 @@
+{
+  "clinical_plausibility": {
+    "score": 4,
+    "rationale": "Most risk factors are clinically plausible, such as high heart rate indicating stress and older age increasing risk. However, some features lack predefined clinical interpretations, which slightly reduces plausibility."
+  },
+  "clarity": {
+    "score": 4,
+    "rationale": "The explanation is generally clear, with a structured presentation of risk factors. Some clinical meanings are missing, which could improve clarity."
+  },
+  "overall_comments": "The explanation is mostly clinically plausible and clear, with minor gaps in predefined clinical interpretations for some features.",
+  "schema_version": "1.0",
+  "evaluator_model": "gpt-4o"
+}
