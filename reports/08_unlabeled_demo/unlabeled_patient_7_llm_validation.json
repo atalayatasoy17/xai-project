@@ -1,10 +1,10 @@
 {
   "passed": false,
   "revision_required": true,
-  "deterministic_validation_score": 4.538,
+  "deterministic_validation_score": 4.231,
   "dimension_scores": {
     "faithfulness_no_hallucination": 4,
-    "caution_awareness": 5,
+    "caution_awareness": 4,
     "completeness": 5
   },
   "checks": {
@@ -39,11 +39,11 @@
       "tolerance": 0.01
     },
     "caution_mentions": {
-      "passed": true,
-      "missing_features": [],
-      "mentioned_features": [
+      "passed": false,
+      "missing_features": [
         "icu_id"
       ],
+      "mentioned_features": [],
       "caution_feature_count": 1
     },
     "feature_grounding": {
@@ -51,13 +51,11 @@
       "ungrounded_features": [],
       "grounded_features": [
         "apache_3j_diagnosis",
-        "bun_apache",
         "icu_id",
         "ventilated_apache"
       ],
       "mentioned_features": [
         "apache_3j_diagnosis",
-        "bun_apache",
         "icu_id",
         "ventilated_apache"
       ],
@@ -89,7 +87,6 @@
         "apache_3j_diagnosis"
       ],
       "mentioned_in_risk_decreasing_section": [
-        "bun_apache",
         "icu_id",
         "ventilated_apache"
       ],
@@ -97,7 +94,8 @@
     }
   },
   "revision_feedback": [
-    "Remove or rephrase unsupported/risky wording: abnormal."
+    "Remove or rephrase unsupported/risky wording: abnormal.",
+    "Mention caution in the Caution notes section using the exact feature name(s): icu_id."
   ],
   "schema_version": "1.0"
 }

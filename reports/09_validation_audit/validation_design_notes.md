@@ -18,7 +18,7 @@ It checks:
 - true-label leakage, such as saying the prediction was correct or referring to the actual outcome
 - required section structure: prediction summary, risk-increasing factors, risk-decreasing factors, caution notes, and overall interpretation
 - prediction probability consistency with the evidence packet, using a tolerance of `0.01`
-- missing caution mentions for flagged features such as `icu_id`
+- missing caution mentions for flagged features such as `icu_id`; the flagged feature must be discussed in the `Caution notes` section with cautious language
 - feature grounding by checking that explicitly named technical features exist in the evidence packet
 - direction consistency by checking that risk-increasing and risk-decreasing sections match SHAP direction
 
@@ -46,6 +46,7 @@ Examples:
 - true-label leakage such as `correct prediction` or `patient died` is flagged
 - a missing `Caution notes` section triggers revision
 - an incorrect probability such as `0.199` when the evidence probability is `0.9919` is flagged
+- a missing caution mention for a flagged feature such as `icu_id` triggers revision
 
 This gives confidence that the validator catches the intended failure modes before being applied to saved LLM outputs.
 
@@ -62,18 +63,22 @@ For each explanation, it loads the matching `*_evidence.json`, validates the exp
 
 ## Audit Results
 
-The audit contains 9 saved explanations. The pattern is clinically and methodologically useful:
+The audit contains 10 saved explanations after applying the stricter caution-note requirement. The pattern is clinically and methodologically useful:
 
 - initial explanations sometimes fail deterministic validation
-- revised explanations pass after one revision loop
-- one high-risk unlabeled case passed immediately without revision
+- revised explanations pass after the revision loop
+- stricter caution validation can turn a previously passing explanation into a revision case if the `Caution notes` section does not explicitly mention the flagged feature name
 
 Examples:
 
 - `test_patient_0_llm_explanation` failed because it used unsupported wording such as `stable` and `adequate`, and did not state the probability consistently. The revised version passed with score `5.0`.
 - `unlabeled_patient_0_llm_explanation` failed because it used `favorable` and missed the caution mention for `icu_id`. The revised version explicitly mentioned `icu_id` as a non-clinical location variable and passed with score `5.0`.
 - `unlabeled_patient_7_llm_explanation` failed because it used unsupported wording such as `abnormal`. The revised version passed with score `5.0`.
-- `unlabeled_patient_15_llm_explanation` passed directly with score `5.0`; this is useful because it shows that revision is only triggered when validation finds a problem.
+- `unlabeled_patient_15_llm_explanation` initially failed under the stricter caution check because the caution-note section did not explicitly include both flagged feature names, `d1_heartrate_min` and `icu_id`. The revised version passed with score `5.0`.
+
+The audit also confirmed an important limitation of the exact-match v1 checks. Across the saved real explanations, `ungrounded_features` and `direction_errors` were empty. This should not be interpreted as proof that no natural-language grounding or direction errors are possible. Instead, it shows that the v1 checks mainly evaluate explicit technical feature names. When the LLM uses clinical phrases instead of exact column names, such as "oxygen saturation" instead of `d1_spo2_min`, those phrases are outside the scope of the current exact-match validator.
+
+This finding motivates a possible alias-aware v2 validator, where selected high-impact features could be mapped to common clinical phrases.
 
 ## Interpretation
 

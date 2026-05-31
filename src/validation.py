@@ -160,18 +160,26 @@ def _get_caution_features(evidence_packet: dict[str, Any]) -> list[dict[str, Any
 def check_caution_mentions(text: str, evidence_packet: dict[str, Any]) -> dict[str, Any]:
     """Check whether caution-flagged features are mentioned with cautious language."""
     caution_records = _get_caution_features(evidence_packet)
-    lowered_text = text.lower()
+    caution_section = _extract_section_text(
+        text=text,
+        start_heading="Caution notes",
+        following_headings=["Overall interpretation"],
+    )
+    lowered_caution_section = caution_section.lower()
 
     missing_features = []
     mentioned_features = []
 
     caution_language_present = any(
-        phrase in lowered_text for phrase in CAUTION_LANGUAGE
+        phrase in lowered_caution_section for phrase in CAUTION_LANGUAGE
     )
 
     for record in caution_records:
         feature = record["feature"]
-        feature_present = feature.lower() in lowered_text
+        feature_present = re.search(
+            r"\b" + re.escape(feature.lower()) + r"\b",
+            lowered_caution_section,
+        )
 
         if feature_present and caution_language_present:
             mentioned_features.append(feature)
@@ -414,7 +422,7 @@ def _build_revision_feedback(checks: dict[str, Any]) -> list[str]:
     missing_caution = checks["caution_mentions"]["missing_features"]
     if missing_caution:
         feedback.append(
-            "Mention caution for flagged features: "
+            "Mention caution in the Caution notes section using the exact feature name(s): "
             + ", ".join(missing_caution)
             + "."
         )
@@ -476,4 +484,3 @@ def validate_explanation(
         "revision_feedback": revision_feedback,
         "schema_version": "1.0",
     }
-

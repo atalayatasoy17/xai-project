@@ -141,6 +141,24 @@ The explanation is based on the provided evidence.
 """.strip()
 
 
+MISSING_CAUTION_EXPLANATION = """
+1. Prediction summary
+The model predicted a mortality probability of 0.99.
+
+2. Main risk-increasing factors
+The feature d1_spo2_min increased risk. The feature icu_id increased risk.
+
+3. Main risk-decreasing factors
+The feature age decreased risk.
+
+4. Caution notes
+No caution notes were identified.
+
+5. Overall interpretation
+The explanation is based on the provided evidence.
+""".strip()
+
+
 def main() -> None:
     fixtures = {
         "good": GOOD_EXPLANATION,
@@ -149,6 +167,7 @@ def main() -> None:
         "true_label_leak": TRUE_LABEL_LEAK_EXPLANATION,
         "missing_section": MISSING_SECTION_EXPLANATION,
         "wrong_probability": WRONG_PROBABILITY_EXPLANATION,
+        "missing_caution": MISSING_CAUTION_EXPLANATION,
     }
 
     print("=== Validation Fixture Verification ===")

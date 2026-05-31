@@ -29,10 +29,12 @@
     },
     "prediction_consistency": {
       "passed": true,
-      "expected_probability": 0.08056957431824724,
-      "matched_probability": 0.0806,
+      "expected_probability": 0.9919451201704785,
+      "matched_probability": 0.9919,
       "candidates": [
-        0.0806
+        0.9919,
+        0.0,
+        1.0
       ],
       "tolerance": 0.01
     },
@@ -40,38 +42,51 @@
       "passed": true,
       "missing_features": [],
       "mentioned_features": [
+        "d1_heartrate_min",
         "icu_id"
       ],
-      "caution_feature_count": 1
+      "caution_feature_count": 2
     },
     "feature_grounding": {
       "passed": true,
       "ungrounded_features": [],
       "grounded_features": [
-        "apache_3j_diagnosis",
-        "icu_id",
-        "ventilated_apache"
+        "d1_diasbp_noninvasive_min",
+        "d1_heartrate_min",
+        "d1_sodium_max",
+        "d1_temp_max",
+        "glucose_apache",
+        "h1_heartrate_max",
+        "h1_heartrate_min",
+        "hematocrit_apache",
+        "icu_id"
       ],
       "mentioned_features": [
-        "apache_3j_diagnosis",
-        "icu_id",
-        "ventilated_apache"
+        "d1_diasbp_noninvasive_min",
+        "d1_heartrate_min",
+        "d1_sodium_max",
+        "d1_temp_max",
+        "glucose_apache",
+        "h1_heartrate_max",
+        "h1_heartrate_min",
+        "hematocrit_apache",
+        "icu_id"
       ],
       "evidence_features": [
-        "age",
         "apache_3j_diagnosis",
-        "bun_apache",
-        "d1_bun_min",
         "d1_diasbp_noninvasive_min",
-        "d1_glucose_min",
         "d1_hco3_max",
-        "d1_heartrate_max",
         "d1_heartrate_min",
-        "d1_resprate_max",
-        "d1_resprate_min",
+        "d1_sodium_max",
+        "d1_spo2_min",
         "d1_sysbp_min",
+        "d1_temp_max",
+        "d1_wbc_min",
         "gcs_motor_apache",
-        "gcs_verbal_apache",
+        "glucose_apache",
+        "h1_heartrate_max",
+        "h1_heartrate_min",
+        "hematocrit_apache",
         "icu_id",
         "ventilated_apache"
       ],
@@ -81,17 +96,22 @@
       "passed": true,
       "direction_errors": [],
       "mentioned_in_risk_increasing_section": [
-        "age",
-        "apache_3j_diagnosis"
+        "d1_heartrate_min",
+        "d1_sodium_max",
+        "d1_temp_max"
       ],
       "mentioned_in_risk_decreasing_section": [
-        "icu_id",
-        "ventilated_apache"
+        "d1_diasbp_noninvasive_min",
+        "glucose_apache",
+        "h1_heartrate_max",
+        "h1_heartrate_min",
+        "hematocrit_apache",
+        "icu_id"
       ],
       "matching_mode": "exact_feature_name"
     }
   },
   "revision_feedback": [],
   "schema_version": "1.0",
-  "revision_rounds": 1
+  "revision_rounds": 2
 }

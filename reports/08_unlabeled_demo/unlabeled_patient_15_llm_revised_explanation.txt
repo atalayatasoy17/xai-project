@@ -1,0 +1,14 @@
+1. Prediction summary  
+The model predicted a high mortality risk with a probability of 0.9919 for this ICU patient.
+
+2. Main risk-increasing factors  
+Key factors increasing the predicted risk include d1_heartrate_min = 0.0, which may indicate severe instability or a data quality issue; a low minimum oxygen saturation of 59.0 indicating hypoxemia; a low Glasgow Coma Scale motor score of 1.0 reflecting impaired neurological response; the diagnosis category contributing baseline clinical severity; mechanical ventilation indicating severe respiratory failure or critical illness; d1_temp_max = 35.2 increased the model’s predicted risk; a minimum systolic blood pressure of 61.0 indicating hemodynamic instability; and d1_sodium_max = 157.0 increased the model’s predicted risk.
+
+3. Main risk-decreasing factors  
+Factors that decreased the predicted risk include icu_id = 1109, which may reflect unit-level patterns rather than patient-level clinical status; glucose_apache = 598.7 decreased the model’s predicted risk; h1_heartrate_min = 54.0 decreased the model’s predicted risk; h1_heartrate_max = 164.0 decreased the model’s predicted risk; a maximum bicarbonate of 26.0; a minimum white blood cell count of 4.5; d1_diasbp_noninvasive_min = 32.0 decreased the model’s predicted risk; and hematocrit_apache = 24.0 decreased the model’s predicted risk.
+
+4. Caution notes  
+The zero-valued d1_heartrate_min may represent an extreme clinical event or a recording artifact and requires careful interpretation. The ICU unit identifier (icu_id) is a non-clinical feature and should be interpreted cautiously.
+
+5. Overall interpretation  
+The prediction is primarily driven by clinical signs of severe physiological instability, including extreme heart rate, hypoxemia, impaired neurological status, respiratory failure, and hemodynamic compromise. Some features partially offset this risk, but the overall evidence supports a high predicted mortality risk.
