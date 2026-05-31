@@ -32,6 +32,17 @@ models/lgbm_tuned_clean_threshold.json
 
 This allows a new or unlabeled patient row to be transformed, predicted, explained, and validated without refitting preprocessing on new data.
 
+## Key Contribution
+
+The main contribution of this project is a hybrid explanation-validation architecture:
+
+- deterministic validation acts as the hard gatekeeper for evidence-grounded checks
+- LLM revision is triggered only when the deterministic validator finds an issue
+- GPT-4o is used only as an advisory evaluator for subjective dimensions
+- saved explanations are audited systematically rather than accepted as one-off LLM outputs
+
+This design was motivated by exploratory experiments where LLM explanations and even LLM-based evaluators could produce unsupported or false-positive judgments. The final pipeline therefore keeps objective safety checks deterministic and reproducible.
+
 ## Dataset
 
 - Dataset: WiDS Datathon 2020 ICU data
@@ -216,6 +227,18 @@ Current GPT-4o evaluation:
 - 7 validated explanations evaluated
 - hybrid scores ranged from `4.65` to `4.90`
 
+## Notebooks vs Final Pipeline
+
+The notebooks document the exploratory development process: EDA, preprocessing decisions, model comparison, SHAP analysis, evidence construction, prompt design, and early LLM evaluation experiments.
+
+The final reproducible pipeline lives in `src/` and `scripts/`:
+
+- `src/` contains reusable modules
+- `scripts/` contains runnable verification and demo entry points
+- `reports/` stores saved outputs, notes, audits, and evaluation summaries
+
+In other words, notebooks explain how decisions were made, while the Python modules and scripts implement the final pipeline.
+
 ## Repository Structure
 
 ```text
@@ -355,6 +378,7 @@ python scripts/15_run_gpt4o_subjective_evaluation.py
 - LLM explanations are generated drafts and require validation.
 - The deterministic validator is the hard gatekeeper for explanation safety checks.
 - GPT-4o is used only as an advisory evaluator for subjective quality dimensions.
+- An exploratory GPT-4o evaluator produced a false-positive faithfulness concern in one case; this motivated keeping deterministic validation as the hard pass/fail layer.
 - `icu_id` is interpreted cautiously because it may reflect unit-level patterns rather than patient-level clinical status.
 - Alias-aware caution matching is intentionally limited to a small set of caution-flagged features.
 - Raw data and API keys are intentionally excluded from Git.
