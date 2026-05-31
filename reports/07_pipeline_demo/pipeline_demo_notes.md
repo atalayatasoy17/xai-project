@@ -257,7 +257,9 @@ raw test patient
 → evidence packet
 → LLM prompt
 → OpenAI explanation generation
-→ lightweight validation
+→ deterministic validation
+→ revision if needed
+→ revised validation
 ```
 
 LLM generation için `gpt-4.1-mini` kullanıldı. API anahtarı `.env` dosyasındaki `OPENAI_API_KEY` üzerinden okunur. API key yoksa LLM adımı anlaşılır bir hata mesajı verir.
@@ -269,13 +271,22 @@ Bu adım sonunda şu dosyalar oluşturuldu:
 - `reports/07_pipeline_demo/test_patient_0_llm_explanation.txt`
 - `reports/07_pipeline_demo/test_patient_0_llm_validation.json`
 
-Generated explanation okunabilir ve genel akışı takip edebilir durumdadır; ancak LLM'in evidence dışına taşma riski tamamen ortadan kalkmamıştır. Bu nedenle açıklama üretildikten sonra lightweight validation uygulanmıştır.
+Generated explanation okunabilir ve genel akışı takip edebilir durumdadır; ancak LLM'in evidence dışına taşma riski tamamen ortadan kalkmamıştır. Bu nedenle açıklama üretildikten sonra deterministic validation uygulanmıştır.
 
-Validation katmanı açıklamada geçmesini istemediğimiz veya dikkat gerektiren ifadeleri tarar. Bu test hasta çıktısında validator şu ifadeleri işaretledi:
+Final validation katmanı yalnızca forbidden phrase taraması yapmaz. `src/validation.py` şu kontrolleri birlikte yürütür:
+
+- unsupported / forbidden wording
+- true-label leakage
+- required section structure
+- prediction probability consistency
+- caution mentions
+- feature grounding
+- SHAP direction consistency
+
+Bu test hasta çıktısında initial explanation validator tarafından fail edildi. Başlıca nedenler unsupported wording ve prediction probability consistency problemiydi:
 
 ```text
 stable
-stability
 adequate
 ```
 
@@ -285,9 +296,10 @@ Bu nedenle LLM çıktısı şu şekilde ele alınmalıdır:
 
 ```text
 generated draft explanation
-→ validation check
-→ review/revision if needed
-→ final explanation
+→ deterministic validation report
+→ revision if needed
+→ revised validation report
+→ final explanation candidate
 ```
 
 Bu yaklaşım notebook 08'de kurulan agentic review mantığıyla uyumludur. LLM açıklaması üretilebilir, fakat klinik bağlamda final kabul edilmeden önce faithfulness, hallucination ve caution awareness açısından değerlendirilmelidir.
@@ -300,31 +312,31 @@ Yeni akış şu şekildedir:
 
 ```text
 initial LLM explanation
-→ forbidden phrase validation
-→ if flagged phrases exist, build revision prompt
+→ deterministic validation
+→ if revision_required is true, build revision prompt from validation feedback
 → revised LLM explanation
 → revised validation
 ```
 
-İlk LLM çıktısında validator şu ifadeleri yakaladı:
+İlk LLM çıktısında validator unsupported wording ve probability consistency gibi sorunlar yakaladı. Revision prompt artık yalnızca flag'lenen kelimeleri değil, validation report içindeki yapılandırılmış feedback'i kullanır. Örneğin:
 
 ```text
-stable
-adequate
-abnormal
+Remove or rephrase unsupported/risky wording: stable, adequate.
+Correct the predicted mortality probability to match the evidence.
 ```
 
-Bu ifadeler açıklamanın bazı bölümlerinde evidence'tan daha yorumlayıcı dile kayabileceğini gösterdi. Bunun üzerine revision prompt oluşturuldu. Revision prompt, LLM'e flag'lenen ifadeleri kaldırmasını veya evidence'a daha uygun şekilde yeniden yazmasını söyledi.
+Bu feedback, LLM'e açıklamayı evidence'a daha uygun şekilde yeniden yazmasını söyler.
 
 Revision sonrası validation sonucu:
 
 ```text
-Revised forbidden phrases: []
+Revised validation passed: True
+Revised deterministic validation score: 5.0
 ```
 
-Bu sonuç, otomatik revision loop'un ilk açıklamadaki sorunlu ifadeleri azaltabildiğini gösterir.
+Bu sonuç, otomatik revision loop'un ilk açıklamadaki sorunları düzeltebildiğini gösterir.
 
-Ayrıca validator başlangıçta basit substring matching kullanıyordu. Bu yaklaşım `instability` gibi desteklenen klinik ifadelerin içinde geçen `stability` kelimesini yanlışlıkla flag'leyebilirdi. Bu nedenle validator whole-word matching kullanacak şekilde güncellendi. Böylece `stability` tek başına geçtiğinde yakalanır, ancak `instability` gibi farklı bir kelimenin içinde geçtiğinde false positive üretilmez.
+Ayrıca validator başlangıçta basit substring matching kullanıyordu. Bu yaklaşım `instability` gibi desteklenen klinik ifadelerin içinde geçen `stability` kelimesini yanlışlıkla flag'leyebilirdi. Bu nedenle validator whole-word matching kullanacak şekilde güncellendi. Daha sonra caution mention kontrolü de alias-aware hale getirildi. Böylece `icu_id` gibi teknik kolon adları yerine `ICU unit identifier` gibi klinik ifadeler, doğru caution diliyle birlikte kullanıldığında kabul edilebilir.
 
 Bu adım projenin agentic kısmı için önemlidir. Pipeline artık yalnızca LLM explanation üretmekle kalmaz; aynı zamanda çıktıyı denetler, problemli ifade bulursa revizyon ister ve revize edilmiş açıklamayı tekrar kontrol eder.
 
@@ -421,10 +433,11 @@ Bu doğrulama tamamlandıktan sonra aynı pipeline `unlabeled.csv` üzerinde gü
 
 ## Sonuç
 
-Bu aşamada notebook tabanlı analizlerden tekrar kullanılabilir bir Python pipeline'a geçildi. Pipeline artık ham test hastasını alıp modelin beklediği feature formatına dönüştürebiliyor, final LightGBM modeliyle tahmin üretiyor, local SHAP explanation çıkarıyor, structured evidence packet oluşturuyor ve LLM için evidence-grounded prompt hazırlıyor. Ayrıca saved preprocessor artifact ile deployment-style kullanım da doğrulandı.
+Bu aşamada notebook tabanlı analizlerden tekrar kullanılabilir bir Python pipeline'a geçildi. Pipeline artık ham test hastasını alıp modelin beklediği feature formatına dönüştürebiliyor, final LightGBM modeliyle tahmin üretiyor, local SHAP explanation çıkarıyor, structured evidence packet oluşturuyor, LLM için evidence-grounded prompt hazırlıyor ve LLM açıklamasını deterministic validation/revision katmanından geçirebiliyor. Ayrıca saved preprocessor artifact ile deployment-style kullanım da doğrulandı.
 
-Bu adım projenin deployment benzeri akışa geçişidir. Sonraki doğal adımlar:
+Bu adım projenin deployment benzeri akışa geçişidir. Daha sonraki aşamalarda bu yapı genişletildi:
 
-- LLM explanation çıktısını evaluator/revision katmanıyla daha sıkı denetlemek
-- aynı pipeline'ı `unlabeled.csv` üzerinde en son demo olarak çalıştırmak
-- pipeline kodunu README ve final raporda metodolojik akış olarak özetlemek
+- aynı saved-artifact pipeline `unlabeled.csv` üzerinde çalıştırıldı
+- saved LLM explanations deterministic audit'ten geçirildi
+- alias-aware caution validation eklendi
+- GPT-4o yalnızca clinical plausibility ve clarity için advisory evaluator olarak kullanıldı

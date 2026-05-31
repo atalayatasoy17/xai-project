@@ -213,3 +213,20 @@ The final Python pipeline therefore separates internal analysis metadata from LL
 - The LLM now receives only the predicted label, predicted probability, decision threshold, SHAP evidence, clinical meanings, and caution flags.
 
 This correction makes the final pipeline more faithful to the project goal: explanations should be based on the model prediction and supporting evidence, not on the observed outcome.
+
+## Current Status In Final Pipeline
+
+This notebook should be interpreted as an exploratory LLM generation and review stage. It was useful for identifying the main risks of LLM explanation generation, including true-label leakage, unsupported clinical phrasing, evaluator false positives, and the need for revision.
+
+The final production-style pipeline is now implemented in the Python modules and later reports:
+
+- deterministic validation: `src/validation.py`
+- LLM revision bridge: `src/llm.py`
+- validator fixture tests: `scripts/13_verify_validation.py`
+- saved explanation audit: `scripts/14_audit_saved_explanations.py`
+- validation audit notes: `reports/09_validation_audit/validation_design_notes.md`
+- GPT-4o subjective evaluation: `reports/10_gpt4o_evaluation/gpt4o_evaluation_notes.md`
+
+In the final pipeline, GPT-4o is not used as the hard validator. Hard pass/fail decisions are made by the deterministic validator. GPT-4o is used only as an advisory evaluator for the subjective rubric dimensions: clinical plausibility and clarity.
+
+Therefore, this notebook documents the development path and early experiments, while the final validation and evaluation methodology is documented in reports 09 and 10.
