@@ -144,6 +144,36 @@ CAUTION_LANGUAGE = [
     "data quality",
 ]
 
+CAUTION_FEATURE_ALIASES = {
+    "icu_id": [
+        "icu_id",
+        "icu unit identifier",
+        "unit identifier",
+        "unit-level",
+    ],
+    "d1_heartrate_min": [
+        "d1_heartrate_min",
+        "minimum heart rate",
+        "heart rate",
+    ],
+    "d1_resprate_min": [
+        "d1_resprate_min",
+        "day 1 minimum respiratory rate",
+        "minimum respiratory rate",
+    ],
+    "h1_resprate_min": [
+        "h1_resprate_min",
+        "hour 1 minimum respiratory rate",
+        "minimum respiratory rate",
+    ],
+    "pre_icu_los_days": [
+        "pre_icu_los_days",
+        "pre-icu length of stay",
+        "pre icu length of stay",
+        "length of stay",
+    ],
+}
+
 
 def _get_caution_features(evidence_packet: dict[str, Any]) -> list[dict[str, Any]]:
     """Return evidence records that contain caution flags."""
@@ -156,6 +186,46 @@ def _get_caution_features(evidence_packet: dict[str, Any]) -> list[dict[str, Any
 
     return records
 
+def _split_sentences(text: str) -> list[str]:
+    """Split text into simple sentence-like chunks."""
+    return [
+        sentence.strip()
+        for sentence in re.split(r"(?<=[.!?])\s+", text)
+        if sentence.strip()
+    ]
+
+
+def _find_caution_alias_match(
+    caution_section: str,
+    feature: str,
+) -> dict[str, str] | None:
+    """Find a feature code or alias in the caution section with nearby caution language."""
+    aliases = CAUTION_FEATURE_ALIASES.get(feature, [feature])
+
+    for sentence in _split_sentences(caution_section):
+        lowered_sentence = sentence.lower()
+
+        matched_alias = None
+        for alias in aliases:
+            if re.search(r"\b" + re.escape(alias.lower()) + r"\b", lowered_sentence):
+                matched_alias = alias
+                break
+
+        if matched_alias is None:
+            continue
+
+        caution_language_present = any(
+            phrase in lowered_sentence for phrase in CAUTION_LANGUAGE
+        )
+
+        if caution_language_present:
+            return {
+                "feature": feature,
+                "matched_text": matched_alias,
+                "matched_sentence": sentence,
+            }
+
+    return None
 
 def check_caution_mentions(text: str, evidence_packet: dict[str, Any]) -> dict[str, Any]:
     """Check whether caution-flagged features are mentioned with cautious language."""
@@ -165,32 +235,28 @@ def check_caution_mentions(text: str, evidence_packet: dict[str, Any]) -> dict[s
         start_heading="Caution notes",
         following_headings=["Overall interpretation"],
     )
-    lowered_caution_section = caution_section.lower()
 
     missing_features = []
-    mentioned_features = []
-
-    caution_language_present = any(
-        phrase in lowered_caution_section for phrase in CAUTION_LANGUAGE
-    )
+    mention_matches = []
 
     for record in caution_records:
         feature = record["feature"]
-        feature_present = re.search(
-            r"\b" + re.escape(feature.lower()) + r"\b",
-            lowered_caution_section,
+        match = _find_caution_alias_match(
+            caution_section=caution_section,
+            feature=feature,
         )
 
-        if feature_present and caution_language_present:
-            mentioned_features.append(feature)
+        if match is not None:
+            mention_matches.append(match)
         else:
             missing_features.append(feature)
 
     return {
         "passed": len(missing_features) == 0,
         "missing_features": missing_features,
-        "mentioned_features": mentioned_features,
+        "mention_matches": mention_matches,
         "caution_feature_count": len(caution_records),
+        "matching_mode": "alias_aware_caution_section",
     }
 
 def _get_evidence_features(evidence_packet: dict[str, Any]) -> set[str]:

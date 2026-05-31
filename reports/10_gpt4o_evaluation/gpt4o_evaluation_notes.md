@@ -38,14 +38,14 @@ The final hybrid quality score combines:
 
 ## Results
 
-Five explanations were evaluated. These were the explanations that passed deterministic validation.
+Seven explanations were evaluated. These were the explanations that passed deterministic validation after alias-aware caution matching.
 
 Summary:
 
-- four explanations received `clinical_plausibility = 4` and `clarity = 4`, with hybrid score `4.65`
-- one high-risk unlabeled case, `unlabeled_patient_15_llm_explanation`, received `clinical_plausibility = 5` and `clarity = 4`, with hybrid score `4.90`
+- five explanations received `clinical_plausibility = 4` and `clarity = 4`, with hybrid score `4.65`
+- two explanations for the high-risk unlabeled case, `unlabeled_patient_15_llm_explanation` and `unlabeled_patient_15_llm_revised_explanation`, received `clinical_plausibility = 5` and `clarity = 4`, with hybrid score `4.90`
 
-This suggests that the revised, validator-approved explanations are also judged by GPT-4o as clinically plausible and clear.
+This suggests that the validator-approved explanations are also judged by GPT-4o as clinically plausible and clear.
 
 ## Example
 

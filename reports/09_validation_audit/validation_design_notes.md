@@ -18,7 +18,7 @@ It checks:
 - true-label leakage, such as saying the prediction was correct or referring to the actual outcome
 - required section structure: prediction summary, risk-increasing factors, risk-decreasing factors, caution notes, and overall interpretation
 - prediction probability consistency with the evidence packet, using a tolerance of `0.01`
-- missing caution mentions for flagged features such as `icu_id`; the flagged feature must be discussed in the `Caution notes` section with cautious language
+- missing caution mentions for flagged features such as `icu_id`; the flagged feature or an approved clinical alias must be discussed in the `Caution notes` section with cautious language
 - feature grounding by checking that explicitly named technical features exist in the evidence packet
 - direction consistency by checking that risk-increasing and risk-decreasing sections match SHAP direction
 
@@ -47,6 +47,7 @@ Examples:
 - a missing `Caution notes` section triggers revision
 - an incorrect probability such as `0.199` when the evidence probability is `0.9919` is flagged
 - a missing caution mention for a flagged feature such as `icu_id` triggers revision
+- a valid clinical alias such as `ICU unit identifier` is accepted as a caution mention for `icu_id`
 
 This gives confidence that the validator catches the intended failure modes before being applied to saved LLM outputs.
 
@@ -61,24 +62,41 @@ For each explanation, it loads the matching `*_evidence.json`, validates the exp
 
 `reports/09_validation_audit/validation_audit_summary.csv`
 
+## Alias-Aware Caution Matching
+
+An audit of the stricter exact-match caution validator revealed a false-positive issue. Some explanations correctly warned that the ICU unit identifier should be interpreted cautiously, but they used clinical language such as `ICU unit identifier` instead of the literal column name `icu_id`. The exact-match validator marked these explanations as missing caution even though the caution was clinically present.
+
+To fix this, caution matching was made alias-aware for the small set of caution-flagged features. The validator now accepts either the exact feature name or an approved clinical alias, but only inside the `Caution notes` section and only when caution language is present in the same sentence.
+
+This keeps the check deterministic while avoiding unnecessary revisions that would force technical column names into otherwise readable explanations.
+
+Examples of accepted caution identity terms:
+
+- `icu_id`: `icu_id`, `ICU unit identifier`, `unit identifier`, `unit-level`
+- `d1_heartrate_min`: `d1_heartrate_min`, `minimum heart rate`, `heart rate`
+- `pre_icu_los_days`: `pre_icu_los_days`, `pre-ICU length of stay`, `length of stay`
+
+The feature identity term and the caution language are kept as separate requirements. For example, `ICU unit identifier` identifies the feature, while wording such as `interpreted cautiously`, `non-clinical`, or `unit-level` provides the caution.
+
 ## Audit Results
 
-The audit contains 10 saved explanations after applying the stricter caution-note requirement. The pattern is clinically and methodologically useful:
+The audit contains 10 saved explanations after alias-aware caution matching. The pattern is clinically and methodologically useful:
 
 - initial explanations sometimes fail deterministic validation
 - revised explanations pass after the revision loop
-- stricter caution validation can turn a previously passing explanation into a revision case if the `Caution notes` section does not explicitly mention the flagged feature name
+- valid clinical caution phrasing is no longer rejected only because the exact column name is absent
+- remaining failures are caused by unsupported wording, not missing caution mentions
 
 Examples:
 
 - `test_patient_0_llm_explanation` failed because it used unsupported wording such as `stable` and `adequate`, and did not state the probability consistently. The revised version passed with score `5.0`.
-- `unlabeled_patient_0_llm_explanation` failed because it used `favorable` and missed the caution mention for `icu_id`. The revised version explicitly mentioned `icu_id` as a non-clinical location variable and passed with score `5.0`.
+- `unlabeled_patient_0_llm_explanation` failed because it used unsupported wording such as `favorable`. Its caution wording for the ICU unit identifier is no longer treated as missing after alias-aware matching.
 - `unlabeled_patient_7_llm_explanation` failed because it used unsupported wording such as `abnormal`. The revised version passed with score `5.0`.
-- `unlabeled_patient_15_llm_explanation` initially failed under the stricter caution check because the caution-note section did not explicitly include both flagged feature names, `d1_heartrate_min` and `icu_id`. The revised version passed with score `5.0`.
+- `unlabeled_patient_3_llm_explanation` and `unlabeled_patient_15_llm_explanation` now pass directly because their caution language is clinically valid even when it uses aliases instead of exact column names.
 
 The audit also confirmed an important limitation of the exact-match v1 checks. Across the saved real explanations, `ungrounded_features` and `direction_errors` were empty. This should not be interpreted as proof that no natural-language grounding or direction errors are possible. Instead, it shows that the v1 checks mainly evaluate explicit technical feature names. When the LLM uses clinical phrases instead of exact column names, such as "oxygen saturation" instead of `d1_spo2_min`, those phrases are outside the scope of the current exact-match validator.
 
-This finding motivates a possible alias-aware v2 validator, where selected high-impact features could be mapped to common clinical phrases.
+This finding motivated the alias-aware caution matcher described above. Feature grounding and direction consistency remain exact-match v1 checks because their exact-match limitation is passive: they may miss paraphrased issues, but they do not actively trigger unnecessary revision. Caution matching was prioritized because its exact-match false positives could incorrectly reject otherwise valid explanations.
 
 ## Interpretation
 
@@ -89,10 +107,10 @@ This stage demonstrates an agentic review loop:
 3. If validation fails, structured feedback is sent into the revision step.
 4. The revised explanation is validated again.
 
-In the current audit, all revised explanations pass the deterministic validator. This supports the use of the validation layer as a practical safety and quality-control step in the explanation pipeline.
+In the current audit, all revised explanations pass the deterministic validator. Some initial explanations also pass directly after alias-aware caution matching. This supports the use of the validation layer as a practical safety and quality-control step in the explanation pipeline.
 
 ## Current Limitations
 
 The validator is intentionally conservative. Feature grounding and direction checks currently work best when the explanation uses exact feature names, such as `d1_spo2_min` or `icu_id`. If an LLM paraphrases a feature as "oxygen saturation" instead of using the technical feature name, this version may not fully evaluate grounding or direction for that phrase.
 
-Alias-aware matching can be added later if broader natural-language feature matching is needed. For now, the prompt encourages exact feature names when predefined clinical meaning is unavailable, which keeps the validation process more reliable.
+Alias-aware matching is currently applied only to caution mentions for a small set of caution-flagged features. Broader alias-aware matching for feature grounding and direction consistency can be added later if needed. For now, the prompt encourages exact feature names when predefined clinical meaning is unavailable, which keeps the validation process more reliable.

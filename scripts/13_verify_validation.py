@@ -158,6 +158,23 @@ No caution notes were identified.
 The explanation is based on the provided evidence.
 """.strip()
 
+ALIAS_CAUTION_EXPLANATION = """
+1. Prediction summary
+The model predicted a mortality probability of 0.99.
+
+2. Main risk-increasing factors
+The feature d1_spo2_min increased risk. The feature icu_id increased risk.
+
+3. Main risk-decreasing factors
+The feature age decreased risk.
+
+4. Caution notes
+The ICU unit identifier should be interpreted cautiously because it reflects unit-level rather than patient-level information.
+
+5. Overall interpretation
+The explanation is based on the provided evidence.
+""".strip()
+
 
 def main() -> None:
     fixtures = {
@@ -168,6 +185,7 @@ def main() -> None:
         "missing_section": MISSING_SECTION_EXPLANATION,
         "wrong_probability": WRONG_PROBABILITY_EXPLANATION,
         "missing_caution": MISSING_CAUTION_EXPLANATION,
+        "alias_caution": ALIAS_CAUTION_EXPLANATION,
     }
 
     print("=== Validation Fixture Verification ===")
