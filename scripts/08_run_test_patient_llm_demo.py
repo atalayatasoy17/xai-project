@@ -10,11 +10,12 @@ from sklearn.model_selection import train_test_split
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
-from src.llm import check_forbidden_phrases, generate_explanation, revise_until_valid
+from src.llm import generate_explanation, revise_until_valid
 from src.pipeline import run_patient_pipeline
 from src.prediction import load_model, load_threshold
 from src.preprocessing import ICUPreprocessor
 from src.prompts import build_explanation_prompt
+from src.validation import validate_explanation
 
 
 def main() -> None:
@@ -51,14 +52,20 @@ def main() -> None:
         top_n=8,
     )
 
-    prompt = build_explanation_prompt(result["evidence_packet"])
+    evidence_packet = result["evidence_packet"]
+    prompt = build_explanation_prompt(evidence_packet)
     explanation = generate_explanation(prompt)
-    forbidden_phrases = check_forbidden_phrases(explanation)
 
-    revised_explanation, revised_forbidden_phrases, revision_rounds = revise_until_valid(
+    validation_report = validate_explanation(
+        text=explanation,
+        evidence_packet=evidence_packet,
+    )
+
+    revised_explanation, revised_validation_report, revision_rounds = revise_until_valid(
         original_prompt=prompt,
         generated_explanation=explanation,
-        forbidden_phrases=forbidden_phrases,
+        evidence_packet=evidence_packet,
+        validation_report=validation_report,
     )
 
     explanation_path = output_dir / f"{patient_label}_llm_explanation.txt"
@@ -75,10 +82,10 @@ def main() -> None:
         f.write(prompt)
 
     with open(evidence_path, "w") as f:
-        json.dump(result["evidence_packet"], f, indent=2)
+        json.dump(evidence_packet, f, indent=2)
 
     with open(validation_path, "w") as f:
-        json.dump({"forbidden_phrases": forbidden_phrases}, f, indent=2)
+        json.dump(validation_report, f, indent=2)
 
     if revised_explanation is not None:
         with open(revised_explanation_path, "w") as f:
@@ -87,7 +94,7 @@ def main() -> None:
         with open(revised_validation_path, "w") as f:
             json.dump(
                 {
-                    "forbidden_phrases": revised_forbidden_phrases,
+                    **revised_validation_report,
                     "revision_rounds": revision_rounds,
                 },
                 f,
@@ -100,15 +107,25 @@ def main() -> None:
     print(f"Prompt        : {prompt_path.relative_to(ROOT)}")
     print(f"Evidence      : {evidence_path.relative_to(ROOT)}")
     print(f"Validation    : {validation_path.relative_to(ROOT)}")
-    print(f"Forbidden phrases found: {forbidden_phrases}")
+    print(f"Validation passed: {validation_report['passed']}")
+    print(f"Revision required: {validation_report['revision_required']}")
+    print(f"Validation score : {validation_report['deterministic_validation_score']}")
+
     if revised_explanation is not None:
         print(f"Revised explanation: {revised_explanation_path.relative_to(ROOT)}")
         print(f"Revised validation : {revised_validation_path.relative_to(ROOT)}")
         print(f"Revision rounds    : {revision_rounds}")
-        print(f"Revised forbidden phrases found: {revised_forbidden_phrases}")
+        print(f"Revised validation passed: {revised_validation_report['passed']}")
+        print(f"Revised revision required: {revised_validation_report['revision_required']}")
+        print(
+            "Revised validation score : "
+            f"{revised_validation_report['deterministic_validation_score']}"
+        )
+
     print()
     print("=== Generated Explanation Preview ===")
     print(explanation)
+
     if revised_explanation is not None:
         print()
         print("=== Revised Explanation Preview ===")

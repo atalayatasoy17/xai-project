@@ -1,0 +1,14 @@
+1. Prediction summary  
+The model predicted a low mortality probability of 0.0806 for this ICU patient.
+
+2. Main risk-increasing factors  
+An abnormal maximum heart rate of 137 increased risk, as it may indicate physiological stress. The diagnosis category (apache_3j_diagnosis = 403.01) contributed baseline clinical severity information increasing risk. Older age (64) is associated with higher mortality risk. Elevated BUN minimum (107) reflects renal function and metabolic status contributing to increased risk. Low maximum bicarbonate (16) may indicate metabolic acidosis, increasing risk. Minimum respiratory rate of 20 and minimum diastolic blood pressure of 64 increased risk, though no clinical interpretation is available for the latter. Minimum glucose of 206 increased risk without a predefined clinical interpretation.
+
+3. Main risk-decreasing factors  
+The ICU unit identifier (icu_id = 971) decreased risk, possibly reflecting unit-level patterns. Absence of mechanical ventilation (ventilated_apache = 0) decreased risk. Maximum respiratory rate of 20 decreased risk despite indicating respiratory distress. Minimum systolic blood pressure of 119 decreased risk, though low systolic pressure indicates instability. Low GCS motor (6) and verbal (5) scores decreased risk, indicating impaired neurological response. Minimum heart rate of 68 and BUN (bun_apache = 107) also decreased risk without predefined clinical interpretations.
+
+4. Caution notes  
+The ICU unit identifier should be interpreted cautiously as it is a non-clinical location identifier. Some features lack predefined clinical interpretations, so their impact is based solely on model behavior.
+
+5. Overall interpretation  
+The prediction reflects a balance between several physiological indicators of stress and severity that increase risk and clinical or unit-related factors that decrease risk. The model integrates these diverse signals to estimate a low probability of mortality for this patient.

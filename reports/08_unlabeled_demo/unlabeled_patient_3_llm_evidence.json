@@ -1,0 +1,143 @@
+{
+  "patient_label": "unlabeled_patient_3",
+  "prediction": {
+    "y_pred": 0,
+    "y_proba": 0.20922226888943282,
+    "threshold": 0.5
+  },
+  "risk_increasing_evidence": [
+    {
+      "feature": "ventilated_apache",
+      "value": 1.0,
+      "shap_value": 0.5874141976787388,
+      "direction": "risk_increasing",
+      "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
+      "caution_flags": []
+    },
+    {
+      "feature": "apache_3j_diagnosis",
+      "value": 211.03,
+      "shap_value": 0.29411334192301986,
+      "direction": "risk_increasing",
+      "clinical_meaning": "diagnosis category contributes baseline clinical severity information",
+      "caution_flags": []
+    },
+    {
+      "feature": "immunosuppression",
+      "value": 1.0,
+      "shap_value": 0.26959464718875153,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_sysbp_min",
+      "value": 69.0,
+      "shap_value": 0.222978205185396,
+      "direction": "risk_increasing",
+      "clinical_meaning": "low systolic blood pressure indicates hemodynamic instability",
+      "caution_flags": []
+    },
+    {
+      "feature": "age",
+      "value": 64.0,
+      "shap_value": 0.21370068718199392,
+      "direction": "risk_increasing",
+      "clinical_meaning": "older age is associated with higher mortality risk",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_resprate_max",
+      "value": 35.0,
+      "shap_value": 0.19086235485248587,
+      "direction": "risk_increasing",
+      "clinical_meaning": "high respiratory rate may indicate respiratory distress",
+      "caution_flags": []
+    },
+    {
+      "feature": "gcs_verbal_apache",
+      "value": 1.0,
+      "shap_value": 0.18728691656750052,
+      "direction": "risk_increasing",
+      "clinical_meaning": "low GCS verbal score indicates impaired neurological response",
+      "caution_flags": []
+    },
+    {
+      "feature": "h1_spo2_max",
+      "value": 95.0,
+      "shap_value": 0.18405580604646138,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    }
+  ],
+  "risk_decreasing_evidence": [
+    {
+      "feature": "icu_id",
+      "value": 1078,
+      "shap_value": -1.0976817969707597,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "ICU unit identifier; may reflect unit-level patterns rather than patient-level clinical status",
+      "caution_flags": [
+        "Non-clinical unit/location identifier; interpret cautiously."
+      ]
+    },
+    {
+      "feature": "d1_heartrate_min",
+      "value": 60.0,
+      "shap_value": -0.15131868613660945,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "extreme or very low heart rate may indicate severe instability or data quality issue",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_spo2_min",
+      "value": 92.0,
+      "shap_value": -0.14745398410605373,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "low minimum oxygen saturation indicates hypoxemia",
+      "caution_flags": []
+    },
+    {
+      "feature": "h1_temp_min",
+      "value": 38.0,
+      "shap_value": -0.12407048161528386,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "gcs_motor_apache",
+      "value": 6.0,
+      "shap_value": -0.09690919514125079,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "low GCS motor score indicates impaired neurological response",
+      "caution_flags": []
+    },
+    {
+      "feature": "temp_apache",
+      "value": 37.7,
+      "shap_value": -0.08809364674921212,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_wbc_min",
+      "value": 7.1,
+      "shap_value": -0.0864757487828378,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "white blood cell count reflects inflammatory or immune status",
+      "caution_flags": []
+    },
+    {
+      "feature": "hospital_admit_source_Operating Room",
+      "value": true,
+      "shap_value": -0.07707415166874348,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    }
+  ],
+  "test_row_index": 3
+}

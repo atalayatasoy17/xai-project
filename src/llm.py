@@ -3,9 +3,12 @@ from __future__ import annotations
 
 import os
 import re
+from typing import Any
 
 from dotenv import load_dotenv
 from openai import OpenAI
+
+from src.validation import validate_explanation
 
 
 DEFAULT_FORBIDDEN_PHRASES = [
@@ -94,13 +97,18 @@ def generate_explanation(
 def build_revision_prompt(
     original_prompt: str,
     generated_explanation: str,
-    forbidden_phrases: list[str],
+    validation_report: dict[str, Any],
 ) -> str:
-    """Build a stricter revision prompt when validation flags generated text."""
-    forbidden_text = ", ".join(forbidden_phrases) if forbidden_phrases else "None"
+    """Build a stricter revision prompt from structured validation feedback."""
+    feedback = validation_report.get("revision_feedback", [])
+    feedback_text = (
+        "\n".join(f"- {item}" for item in feedback)
+        if feedback
+        else "- No specific feedback."
+    )
 
     return f"""
-The following ICU mortality explanation was generated from structured evidence, but validation flagged unsupported or cautionary wording.
+The following ICU mortality explanation was generated from structured evidence, but deterministic validation found issues that need revision.
 
 Original evidence and prompt:
 {original_prompt}
@@ -108,10 +116,10 @@ Original evidence and prompt:
 Generated explanation:
 {generated_explanation}
 
-Flagged phrases:
-{forbidden_text}
+Validation feedback:
+{feedback_text}
 
-Revise the explanation to remove or rephrase the flagged wording.
+Revise the explanation to address the validation feedback.
 
 Rules:
 - Use only the original evidence.
@@ -122,8 +130,8 @@ Rules:
 - Do not invent normal ranges, diagnoses, mechanisms, or clinical details beyond the provided clinical_meaning.
 - If clinical_meaning is "No predefined clinical interpretation available.", do not infer a clinical interpretation for that feature.
 - For features without explicit clinical_meaning, use this exact style: "<feature> = <value> increased/decreased the model's predicted risk."
-- Do not use any of the flagged phrases anywhere in the revised explanation.
-- Replace flagged interpretive adjectives with neutral evidence-grounded wording.
+- Do not use any flagged unsupported wording.
+- Correct any prediction probability, feature grounding, caution, section, or SHAP-direction issues identified in the feedback.
 - Preserve the same section structure:
   1. Prediction summary
   2. Main risk-increasing factors
@@ -136,7 +144,7 @@ Rules:
 def revise_explanation(
     original_prompt: str,
     generated_explanation: str,
-    forbidden_phrases: list[str],
+    validation_report: dict[str, Any],
     client: OpenAI | None = None,
     model: str = "gpt-4.1-mini",
     temperature: float = 0.0,
@@ -148,7 +156,7 @@ def revise_explanation(
     revision_prompt = build_revision_prompt(
         original_prompt=original_prompt,
         generated_explanation=generated_explanation,
-        forbidden_phrases=forbidden_phrases,
+        validation_report=validation_report,
     )
 
     response = client.responses.create(
@@ -164,44 +172,59 @@ def revise_explanation(
 def revise_until_valid(
     original_prompt: str,
     generated_explanation: str,
-    forbidden_phrases: list[str],
+    evidence_packet: dict[str, Any],
+    validation_report: dict[str, Any] | None = None,
     client: OpenAI | None = None,
     model: str = "gpt-4.1-mini",
     temperature: float = 0.0,
     max_rounds: int = 3,
-) -> tuple[str | None, list[str] | None, int]:
-    """Revise an explanation until validator flags are cleared or max rounds is reached."""
-    if not forbidden_phrases:
-        return None, None, 0
+) -> tuple[str | None, dict[str, Any] | None, int]:
+    """Revise an explanation until validation passes or max rounds is reached."""
+    if validation_report is None:
+        validation_report = validate_explanation(
+            text=generated_explanation,
+            evidence_packet=evidence_packet,
+        )
+
+    if not validation_report["revision_required"]:
+        return None, validation_report, 0
 
     current_explanation = generated_explanation
-    current_flags = forbidden_phrases
+    current_report = validation_report
     revised_explanation = None
 
     for revision_round in range(1, max_rounds + 1):
         revised_explanation = revise_explanation(
             original_prompt=original_prompt,
             generated_explanation=current_explanation,
-            forbidden_phrases=current_flags,
+            validation_report=current_report,
             client=client,
             model=model,
             temperature=temperature,
         )
-        current_flags = check_forbidden_phrases(revised_explanation)
 
-        if not current_flags:
-            return revised_explanation, current_flags, revision_round
+        current_report = validate_explanation(
+            text=revised_explanation,
+            evidence_packet=evidence_packet,
+        )
+
+        if not current_report["revision_required"]:
+            return revised_explanation, current_report, revision_round
 
         current_explanation = revised_explanation
 
-    return revised_explanation, current_flags, max_rounds
+    return revised_explanation, current_report, max_rounds
 
 
 def check_forbidden_phrases(
     text: str,
     forbidden_phrases: list[str] | None = None,
 ) -> list[str]:
-    """Return forbidden or cautionary phrases found in generated text."""
+    """Return forbidden or cautionary phrases found in generated text.
+
+    This legacy helper is kept for backwards compatibility. New validation
+    should use src.validation.validate_explanation.
+    """
     phrases = forbidden_phrases or DEFAULT_FORBIDDEN_PHRASES
     flags = []
 

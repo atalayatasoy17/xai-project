@@ -1,0 +1,14 @@
+1. Prediction summary  
+The model predicted a mortality probability of 0.2092, below the decision threshold of 0.50.
+
+2. Main risk-increasing factors  
+Mechanical ventilation indicated severe respiratory failure or critical illness. The diagnosis category contributed baseline clinical severity information. Immunosuppression increased risk. Low minimum systolic blood pressure suggested hemodynamic instability. Older age was associated with higher mortality risk. High maximum respiratory rate indicated possible respiratory distress. Low GCS verbal score reflected impaired neurological response. Additionally, the maximum oxygen saturation value increased risk without a predefined clinical interpretation.
+
+3. Main risk-decreasing factors  
+The ICU unit identifier decreased risk but should be interpreted cautiously as it may reflect unit-level patterns rather than patient status. Minimum heart rate, minimum oxygen saturation, and white blood cell count values decreased risk. Some temperature measurements also decreased risk. The GCS motor score decreased risk despite its clinical meaning indicating impaired neurological response. Admission from the Operating Room was associated with decreased risk without a predefined clinical interpretation.
+
+4. Caution notes  
+The ICU unit identifier is a non-clinical variable and should be interpreted cautiously. No other caution flags were present.
+
+5. Overall interpretation  
+The prediction reflects a balance between several clinical indicators of severity, such as mechanical ventilation and hemodynamic instability, increasing risk, and other factors including physiological measurements and admission source decreasing risk. The model integrates these diverse inputs to estimate a mortality probability below the threshold.

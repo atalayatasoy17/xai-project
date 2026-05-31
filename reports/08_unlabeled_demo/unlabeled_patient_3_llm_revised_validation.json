@@ -29,66 +29,51 @@
     },
     "prediction_consistency": {
       "passed": true,
-      "expected_probability": 0.01276194704472678,
-      "matched_probability": 0.0128,
+      "expected_probability": 0.20922226888943282,
+      "matched_probability": 0.2092,
       "candidates": [
-        0.0128,
-        0.0
+        0.2092,
+        0.5,
+        1.0
       ],
       "tolerance": 0.01
     },
     "caution_mentions": {
       "passed": true,
       "missing_features": [],
-      "mentioned_features": [],
-      "caution_feature_count": 0
+      "mentioned_features": [
+        "icu_id"
+      ],
+      "caution_feature_count": 1
     },
     "feature_grounding": {
       "passed": true,
       "ungrounded_features": [],
       "grounded_features": [
-        "apache_3j_diagnosis",
-        "d1_hemaglobin_min",
-        "d1_mbp_min",
-        "d1_mbp_noninvasive_min",
-        "d1_resprate_max",
-        "d1_wbc_max",
-        "d1_wbc_min",
-        "h1_resprate_max",
-        "h1_resprate_min",
-        "ventilated_apache",
-        "wbc_apache"
+        "h1_spo2_max",
+        "icu_id"
       ],
       "mentioned_features": [
-        "apache_3j_diagnosis",
-        "d1_hemaglobin_min",
-        "d1_mbp_min",
-        "d1_mbp_noninvasive_min",
-        "d1_resprate_max",
-        "d1_wbc_max",
-        "d1_wbc_min",
-        "h1_resprate_max",
-        "h1_resprate_min",
-        "ventilated_apache",
-        "wbc_apache"
+        "h1_spo2_max",
+        "icu_id"
       ],
       "evidence_features": [
         "age",
         "apache_3j_diagnosis",
-        "d1_heartrate_max",
         "d1_heartrate_min",
-        "d1_hemaglobin_min",
-        "d1_mbp_min",
-        "d1_mbp_noninvasive_min",
         "d1_resprate_max",
         "d1_spo2_min",
-        "d1_wbc_max",
+        "d1_sysbp_min",
         "d1_wbc_min",
         "gcs_motor_apache",
-        "h1_resprate_max",
-        "h1_resprate_min",
-        "ventilated_apache",
-        "wbc_apache"
+        "gcs_verbal_apache",
+        "h1_spo2_max",
+        "h1_temp_min",
+        "hospital_admit_source_Operating Room",
+        "icu_id",
+        "immunosuppression",
+        "temp_apache",
+        "ventilated_apache"
       ],
       "matching_mode": "exact_feature_name"
     },
@@ -96,20 +81,12 @@
       "passed": true,
       "direction_errors": [],
       "mentioned_in_risk_increasing_section": [
-        "apache_3j_diagnosis",
-        "d1_hemaglobin_min",
-        "d1_resprate_max",
-        "d1_wbc_max",
-        "d1_wbc_min",
-        "h1_resprate_max",
-        "wbc_apache"
+        "age",
+        "h1_spo2_max",
+        "immunosuppression"
       ],
       "mentioned_in_risk_decreasing_section": [
-        "age",
-        "d1_mbp_min",
-        "d1_mbp_noninvasive_min",
-        "h1_resprate_min",
-        "ventilated_apache"
+        "icu_id"
       ],
       "matching_mode": "exact_feature_name"
     }

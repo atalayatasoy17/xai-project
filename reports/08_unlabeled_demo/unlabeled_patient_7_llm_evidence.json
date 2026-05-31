@@ -1,0 +1,143 @@
+{
+  "patient_label": "unlabeled_patient_7",
+  "prediction": {
+    "y_pred": 0,
+    "y_proba": 0.08056957431824724,
+    "threshold": 0.5
+  },
+  "risk_increasing_evidence": [
+    {
+      "feature": "d1_heartrate_max",
+      "value": 137.0,
+      "shap_value": 0.3057155703572103,
+      "direction": "risk_increasing",
+      "clinical_meaning": "abnormal maximum heart rate may indicate physiological stress",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_glucose_min",
+      "value": 206.0,
+      "shap_value": 0.3033771447389186,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "apache_3j_diagnosis",
+      "value": 403.01,
+      "shap_value": 0.29500313849959775,
+      "direction": "risk_increasing",
+      "clinical_meaning": "diagnosis category contributes baseline clinical severity information",
+      "caution_flags": []
+    },
+    {
+      "feature": "age",
+      "value": 64.0,
+      "shap_value": 0.2759946685486823,
+      "direction": "risk_increasing",
+      "clinical_meaning": "older age is associated with higher mortality risk",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_bun_min",
+      "value": 107.0,
+      "shap_value": 0.2540088369771217,
+      "direction": "risk_increasing",
+      "clinical_meaning": "BUN reflects renal function and metabolic status",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_resprate_min",
+      "value": 20.0,
+      "shap_value": 0.24408874212733903,
+      "direction": "risk_increasing",
+      "clinical_meaning": "extreme or very low respiratory rate may indicate respiratory instability or data quality issue",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_hco3_max",
+      "value": 16.0,
+      "shap_value": 0.2256203058426008,
+      "direction": "risk_increasing",
+      "clinical_meaning": "low bicarbonate range may indicate metabolic acidosis",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_diasbp_noninvasive_min",
+      "value": 64.0,
+      "shap_value": 0.12771711019983306,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    }
+  ],
+  "risk_decreasing_evidence": [
+    {
+      "feature": "icu_id",
+      "value": 971,
+      "shap_value": -0.7330126547241433,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "ICU unit identifier; may reflect unit-level patterns rather than patient-level clinical status",
+      "caution_flags": [
+        "Non-clinical unit/location identifier; interpret cautiously."
+      ]
+    },
+    {
+      "feature": "ventilated_apache",
+      "value": 0.0,
+      "shap_value": -0.3850519836839769,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_resprate_max",
+      "value": 20.0,
+      "shap_value": -0.24117905320482586,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "high respiratory rate may indicate respiratory distress",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_sysbp_min",
+      "value": 119.0,
+      "shap_value": -0.14202926394609633,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "low systolic blood pressure indicates hemodynamic instability",
+      "caution_flags": []
+    },
+    {
+      "feature": "gcs_motor_apache",
+      "value": 6.0,
+      "shap_value": -0.11952854243469878,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "low GCS motor score indicates impaired neurological response",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_heartrate_min",
+      "value": 68.0,
+      "shap_value": -0.10308686283397127,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "extreme or very low heart rate may indicate severe instability or data quality issue",
+      "caution_flags": []
+    },
+    {
+      "feature": "bun_apache",
+      "value": 107.0,
+      "shap_value": -0.09814176532056691,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "gcs_verbal_apache",
+      "value": 5.0,
+      "shap_value": -0.09670743160638277,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "low GCS verbal score indicates impaired neurological response",
+      "caution_flags": []
+    }
+  ],
+  "test_row_index": 7
+}

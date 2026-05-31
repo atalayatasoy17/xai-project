@@ -1,18 +1,16 @@
 {
   "passed": false,
   "revision_required": true,
-  "deterministic_validation_score": 4.231,
+  "deterministic_validation_score": 4.692,
   "dimension_scores": {
-    "faithfulness_no_hallucination": 4,
+    "faithfulness_no_hallucination": 5,
     "caution_awareness": 4,
     "completeness": 5
   },
   "checks": {
     "forbidden_phrases": {
-      "passed": false,
-      "found": [
-        "favorable"
-      ]
+      "passed": true,
+      "found": []
     },
     "true_label_leakage": {
       "passed": true,
@@ -31,12 +29,11 @@
     },
     "prediction_consistency": {
       "passed": true,
-      "expected_probability": 0.02909931112897766,
-      "matched_probability": 0.0291,
+      "expected_probability": 0.20922226888943282,
+      "matched_probability": 0.2092,
       "candidates": [
-        0.0291,
-        1.0,
-        0.0
+        0.2092,
+        0.5
       ],
       "tolerance": 0.01
     },
@@ -56,19 +53,19 @@
       "evidence_features": [
         "age",
         "apache_3j_diagnosis",
-        "d1_bun_max",
-        "d1_glucose_min",
-        "d1_hemaglobin_min",
+        "d1_heartrate_min",
         "d1_resprate_max",
         "d1_spo2_min",
         "d1_sysbp_min",
         "d1_wbc_min",
-        "gcs_eyes_apache",
         "gcs_motor_apache",
         "gcs_verbal_apache",
-        "h1_resprate_min",
+        "h1_spo2_max",
+        "h1_temp_min",
+        "hospital_admit_source_Operating Room",
         "icu_id",
-        "resprate_apache",
+        "immunosuppression",
+        "temp_apache",
         "ventilated_apache"
       ],
       "matching_mode": "exact_feature_name"
@@ -76,15 +73,15 @@
     "direction_consistency": {
       "passed": true,
       "direction_errors": [],
-      "mentioned_in_risk_increasing_section": [],
-      "mentioned_in_risk_decreasing_section": [
-        "age"
+      "mentioned_in_risk_increasing_section": [
+        "age",
+        "immunosuppression"
       ],
+      "mentioned_in_risk_decreasing_section": [],
       "matching_mode": "exact_feature_name"
     }
   },
   "revision_feedback": [
-    "Remove or rephrase unsupported/risky wording: favorable.",
     "Mention caution for flagged features: icu_id."
   ],
   "schema_version": "1.0"
