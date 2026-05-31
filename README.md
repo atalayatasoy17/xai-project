@@ -1,25 +1,28 @@
 # Explainable ICU Mortality Prediction Pipeline
 
-Bu proje, WiDS Datathon 2020 ICU verisi üzerinde hastane içi mortalite riskini tahmin eden ve bu tahminleri SHAP, structured evidence ve LLM tabanlı açıklama katmanlarıyla yorumlayan uçtan uca bir XAI pipeline'ıdır.
+This project builds an end-to-end explainable AI pipeline for ICU hospital mortality prediction using the WiDS Datathon 2020 dataset. The goal is not only to predict mortality risk, but also to explain each prediction using SHAP evidence, structured clinical reasoning, LLM-generated explanations, deterministic validation, and advisory GPT-4o evaluation.
 
-Amaç yalnızca yüksek performanslı bir model kurmak değil, modelin bir hasta için neden belirli bir risk tahmini verdiğini izlenebilir, kanıta dayalı ve denetlenebilir şekilde açıklamaktır.
+The final system is designed around one principle:
 
-## Project Overview
+> Model explanations should be evidence-grounded, auditable, and protected against unsupported LLM reasoning.
 
-Pipeline şu akışı izler:
+## Project Pipeline
 
 ```text
 raw ICU patient data
-→ preprocessing
+→ fitted preprocessing artifact
 → LightGBM mortality prediction
 → local SHAP explanation
 → structured evidence packet
 → LLM explanation prompt
-→ LLM explanation
-→ validation and revision
+→ GPT-4.1-mini explanation
+→ deterministic validation
+→ revision if needed
+→ validation audit
+→ GPT-4o subjective evaluation
 ```
 
-Final deployment benzeri demo, kaydedilmiş artifact'lerle çalışır:
+The deployment-style path uses saved artifacts:
 
 ```text
 models/icu_preprocessor.pkl
@@ -27,71 +30,59 @@ models/lgbm_tuned_clean.pkl
 models/lgbm_tuned_clean_threshold.json
 ```
 
-Bu sayede yeni veya etiketsiz bir hasta satırı geldiğinde training preprocessing yeniden fit edilmeden tahmin ve açıklama üretilebilir.
+This allows a new or unlabeled patient row to be transformed, predicted, explained, and validated without refitting preprocessing on new data.
 
 ## Dataset
 
-Kullanılan veri:
+- Dataset: WiDS Datathon 2020 ICU data
+- Target: `hospital_death`
+- Task: binary classification
+- Positive class: in-hospital mortality
 
-- WiDS Datathon 2020 ICU dataset
-- Hedef değişken: `hospital_death`
-- Problem tipi: binary classification
-- Pozitif sınıf: hastane içi ölüm
-
-Ham ve processed veri dosyaları Git'e dahil edilmez:
+Raw and processed data are excluded from Git:
 
 ```text
 data/raw/
 data/processed/
 ```
 
-## Methodology
+## Methodology Summary
 
-### 1. EDA
+### 1. Preprocessing
 
-İlk aşamada hedef dağılımı, eksik değer yapısı, klinik değişkenlerin dağılımları ve ölüm oranıyla ilişkili pattern'ler incelendi. Eksik değerlerin tamamen rastgele olmadığı görüldüğü için missingness bilgisi modelleme aşamasında ayrıca temsil edildi.
+Preprocessing decisions were learned from the training split only:
 
-### 2. Preprocessing
+- removed ID and leakage-prone APACHE death probability columns
+- dropped columns with more than 50% missingness
+- added missingness indicators for remaining missing columns
+- imputed numeric features with train medians
+- imputed categorical features with `Unknown`
+- one-hot encoded categorical variables
+- aligned train/test feature schemas
 
-Preprocessing kararları yalnızca train verisi üzerinden öğrenildi:
+The final preprocessing logic was converted into `ICUPreprocessor` and saved as `models/icu_preprocessor.pkl`.
 
-- ID kolonları kaldırıldı.
-- Leakage riski taşıyan APACHE death probability kolonları kaldırıldı.
-- Train setinde yüzde 50'den fazla eksik olan kolonlar drop edildi.
-- Kalan eksik kolonlar için missingness indicator üretildi.
-- Sayısal değişkenler train medyanı ile dolduruldu.
-- Kategorik değişkenler `Unknown` ile dolduruldu ve one-hot encoded edildi.
-- Train ve test kolonları aynı feature schema'ya hizalandı.
+### 2. Modeling
 
-Bu adım sonradan `ICUPreprocessor` sınıfına taşındı ve artifact olarak kaydedildi:
-
-```text
-models/icu_preprocessor.pkl
-```
-
-### 3. Modeling
-
-Denediğimiz ana modeller:
+Several models were compared:
 
 - Logistic Regression
 - Decision Tree
 - Random Forest
 - XGBoost
 - LightGBM
-- balanced XGBoost / LightGBM
-- Optuna tuned XGBoost / LightGBM
+- imbalance-weighted XGBoost / LightGBM
+- Optuna-tuned XGBoost / LightGBM
 
-Pozitif sınıf az olduğu için model seçiminde yalnızca accuracy'ye bakılmadı. Özellikle AUPRC, recall, F1 ve confusion matrix birlikte değerlendirildi.
+Because the positive class is rare, model selection used AUROC, AUPRC, recall, precision, F1, and confusion matrix rather than accuracy alone.
 
-Kullanılan temel metrikler:
+Key metrics:
 
 ```text
 Precision = TP / (TP + FP)
 Recall    = TP / (TP + FN)
 F1        = 2 * Precision * Recall / (Precision + Recall)
 ```
-
-AUPRC, dengesiz sınıf probleminde pozitif sınıfı yakalama kalitesini daha iyi gösterdiği için ana karşılaştırma metriklerinden biri olarak kullanıldı.
 
 Final model:
 
@@ -100,7 +91,7 @@ LightGBM Tuned Clean
 threshold = 0.50
 ```
 
-Final test sonuçları:
+Final test performance:
 
 | Metric | Value |
 | --- | ---: |
@@ -115,83 +106,123 @@ Final test sonuçları:
 | FN | 588 |
 | TP | 995 |
 
-Threshold 0.50 seçildi çünkü klinik bağlamda false negative sayısını azaltmak önemliydi.
+Threshold `0.50` was kept because it produced a better recall / false-negative balance than higher thresholds in this clinical risk context.
 
-### 4. SHAP Explainability
+### 3. SHAP Explainability
 
-Final LightGBM modeli için SHAP analizi yapıldı:
-
-- global feature importance
-- local patient-level explanation
-- TP, FN, FP, TN vaka analizleri
-- error analysis
-
-SHAP değeri şu şekilde yorumlandı:
+The final LightGBM model is explained using SHAP:
 
 ```text
-SHAP > 0  → prediction riskini artıran katkı
-SHAP < 0  → prediction riskini azaltan katkı
+SHAP > 0  → increases predicted mortality risk
+SHAP < 0  → decreases predicted mortality risk
 ```
 
-Özellikle `icu_id`, sıfır vital sign değerleri ve negatif `pre_icu_los_days` gibi dikkat gerektiren değişkenler için caution note eklendi.
+The project includes:
 
-### 5. Structured Evidence
+- global SHAP importance
+- local patient-level explanations
+- TP / FN / FP / TN case analysis
+- group-level SHAP error analysis
+- caution notes for variables such as `icu_id`, zero-valued vital signs, and negative `pre_icu_los_days`
 
-Ham SHAP tabloları LLM'e doğrudan verilmedi. Önce structured evidence packet formatına çevrildi:
+### 4. Structured Evidence Packets
 
-```json
-{
-  "prediction": {
-    "y_pred": 0,
-    "y_proba": 0.0291,
-    "threshold": 0.5
-  },
-  "risk_increasing_evidence": [],
-  "risk_decreasing_evidence": []
-}
-```
+Raw SHAP tables are converted into structured evidence packets before being passed to the LLM. Each packet contains:
 
-Her evidence kaydı şu alanları içerir:
-
-- feature
-- observed value
-- SHAP value
-- direction
+- model prediction
+- predicted probability
+- threshold
+- risk-increasing SHAP evidence
+- risk-decreasing SHAP evidence
+- feature values
 - clinical meaning
 - caution flags
 
-Bu yapı LLM açıklamasının evidence-grounded kalmasını sağlar.
+This evidence layer prevents the LLM from reasoning directly over raw model internals without structure.
 
-### 6. LLM Explanation and Validation
+### 5. LLM Explanation Generation
 
-LLM katmanında `gpt-4.1-mini` ile evidence packet'ten klinik açıklama üretildi. Ancak LLM çıktısı doğrudan final kabul edilmedi.
+The explanation generator uses `gpt-4.1-mini`. Prompts include only:
 
-Eklenen kontrol katmanı:
+- predicted label
+- predicted mortality probability
+- threshold
+- SHAP evidence
+- clinical meanings
+- caution flags
+
+True labels and TP/FN/FP/TN metadata are intentionally excluded from the LLM prompt to prevent label leakage.
+
+### 6. Deterministic Validation and Revision
+
+LLM explanations are not accepted blindly. The deterministic validator checks:
+
+- unsupported / forbidden wording
+- true-label leakage
+- required section structure
+- prediction probability consistency
+- caution mentions
+- exact feature grounding
+- SHAP direction consistency
+
+The validator returns a structured report:
 
 ```text
-initial explanation
-→ forbidden phrase validation
-→ revision if needed
-→ revised validation
+passed
+revision_required
+deterministic_validation_score
+dimension_scores
+checks
+revision_feedback
 ```
 
-Örneğin test patient ve unlabeled patient demolarında initial açıklamalar bazı fazla yorumlayıcı ifadeler içerdi. Validator bu ifadeleri yakaladı ve revision loop sonrası revised validation temiz çıktı:
+The deterministic score covers only rubric dimensions that can be checked reliably:
 
 ```text
-forbidden_phrases: []
+score =
+(0.30 / 0.65) * faithfulness
++ (0.20 / 0.65) * caution_awareness
++ (0.15 / 0.65) * completeness
 ```
 
-Bu yaklaşım, LLM'in evidence dışına taşma riskine karşı hafif ama etkili bir agentic review mekanizması sağlar.
+Clinical plausibility and clarity are evaluated separately because they are more subjective.
 
-Label leakage'i önlemek için LLM prompt'u özellikle sınırlandırıldı. Test/evaluation amaçlı evidence packet içinde `y_true` ve `prediction_type` tutulabilir; ancak bu bilgiler LLM'e gönderilen prompt'a yazılmaz. LLM yalnızca modelin kendi çıktısını (`predicted label`, `predicted probability`, `threshold`) ve SHAP tabanlı evidence kayıtlarını görür. Böylece açıklama gerçek sonuçtan veya TP/FN/FP/TN bilgisinden etkilenmeden, model evidence'ına dayanır.
+The caution validator uses limited alias-aware matching for caution-flagged features. For example, `ICU unit identifier` can be accepted as a clinical alias for `icu_id` when used in the `Caution notes` section with caution language.
+
+### 7. Validation Audit and GPT-4o Evaluation
+
+Saved explanations are audited with:
+
+```text
+scripts/14_audit_saved_explanations.py
+```
+
+Current audit result:
+
+- 10 saved explanations audited
+- 7 passed deterministic validation
+- 3 failed due to unsupported wording
+- all revised explanations passed deterministic validation
+
+GPT-4o is used only as an advisory evaluator for:
+
+- clinical plausibility
+- clarity
+
+It does not decide hard pass/fail status. The hard gatekeeper remains the deterministic validator.
+
+Current GPT-4o evaluation:
+
+- 7 validated explanations evaluated
+- hybrid scores ranged from `4.65` to `4.90`
 
 ## Repository Structure
 
 ```text
 xai-project/
 ├── data/
-│   ├── raw/                    # Git'e dahil edilmez
-│   └── processed/              # Git'e dahil edilmez
+│   ├── raw/                       # excluded from Git
+│   └── processed/                 # excluded from Git
 ├── models/
 │   ├── icu_preprocessor.pkl
 │   ├── lgbm_tuned_clean.pkl
@@ -206,14 +237,16 @@ xai-project/
 │   ├── 07_explanation_evaluation.ipynb
 │   └── 08_llm_generation_and_agentic_review.ipynb
 ├── reports/
-│   ├── 01_modeling
-│   ├── 02_explainability
-│   ├── 03_evidence
-│   ├── 04_llm_reasoning
-│   ├── 05_evaluation
-│   ├── 06_llm_generation
-│   ├── 07_pipeline_demo
-│   └── 08_unlabeled_demo
+│   ├── 01_modeling/
+│   ├── 02_explainability/
+│   ├── 03_evidence/
+│   ├── 04_llm_reasoning/
+│   ├── 05_evaluation/
+│   ├── 06_llm_generation/
+│   ├── 07_pipeline_demo/
+│   ├── 08_unlabeled_demo/
+│   ├── 09_validation_audit/
+│   └── 10_gpt4o_evaluation/
 ├── scripts/
 │   ├── 01_verify_preprocessing.py
 │   ├── 02_verify_prediction.py
@@ -226,7 +259,10 @@ xai-project/
 │   ├── 09_save_preprocessor_artifact.py
 │   ├── 10_run_saved_artifact_patient_demo.py
 │   ├── 11_run_unlabeled_patient_demo.py
-│   └── 12_run_unlabeled_patient_llm_demo.py
+│   ├── 12_run_unlabeled_patient_llm_demo.py
+│   ├── 13_verify_validation.py
+│   ├── 14_audit_saved_explanations.py
+│   └── 15_run_gpt4o_subjective_evaluation.py
 └── src/
     ├── preprocessing.py
     ├── prediction.py
@@ -234,6 +270,8 @@ xai-project/
     ├── evidence.py
     ├── prompts.py
     ├── llm.py
+    ├── validation.py
+    ├── evaluator.py
     └── pipeline.py
 ```
 
@@ -243,6 +281,12 @@ Install dependencies:
 
 ```bash
 pip install -r requirements.txt
+```
+
+For LLM scripts, create a local `.env` file:
+
+```text
+OPENAI_API_KEY=your_api_key_here
 ```
 
 Run core verification:
@@ -256,62 +300,61 @@ python scripts/05_verify_patient_pipeline.py
 python scripts/06_verify_prompt.py
 ```
 
-Run saved artifact demo:
+Run a saved-artifact patient demo:
 
 ```bash
 python scripts/10_run_saved_artifact_patient_demo.py
 ```
 
-Run unlabeled patient demo:
+Run an unlabeled patient prediction demo:
 
 ```bash
-python scripts/11_run_unlabeled_patient_demo.py
+python scripts/11_run_unlabeled_patient_demo.py --patient-position 15 --no-save
 ```
 
-Run LLM demos:
+Run an unlabeled patient LLM explanation demo:
 
 ```bash
-python scripts/08_run_test_patient_llm_demo.py
-python scripts/12_run_unlabeled_patient_llm_demo.py
+python scripts/12_run_unlabeled_patient_llm_demo.py --patient-position 15 --no-save
 ```
 
-LLM demos require an `.env` file:
+Run validation fixture tests:
 
-```text
-OPENAI_API_KEY=your_api_key_here
+```bash
+python scripts/13_verify_validation.py
+```
+
+Run saved explanation audit:
+
+```bash
+python scripts/14_audit_saved_explanations.py
+```
+
+Run GPT-4o subjective evaluation:
+
+```bash
+python scripts/15_run_gpt4o_subjective_evaluation.py
 ```
 
 ## Key Outputs
 
-Model comparison:
-
-```text
-reports/01_modeling/final_model_comparison.csv
-```
-
-SHAP outputs:
-
-```text
-reports/02_explainability/
-```
-
-Evidence packets:
-
-```text
-reports/03_evidence/
-```
-
-Pipeline demos:
-
-```text
-reports/07_pipeline_demo/
-reports/08_unlabeled_demo/
-```
+| Output | Path |
+| --- | --- |
+| Model comparison | `reports/01_modeling/final_model_comparison.csv` |
+| SHAP outputs | `reports/02_explainability/` |
+| Evidence packets | `reports/03_evidence/` |
+| Pipeline demo outputs | `reports/07_pipeline_demo/` |
+| Unlabeled demo outputs | `reports/08_unlabeled_demo/` |
+| Validation audit | `reports/09_validation_audit/validation_audit_summary.csv` |
+| GPT-4o evaluation | `reports/10_gpt4o_evaluation/gpt4o_subjective_evaluation_summary.csv` |
 
 ## Important Notes
 
-- This project is for research and educational use.
+- This project is for research and educational use only.
 - Model predictions are not clinical decisions.
-- LLM explanations are generated drafts and should be interpreted with validation results.
-- `icu_id` is treated cautiously because it may reflect unit-level patterns rather than patient-level clinical status.
+- LLM explanations are generated drafts and require validation.
+- The deterministic validator is the hard gatekeeper for explanation safety checks.
+- GPT-4o is used only as an advisory evaluator for subjective quality dimensions.
+- `icu_id` is interpreted cautiously because it may reflect unit-level patterns rather than patient-level clinical status.
+- Alias-aware caution matching is intentionally limited to a small set of caution-flagged features.
 - Raw data and API keys are intentionally excluded from Git.
