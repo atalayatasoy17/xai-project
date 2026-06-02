@@ -84,6 +84,13 @@ F1 açısından 0.60 biraz daha yüksek olsa da klinik bağlamda false negative 
 
 Bu kararın anlamı: model, biraz daha fazla false positive üretmeyi kabul ederek daha fazla gerçek ölüm vakasını yakalar.
 
+Threshold sweep sonuçları ayrıca `threshold_sweep_lgbm.csv` ve iki figür olarak kaydedildi:
+
+- `figures/threshold_sweep_precision_recall_f1.png`
+- `figures/threshold_sweep_fp_fn.png`
+
+Bu görseller 0.50 threshold kararını raporlanabilir hale getirir: threshold yükseldikçe precision artar, fakat recall düşer ve false negative sayısı yükselir.
+
 ## Final Model Seçimi
 
 Final model olarak **LightGBM Tuned Clean, threshold = 0.50** seçildi.
@@ -120,6 +127,41 @@ Bu fark klinik problem için önemlidir. XGBoost daha az false positive üretse 
 
 Bu nedenle final seçim sadece en yüksek AUPRC değerine göre değil, AUPRC + recall + FN dengesi birlikte düşünülerek yapıldı.
 
+Final modelin confusion matrix çıktısı `figures/selected_lgbm_confusion_matrix.png` olarak kaydedildi. Bu görsel final eşiğin klinik etkisini doğrudan gösterir:
+
+```text
+TN = 15537
+FP = 1223
+FN = 588
+TP = 995
+```
+
+## Native LightGBM Feature Importance
+
+Final LightGBM modelinin kendi feature importance değerleri de ayrıca çıkarıldı. Bu analiz SHAP değildir; modelin ağaç yapısında hangi feature'ları nasıl kullandığını özetler.
+
+İki importance türü kaydedildi:
+
+- `split_importance`: feature'ın kaç split'te kullanıldığını gösterir.
+- `gain_importance`: feature kullanıldığında loss/objective tarafında ne kadar iyileşme sağlandığını gösterir.
+
+Gain importance'a göre en yüksek feature'lar şunlardı:
+
+```text
+ventilated_apache
+gcs_motor_apache
+apache_3j_diagnosis
+d1_sysbp_min
+age
+d1_bun_max
+d1_spo2_min
+d1_bun_min
+d1_heartrate_min
+d1_heartrate_max
+```
+
+Bu sonuç SHAP analiziyle aynı şey değildir. Native LightGBM importance modelin split/gain davranışını özetler; SHAP ise feature katkılarını prediction düzeyinde açıklar. Bu nedenle native importance, SHAP analizinin yerine değil, modelleme aşamasını destekleyen ek bir global model kontrolü olarak kullanıldı.
+
 ## Kaydedilen Çıktılar
 
 Modelleme aşamasında oluşturulan ana çıktılar:
@@ -127,6 +169,17 @@ Modelleme aşamasında oluşturulan ana çıktılar:
 - `models/lgbm_tuned_clean.pkl`: final seçilen LightGBM modeli
 - `models/lgbm_tuned_clean_threshold.json`: final threshold bilgisi
 - `reports/01_modeling/final_model_comparison.csv`: tüm ana model sonuçlarının karşılaştırma tablosu
+- `reports/01_modeling/selected_lgbm_test_metrics.csv`: final model test metrikleri
+- `reports/01_modeling/threshold_sweep_lgbm.csv`: threshold sweep tablosu
+- `reports/01_modeling/native_lgbm_feature_importance.csv`: LightGBM native split/gain importance tablosu
+
+Kaydedilen modelleme figürleri:
+
+- `reports/01_modeling/figures/model_comparison_metrics.png`
+- `reports/01_modeling/figures/selected_lgbm_confusion_matrix.png`
+- `reports/01_modeling/figures/threshold_sweep_precision_recall_f1.png`
+- `reports/01_modeling/figures/threshold_sweep_fp_fn.png`
+- `reports/01_modeling/figures/native_lgbm_feature_importance_gain_top20.png`
 
 ## Sonuç
 

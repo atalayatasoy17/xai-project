@@ -1,0 +1,2 @@
+model,threshold,AUROC,AUPRC,Accuracy,Precision,Recall,F1,TN,FP,FN,TP
+Selected LightGBM,0.5,0.9019,0.5824,0.9013,0.4486,0.6286,0.5235,15537,1223,588,995
