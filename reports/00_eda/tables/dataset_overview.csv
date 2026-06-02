@@ -1,0 +1,7 @@
+metric,value
+n_rows,91713
+n_columns,186
+target_column,hospital_death
+positive_rate_percent,8.63
+numeric_columns,177
+categorical_columns,8

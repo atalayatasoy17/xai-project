@@ -1,0 +1,67 @@
+feature,category,n_patients,mortality_rate
+ethnicity,African American,9547,7.9
+ethnicity,Asian,1129,8.2
+ethnicity,Caucasian,70684,8.7
+ethnicity,Hispanic,3796,9.9
+ethnicity,Native American,788,8.9
+ethnicity,Other/Unknown,4374,8.1
+ethnicity,,1395,7.5
+gender,F,42219,8.8
+gender,M,49469,8.4
+gender,,25,32.0
+hospital_admit_source,Acute Care/Floor,1910,10.5
+hospital_admit_source,Chest Pain Center,134,6.0
+hospital_admit_source,Direct Admit,6441,10.3
+hospital_admit_source,Emergency Department,36962,8.7
+hospital_admit_source,Floor,8055,13.9
+hospital_admit_source,ICU,35,8.6
+hospital_admit_source,ICU to SDU,45,6.7
+hospital_admit_source,Observation,10,0.0
+hospital_admit_source,Operating Room,9787,3.5
+hospital_admit_source,Other,7,14.3
+hospital_admit_source,Other Hospital,1641,13.5
+hospital_admit_source,Other ICU,233,15.0
+hospital_admit_source,PACU,1017,2.9
+hospital_admit_source,Recovery Room,2896,3.6
+hospital_admit_source,Step-Down Unit (SDU),1131,18.8
+hospital_admit_source,,21409,8.1
+icu_admit_source,Accident & Emergency,54060,8.6
+icu_admit_source,Floor,15611,13.4
+icu_admit_source,Operating Room / Recovery,18713,3.7
+icu_admit_source,Other Hospital,2358,13.4
+icu_admit_source,Other ICU,859,14.4
+icu_admit_source,,112,10.7
+icu_stay_type,admit,86183,8.5
+icu_stay_type,readmit,560,8.9
+icu_stay_type,transfer,4970,10.6
+icu_type,CCU-CTICU,7156,7.6
+icu_type,CSICU,4613,5.5
+icu_type,CTICU,4003,6.0
+icu_type,Cardiac ICU,4776,10.3
+icu_type,MICU,7695,12.1
+icu_type,Med-Surg ICU,50586,8.7
+icu_type,Neuro ICU,7675,8.3
+icu_type,SICU,5209,7.5
+apache_3j_bodysystem,Cardiovascular,29999,8.0
+apache_3j_bodysystem,Gastrointestinal,9026,7.4
+apache_3j_bodysystem,Genitourinary,2172,6.2
+apache_3j_bodysystem,Gynecological,313,0.6
+apache_3j_bodysystem,Hematological,638,9.1
+apache_3j_bodysystem,Metabolic,7650,1.5
+apache_3j_bodysystem,Musculoskeletal/Skin,1166,4.7
+apache_3j_bodysystem,Neurological,11896,7.9
+apache_3j_bodysystem,Respiratory,11609,11.2
+apache_3j_bodysystem,Sepsis,11740,15.8
+apache_3j_bodysystem,Trauma,3842,6.7
+apache_3j_bodysystem,,1662,8.2
+apache_2_bodysystem,Cardiovascular,38816,10.8
+apache_2_bodysystem,Gastrointestinal,9026,7.4
+apache_2_bodysystem,Haematologic,638,9.1
+apache_2_bodysystem,Metabolic,7650,1.5
+apache_2_bodysystem,Neurologic,11896,7.9
+apache_2_bodysystem,Renal/Genitourinary,2460,5.5
+apache_2_bodysystem,Respiratory,11609,11.2
+apache_2_bodysystem,Trauma,3842,6.7
+apache_2_bodysystem,Undefined Diagnoses,346,5.2
+apache_2_bodysystem,Undefined diagnoses,3768,2.0
+apache_2_bodysystem,,1662,8.2

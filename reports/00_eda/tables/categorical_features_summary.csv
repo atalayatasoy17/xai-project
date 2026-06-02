@@ -1,0 +1,9 @@
+feature,n_unique,missing_count,missing_pct,sample_values
+ethnicity,6,1395,1.52,"Caucasian, Hispanic, African American, Asian, Native American"
+gender,2,25,0.03,"M, F"
+hospital_admit_source,15,21409,23.34,"Floor, Emergency Department, Operating Room, Direct Admit, Other Hospital"
+icu_admit_source,5,112,0.12,"Floor, Accident & Emergency, Operating Room / Recovery, Other Hospital, Other ICU"
+icu_stay_type,3,0,0.0,"admit, readmit, transfer"
+icu_type,8,0,0.0,"CTICU, Med-Surg ICU, CCU-CTICU, Neuro ICU, MICU"
+apache_3j_bodysystem,11,1662,1.81,"Sepsis, Respiratory, Metabolic, Cardiovascular, Trauma"
+apache_2_bodysystem,10,1662,1.81,"Cardiovascular, Respiratory, Metabolic, Trauma, Neurologic"

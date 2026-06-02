@@ -1,0 +1,9 @@
+feature,min,max,mean,std,iqr_outlier_count,iqr_outlier_pct
+age,16.0,89.0,62.31,16.78,170,0.19
+bmi,14.84,67.81,29.19,8.28,3289,3.73
+heart_rate_apache,30.0,178.0,99.71,30.87,1658,1.83
+temp_apache,32.1,39.7,36.41,0.83,8762,10.0
+map_apache,40.0,200.0,88.02,42.03,0,0.0
+glucose_apache,39.0,598.7,160.33,90.79,3874,4.8
+creatinine_apache,0.3,11.18,1.48,1.53,7526,10.33
+bun_apache,4.0,127.0,25.83,20.67,5127,7.08
