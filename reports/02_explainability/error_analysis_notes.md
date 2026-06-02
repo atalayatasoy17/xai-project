@@ -5,6 +5,41 @@
 - The global SHAP analysis identified clinically meaningful high-importance features such as `age`, `ventilated_apache`, `d1_spo2_min`, `gcs_motor_apache`, vital signs, and laboratory values.
 - `icu_id` also appeared among the top global SHAP features. Since this is likely a unit/location identifier rather than a direct clinical measurement, it should not be interpreted as a patient-level clinical risk factor.
 
+## Top-20 SHAP Feature Review
+
+- The top 20 features by mean absolute SHAP value were exported to `top20_shap_features.csv`.
+- The highest-ranked features were `age`, `ventilated_apache`, `apache_3j_diagnosis`, `d1_spo2_min`, `gcs_motor_apache`, `d1_heartrate_min`, `d1_resprate_max`, and `icu_id`.
+- Selected SHAP dependence plots were inspected to understand how clinically meaningful feature values were associated with model-level SHAP contributions.
+- Features such as `age`, `d1_spo2_min`, `gcs_motor_apache`, and `ventilated_apache` showed clinically interpretable patterns. In contrast, coded or non-clinical variables such as `apache_3j_diagnosis` and `icu_id` require cautious interpretation.
+
+## Exploratory SHAP Interaction Analysis
+
+- An exploratory SHAP interaction analysis was performed on the top 20 globally important SHAP features using a 300-patient sample.
+- The interaction matrix was saved as `top20_shap_interaction_matrix.csv`, and the ranked pairwise interactions were saved as `top20_shap_interactions.csv`.
+- The strongest model-level interaction pairs included:
+  - `ventilated_apache` x `apache_3j_diagnosis`
+  - `age` x `ventilated_apache`
+  - `ventilated_apache` x `d1_resprate_max`
+  - `ventilated_apache` x `gcs_verbal_apache`
+  - `age` x `d1_resprate_max`
+- These patterns suggest that the model may combine respiratory support, diagnosis/severity category, age, respiratory status, and neurological response in non-additive ways.
+- The strongest interaction, `ventilated_apache` x `apache_3j_diagnosis`, is clinically plausible as a model-level pattern because the meaning of mechanical ventilation may differ across diagnosis or severity categories. However, `apache_3j_diagnosis` is a coded diagnosis category and was not decoded into specific diagnoses in this project.
+- The `age` x `ventilated_apache` interaction suggests that the model may combine age and ventilation status when estimating mortality risk, rather than treating them as fully independent signals.
+- These interaction findings were interpreted as model-level patterns only, not causal clinical relationships.
+- Interaction evidence was not added to the final LLM evidence packet. The LLM pipeline intentionally remains based on patient-specific local SHAP main effects to keep explanations concise, auditable, and easier to validate deterministically.
+
+## Top-20 Feature Correlation Review
+
+- A supplementary Spearman correlation heatmap was generated for the top 20 SHAP features and saved as `top20_feature_correlation_heatmap.png`. Ranked feature-pair correlations were also saved as `top20_feature_correlations.csv`.
+- The strongest correlations were observed among clinically related measurement families:
+  - `d1_bun_max` x `d1_bun_min`
+  - `d1_sysbp_min` x `d1_mbp_min`
+  - `gcs_motor_apache` x `gcs_verbal_apache`
+  - `gcs_motor_apache` x `gcs_eyes_apache`
+  - `gcs_verbal_apache` x `gcs_eyes_apache`
+- This correlation analysis is a data-level analysis, not a model explanation. It complements the SHAP interaction heatmap by showing which high-importance features are naturally related in the input data.
+- High feature correlation and high SHAP interaction are not the same. Correlation describes relationships between feature values, while SHAP interaction describes how the model combines feature pairs in its prediction function.
+
 ## Local True Positive Case
 
 - The selected true positive case had true mortality (`y_true = 1`) and received an extremely high predicted mortality probability (`p = 0.9995`).
