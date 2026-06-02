@@ -56,6 +56,12 @@ cleaner archive for reporting.
 - Selected SHAP dependence plots were inspected to understand how clinically meaningful feature values were associated with model-level SHAP contributions.
 - Features such as `age`, `d1_spo2_min`, `gcs_motor_apache`, and `ventilated_apache` showed clinically interpretable patterns. In contrast, coded or non-clinical variables such as `apache_3j_diagnosis` and `icu_id` require cautious interpretation.
 
+## Caution Feature Check: `icu_id`
+
+- `icu_id` was reviewed separately because it is a unit/location identifier, not a direct patient-level clinical measurement.
+- The analysis in `caution_analysis/` shows that `icu_id` appears as a meaningful model signal and that ICU-level mortality rates vary across units with sufficient sample size.
+- This supports using `icu_id` as model evidence, but only with a caution flag. It should be described as a possible unit-level or case-mix pattern, not as a causal patient-level clinical factor.
+
 ## Exploratory SHAP Interaction Analysis
 
 - An exploratory SHAP interaction analysis was performed on the top 20 globally important SHAP features using a 300-patient sample.
