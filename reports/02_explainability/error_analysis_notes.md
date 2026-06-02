@@ -5,6 +5,50 @@
 - The global SHAP analysis identified clinically meaningful high-importance features such as `age`, `ventilated_apache`, `d1_spo2_min`, `gcs_motor_apache`, vital signs, and laboratory values.
 - `icu_id` also appeared among the top global SHAP features. Since this is likely a unit/location identifier rather than a direct clinical measurement, it should not be interpreted as a patient-level clinical risk factor.
 
+## Saved Explainability Outputs
+
+The main visual and tabular outputs from `notebooks/04_shap_explainability.ipynb`
+were archived under:
+
+- `figures/`
+- `tables/`
+
+Key saved figures include:
+
+- `figures/predicted_probability_distribution.png`
+- `figures/global_shap_importance_top20.png`
+- `figures/shap_summary_top20.png`
+- `figures/shap_dependence_age.png`
+- `figures/shap_dependence_d1_spo2_min.png`
+- `figures/shap_dependence_gcs_motor_apache.png`
+- `figures/shap_effect_ventilated_apache.png`
+- `figures/local_waterfall_tp.png`
+- `figures/local_waterfall_fn.png`
+- `figures/local_waterfall_fp.png`
+- `figures/local_waterfall_tn.png`
+- `figures/top20_shap_interaction_heatmap.png`
+- `figures/top20_feature_correlation_heatmap.png`
+
+Key saved tables include:
+
+- `tables/global_shap_importance.csv`
+- `tables/age_shap_grouped.csv`
+- `tables/spo2_shap_grouped.csv`
+- `tables/ventilated_shap_grouped.csv`
+- `tables/gcs_motor_shap_grouped.csv`
+- `tables/selected_local_cases.csv`
+- `tables/local_explanation_tp.csv`
+- `tables/local_explanation_fn.csv`
+- `tables/local_explanation_fp.csv`
+- `tables/local_explanation_tn.csv`
+- `tables/zero_vital_summary.csv`
+- `tables/group_top_shap_summary.csv`
+
+These outputs separate reusable report artifacts from exploratory notebook
+cells. The root-level CSV files are retained for backward compatibility with
+earlier project stages, while the `figures/` and `tables/` folders provide a
+cleaner archive for reporting.
+
 ## Top-20 SHAP Feature Review
 
 - The top 20 features by mean absolute SHAP value were exported to `top20_shap_features.csv`.

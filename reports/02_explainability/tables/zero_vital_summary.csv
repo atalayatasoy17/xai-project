@@ -1,0 +1,4 @@
+feature,zero_count,zero_pct,death_rate_when_zero,death_rate_when_nonzero
+d1_heartrate_min,129,0.703,0.6512,0.0823
+h1_resprate_min,147,0.801,0.1293,0.086
+d1_resprate_min,767,4.181,0.2034,0.0812
