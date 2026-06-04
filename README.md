@@ -270,6 +270,8 @@ xai-project/
 │   ├── 08_unlabeled_demo/
 │   ├── 09_validation_audit/
 │   └── 10_gpt4o_evaluation/
+├── dashboard/
+│   └── app.py
 ├── scripts/
 │   ├── 01_verify_preprocessing.py
 │   ├── 02_verify_prediction.py
@@ -358,6 +360,14 @@ Run GPT-4o subjective evaluation:
 ```bash
 python scripts/15_run_gpt4o_subjective_evaluation.py
 ```
+
+Run the Streamlit dashboard:
+
+```bash
+streamlit run dashboard/app.py
+```
+
+Then open `http://localhost:8501`. LLM and GPT-4o calls are optional controls inside the dashboard.
 
 ## Key Outputs
 
