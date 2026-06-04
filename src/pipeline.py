@@ -48,6 +48,13 @@ def run_patient_pipeline(
     ).iloc[0]
 
     local_explanation = explain_patient(model, X_patient)
+    if hasattr(preprocessor, "get_display_values"):
+        display_values = preprocessor.get_display_values(raw_patient)
+        local_explanation["model_value"] = local_explanation["value"]
+        local_explanation["value"] = local_explanation.apply(
+            lambda row: display_values.get(row["feature"], row["value"]),
+            axis=1,
+        )
 
     prediction_type = None
     if y_true is not None:

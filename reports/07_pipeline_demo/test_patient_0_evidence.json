@@ -2,8 +2,8 @@
   "patient_label": "test_patient_0",
   "prediction": {
     "y_pred": 0,
-    "y_proba": 0.01276194704472678,
-    "threshold": 0.5,
+    "y_proba": 0.022930533634955393,
+    "threshold": 0.7273530450209328,
     "y_true": 0,
     "prediction_type": "TN"
   },
@@ -11,39 +11,39 @@
     {
       "feature": "d1_wbc_min",
       "value": 22.0,
-      "shap_value": 0.24831132396642358,
+      "shap_value": 0.22354767149738447,
       "direction": "risk_increasing",
       "clinical_meaning": "white blood cell count reflects inflammatory or immune status",
       "caution_flags": []
     },
     {
-      "feature": "d1_resprate_max",
-      "value": 92.0,
-      "shap_value": 0.1993188893980605,
-      "direction": "risk_increasing",
-      "clinical_meaning": "high respiratory rate may indicate respiratory distress",
-      "caution_flags": []
-    },
-    {
       "feature": "apache_3j_diagnosis",
       "value": 306.01,
-      "shap_value": 0.19538236311910612,
+      "shap_value": 0.16247785637757106,
       "direction": "risk_increasing",
       "clinical_meaning": "diagnosis category contributes baseline clinical severity information",
       "caution_flags": []
     },
     {
+      "feature": "d1_resprate_max",
+      "value": 92.0,
+      "shap_value": 0.152749323964546,
+      "direction": "risk_increasing",
+      "clinical_meaning": "high respiratory rate may indicate respiratory distress",
+      "caution_flags": []
+    },
+    {
       "feature": "d1_heartrate_min",
       "value": 90.0,
-      "shap_value": 0.15744043215814083,
+      "shap_value": 0.15015417382715443,
       "direction": "risk_increasing",
       "clinical_meaning": "extreme or very low heart rate may indicate severe instability or data quality issue",
       "caution_flags": []
     },
     {
-      "feature": "wbc_apache",
-      "value": 22.0,
-      "shap_value": 0.089774332325904,
+      "feature": "d1_hemaglobin_max",
+      "value": 9.9,
+      "shap_value": 0.06299994185366949,
       "direction": "risk_increasing",
       "clinical_meaning": "No predefined clinical interpretation available.",
       "caution_flags": []
@@ -51,15 +51,15 @@
     {
       "feature": "h1_resprate_max",
       "value": 31.0,
-      "shap_value": 0.08889064605763293,
+      "shap_value": 0.053896131656351834,
       "direction": "risk_increasing",
       "clinical_meaning": "No predefined clinical interpretation available.",
       "caution_flags": []
     },
     {
-      "feature": "d1_wbc_max",
-      "value": 22.0,
-      "shap_value": 0.08387404579663181,
+      "feature": "elective_surgery",
+      "value": 0,
+      "shap_value": 0.045147147133504144,
       "direction": "risk_increasing",
       "clinical_meaning": "No predefined clinical interpretation available.",
       "caution_flags": []
@@ -67,7 +67,7 @@
     {
       "feature": "d1_hemaglobin_min",
       "value": 8.8,
-      "shap_value": 0.07403092461269091,
+      "shap_value": 0.04218283175176215,
       "direction": "risk_increasing",
       "clinical_meaning": "No predefined clinical interpretation available.",
       "caution_flags": []
@@ -77,15 +77,23 @@
     {
       "feature": "age",
       "value": 52.0,
-      "shap_value": -0.3991057198406927,
+      "shap_value": -0.46322552448387944,
       "direction": "risk_decreasing",
       "clinical_meaning": "older age is associated with higher mortality risk",
       "caution_flags": []
     },
     {
+      "feature": "urineoutput_apache",
+      "value": 3068.928,
+      "shap_value": -0.25452198763615025,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
       "feature": "ventilated_apache",
       "value": 0.0,
-      "shap_value": -0.3029018721851513,
+      "shap_value": -0.2542586740877423,
       "direction": "risk_decreasing",
       "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
       "caution_flags": []
@@ -93,7 +101,7 @@
     {
       "feature": "d1_mbp_min",
       "value": 89.0,
-      "shap_value": -0.2853753654768536,
+      "shap_value": -0.21260292046140888,
       "direction": "risk_decreasing",
       "clinical_meaning": "low mean blood pressure indicates hemodynamic instability",
       "caution_flags": []
@@ -101,39 +109,31 @@
     {
       "feature": "h1_resprate_min",
       "value": 10.0,
-      "shap_value": -0.2381323780780389,
+      "shap_value": -0.11597614608990117,
       "direction": "risk_decreasing",
       "clinical_meaning": "No predefined clinical interpretation available.",
-      "caution_flags": []
-    },
-    {
-      "feature": "d1_mbp_noninvasive_min",
-      "value": 89.0,
-      "shap_value": -0.17916184412185915,
-      "direction": "risk_decreasing",
-      "clinical_meaning": "No predefined clinical interpretation available.",
-      "caution_flags": []
-    },
-    {
-      "feature": "d1_spo2_min",
-      "value": 98.0,
-      "shap_value": -0.1453917509442084,
-      "direction": "risk_decreasing",
-      "clinical_meaning": "low minimum oxygen saturation indicates hypoxemia",
       "caution_flags": []
     },
     {
       "feature": "gcs_motor_apache",
       "value": 6.0,
-      "shap_value": -0.1085995003520002,
+      "shap_value": -0.10682281614872977,
       "direction": "risk_decreasing",
       "clinical_meaning": "low GCS motor score indicates impaired neurological response",
       "caution_flags": []
     },
     {
+      "feature": "gcs_verbal_apache",
+      "value": 5.0,
+      "shap_value": -0.09002104928191283,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "low GCS verbal score indicates impaired neurological response",
+      "caution_flags": []
+    },
+    {
       "feature": "d1_heartrate_max",
       "value": 97.0,
-      "shap_value": -0.10340060801004206,
+      "shap_value": -0.0889802963489269,
       "direction": "risk_decreasing",
       "clinical_meaning": "abnormal maximum heart rate may indicate physiological stress",
       "caution_flags": []

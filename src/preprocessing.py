@@ -5,14 +5,26 @@ from typing import Iterable
 
 import numpy as np
 import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
 
 
 @dataclass
 class ICUPreprocessor:
-    """Preprocess raw WiDS ICU rows into the final model feature schema."""
+    """Preprocess raw WiDS ICU rows into the final model feature schema.
+
+    This production wrapper mirrors the model-experiment preprocessing:
+    numeric features are median-imputed, missingness indicators are added for
+    numeric missing values, binary features are ordinal-encoded, and remaining
+    categorical features are one-hot encoded with infrequent-category handling.
+    Numeric scaling is intentionally omitted because LightGBM is tree-based and
+    evidence packets should keep values clinically readable.
+    """
 
     id_cols: list[str] = field(
-        default_factory=lambda: ["encounter_id", "patient_id", "hospital_id"]
+        default_factory=lambda: ["encounter_id", "patient_id", "hospital_id", "icu_id"]
     )
     leakage_cols: list[str] = field(
         default_factory=lambda: [
@@ -21,54 +33,116 @@ class ICUPreprocessor:
         ]
     )
     target_col: str = "hospital_death"
-    high_missing_threshold: float = 50.0
+    ohe_max_categories: int = 10
 
-    high_missing_cols_: list[str] = field(default_factory=list, init=False)
-    missing_indicator_cols_: list[str] = field(default_factory=list, init=False)
     numeric_cols_: list[str] = field(default_factory=list, init=False)
+    binary_cols_: list[str] = field(default_factory=list, init=False)
     categorical_cols_: list[str] = field(default_factory=list, init=False)
-    train_medians_: pd.Series | None = field(default=None, init=False)
+    ordinal_cols_: list[str] = field(default_factory=list, init=False)
+    missing_indicator_cols_: list[str] = field(default_factory=list, init=False)
+    high_missing_cols_: list[str] = field(default_factory=list, init=False)
     feature_names_: list[str] = field(default_factory=list, init=False)
+    preprocessor_: ColumnTransformer | None = field(default=None, init=False)
     fitted_: bool = field(default=False, init=False)
 
     def fit(self, raw_df: pd.DataFrame) -> "ICUPreprocessor":
         """Learn preprocessing decisions from the training split only."""
         X = self._drop_initial_columns(raw_df)
+        self._learn_column_groups(X)
 
-        train_missing_pct = X.isnull().sum() / len(X) * 100
-        self.high_missing_cols_ = (
-            train_missing_pct[train_missing_pct > self.high_missing_threshold]
-            .index.tolist()
+        numeric_tf = Pipeline(
+            steps=[
+                ("imputer", SimpleImputer(strategy="median", add_indicator=True)),
+            ]
+        )
+        binary_tf = Pipeline(
+            steps=[
+                ("imputer", SimpleImputer(strategy="most_frequent")),
+                (
+                    "encoder",
+                    OrdinalEncoder(
+                        handle_unknown="use_encoded_value",
+                        unknown_value=-1,
+                    ),
+                ),
+            ]
+        )
+        ohe_tf = Pipeline(
+            steps=[
+                ("imputer", SimpleImputer(strategy="most_frequent")),
+                (
+                    "ohe",
+                    OneHotEncoder(
+                        handle_unknown="infrequent_if_exist",
+                        sparse_output=False,
+                        max_categories=self.ohe_max_categories,
+                    ),
+                ),
+            ]
         )
 
-        X = X.drop(columns=self.high_missing_cols_)
-        self.missing_indicator_cols_ = [c for c in X.columns if X[c].isnull().any()]
-
-        X = self._add_missing_indicators(X)
-
-        self.numeric_cols_ = X.select_dtypes(include=[np.number]).columns.tolist()
-        self.categorical_cols_ = X.select_dtypes(include="object").columns.tolist()
-        self.train_medians_ = X[self.numeric_cols_].median()
-
-        X = self._impute(X)
-        X = pd.get_dummies(X, columns=self.categorical_cols_, drop_first=False)
-
-        self.feature_names_ = X.columns.tolist()
+        self.preprocessor_ = ColumnTransformer(
+            transformers=[
+                ("num", numeric_tf, self.numeric_cols_),
+                ("bin", binary_tf, self.binary_cols_),
+                ("ohe", ohe_tf, self.categorical_cols_),
+            ],
+            remainder="drop",
+            verbose_feature_names_out=True,
+        )
+        self.preprocessor_.fit(X)
+        self.feature_names_ = self._clean_feature_names(
+            self.preprocessor_.get_feature_names_out()
+        )
         self.fitted_ = True
         return self
 
     def transform(self, raw_df: pd.DataFrame) -> pd.DataFrame:
         """Apply fitted preprocessing decisions to raw validation/test/new rows."""
         self._check_is_fitted()
+        if self.preprocessor_ is None:
+            raise RuntimeError("ICUPreprocessor transformer is missing.")
 
         X = self._drop_initial_columns(raw_df)
-        X = X.drop(columns=self.high_missing_cols_, errors="ignore")
-        X = self._add_missing_indicators(X)
-        X = self._impute(X)
-        X = pd.get_dummies(X, columns=self.categorical_cols_, drop_first=False)
+        transformed = self.preprocessor_.transform(X)
 
-        X = X.reindex(columns=self.feature_names_, fill_value=0)
-        return X
+        return pd.DataFrame(
+            transformed,
+            columns=self.feature_names_,
+            index=raw_df.index,
+        )
+
+    def get_display_values(self, raw_df: pd.DataFrame) -> dict[str, object]:
+        """Return human-readable values aligned to transformed feature names.
+
+        The model uses scaled/encoded values, but the evidence packet should
+        show original patient values whenever the transformed feature still maps
+        directly to a raw column.
+        """
+        self._check_is_fitted()
+
+        if len(raw_df) != 1:
+            raise ValueError("raw_df must contain exactly one row.")
+
+        raw_X = self._drop_initial_columns(raw_df)
+        transformed_row = self.transform(raw_df).iloc[0]
+        raw_row = raw_X.iloc[0]
+        display_values: dict[str, object] = {}
+
+        for feature in self.feature_names_:
+            if feature in raw_X.columns:
+                display_values[feature] = raw_row[feature]
+                continue
+
+            if feature.endswith("_missing"):
+                raw_feature = feature.removesuffix("_missing")
+                if raw_feature in raw_X.columns:
+                    display_values[feature] = int(pd.isna(raw_row[raw_feature]))
+                    continue
+
+            display_values[feature] = transformed_row[feature]
+
+        return display_values
 
     def fit_transform(self, raw_df: pd.DataFrame) -> pd.DataFrame:
         """Fit on raw training rows and return the processed training matrix."""
@@ -78,27 +152,57 @@ class ICUPreprocessor:
         drop_cols = self.id_cols + self.leakage_cols + [self.target_col]
         return raw_df.drop(columns=drop_cols, errors="ignore").copy()
 
-    def _add_missing_indicators(self, X: pd.DataFrame) -> pd.DataFrame:
-        indicators = {
-            f"{col}_missing": X[col].isnull().astype(int)
-            for col in self.missing_indicator_cols_
-            if col in X.columns
-        }
-        if not indicators:
-            return X
-        return pd.concat([X, pd.DataFrame(indicators, index=X.index)], axis=1)
+    def _learn_column_groups(self, X: pd.DataFrame) -> None:
+        self.numeric_cols_ = []
+        self.binary_cols_ = []
+        self.categorical_cols_ = []
+        self.ordinal_cols_ = []
+        self.high_missing_cols_ = []
 
-    def _impute(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.copy()
-        if self.train_medians_ is None:
-            raise RuntimeError("ICUPreprocessor must be fitted before imputation.")
+        for column in X.columns:
+            n_unique = X[column].nunique(dropna=True)
 
-        numeric_cols = [c for c in self.numeric_cols_ if c in X.columns]
-        categorical_cols = [c for c in self.categorical_cols_ if c in X.columns]
+            if n_unique == 2:
+                self.binary_cols_.append(column)
+            elif np.issubdtype(X[column].dtype, np.number):
+                self.numeric_cols_.append(column)
+            elif X[column].dtype == "O":
+                self.categorical_cols_.append(column)
+            else:
+                self.categorical_cols_.append(column)
 
-        X[numeric_cols] = X[numeric_cols].fillna(self.train_medians_)
-        X[categorical_cols] = X[categorical_cols].fillna("Unknown")
-        return X
+        self.missing_indicator_cols_ = [
+            column for column in self.numeric_cols_ if X[column].isna().any()
+        ]
+
+    def _clean_feature_names(self, raw_feature_names: Iterable[str]) -> list[str]:
+        cleaned = []
+
+        for name in raw_feature_names:
+            feature = str(name)
+            if "__" in feature:
+                transformer_name, feature = feature.split("__", 1)
+            else:
+                transformer_name = ""
+
+            if feature.startswith("missingindicator_"):
+                feature = feature.replace("missingindicator_", "", 1) + "_missing"
+
+            if transformer_name == "ohe":
+                feature = self._clean_ohe_feature_name(feature)
+
+            cleaned.append(feature)
+
+        return cleaned
+
+    def _clean_ohe_feature_name(self, feature: str) -> str:
+        for column in sorted(self.categorical_cols_, key=len, reverse=True):
+            prefix = f"{column}_"
+            if feature.startswith(prefix):
+                category = feature[len(prefix):]
+                return f"{column}_{category}"
+
+        return feature
 
     def _check_is_fitted(self) -> None:
         if not self.fitted_:
