@@ -1,27 +1,40 @@
-"""Streamlit dashboard for saved ICU XAI demo outputs."""
+"""Streamlit dashboard for live ICU XAI demo outputs."""
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
+import joblib
 import pandas as pd
 import streamlit as st
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REPORTS_DIR = ROOT / "reports"
-DEMO_DIRS = [
-    REPORTS_DIR / "07_pipeline_demo",
-    REPORTS_DIR / "08_unlabeled_demo",
-]
-AUDIT_PATH = REPORTS_DIR / "09_validation_audit" / "validation_audit_summary.csv"
-GPT4O_SUMMARY_PATH = (
-    REPORTS_DIR / "10_gpt4o_evaluation" / "gpt4o_subjective_evaluation_summary.csv"
-)
-MODEL_METRICS_PATH = REPORTS_DIR / "01_modeling" / "selected_lgbm_test_metrics.csv"
-MODEL_FIGURES_DIR = REPORTS_DIR / "01_modeling" / "figures"
-SHAP_FIGURES_DIR = REPORTS_DIR / "02_explainability" / "figures"
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+
+from src.llm import generate_explanation, revise_until_valid
+from src.evaluator import compute_hybrid_quality_score, evaluate_subjective_quality
+from src.pipeline import run_patient_pipeline
+from src.prediction import load_model, load_threshold
+from src.prompts import build_explanation_prompt
+from src.validation import validate_explanation
+
+
+RAW_UNLABELED_PATH = ROOT / "data" / "raw" / "unlabeled.csv"
+PREPROCESSOR_PATH = ROOT / "models" / "icu_preprocessor.pkl"
+MODEL_PATH = ROOT / "models" / "lgbm_tuned_clean.pkl"
+THRESHOLD_PATH = ROOT / "models" / "lgbm_tuned_clean_threshold.json"
+WEIGHTS_PATH = ROOT / "reports" / "05_evaluation" / "evaluation_weights.json"
+DEFAULT_EVALUATION_WEIGHTS = {
+    "faithfulness_no_hallucination": 0.30,
+    "clinical_plausibility": 0.25,
+    "caution_awareness": 0.20,
+    "completeness": 0.15,
+    "clarity": 0.10,
+}
 
 
 st.set_page_config(
@@ -33,16 +46,54 @@ st.set_page_config(
 
 CUSTOM_CSS = """
 <style>
+.stApp {
+    background: #eef4f2;
+}
 .block-container {
-    padding-top: 1.5rem;
+    padding-top: 1.4rem;
     padding-bottom: 3rem;
+    max-width: 1220px;
+}
+[data-testid="stSidebar"] {
+    background: #1f4d4a;
+    border-right: 1px solid #183f3d;
+}
+[data-testid="stSidebar"] * {
+    color: #f4fbf8;
+}
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
+    color: #d7eee8;
+}
+[data-testid="stSidebar"] div[role="slider"] {
+    color: #f4fbf8;
+}
+[data-testid="stMetric"] {
+    background: #fbfdfc;
+    border: 1px solid #c7d8d2;
+    border-radius: 8px;
+    padding: 0.95rem 1rem;
+    box-shadow: 0 8px 20px rgba(31, 77, 74, 0.08);
+}
+[data-testid="stMetricLabel"] {
+    color: #38524e;
+    font-weight: 650;
+}
+[data-testid="stMetricValue"] {
+    color: #16312f;
+    font-weight: 750;
+}
+h1, h2, h3 {
+    color: #183331;
+}
+p, li, label, span {
+    color: #203432;
 }
 .small-note {
-    color: #5b6472;
+    color: #d7eee8;
     font-size: 0.92rem;
 }
 .status-pass {
-    color: #157347;
+    color: #0f7b45;
     font-weight: 700;
 }
 .status-fail {
@@ -50,49 +101,134 @@ CUSTOM_CSS = """
     font-weight: 700;
 }
 .section-caption {
-    color: #4b5563;
+    color: #536864;
     margin-top: -0.4rem;
+}
+div[data-testid="stDataFrame"] {
+    border: 1px solid #c7d8d2;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(31, 77, 74, 0.06);
+}
+[data-testid="stExpander"] {
+    background: #fbfdfc;
+    border: 1px solid #c7d8d2;
+    border-radius: 8px;
+}
+[data-testid="stAlert"] {
+    border: 1px solid #b6c9c3;
+}
+hr {
+    border-color: #c7d8d2;
+}
+.hero {
+    background: #f9fcfa;
+    border: 1px solid #c7d8d2;
+    border-left: 6px solid #2f8077;
+    border-radius: 10px;
+    padding: 1.35rem 1.45rem;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 12px 28px rgba(31, 77, 74, 0.10);
+}
+.eyebrow {
+    color: #2f8077;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+}
+.hero-title {
+    color: #16312f;
+    font-size: 2rem;
+    line-height: 1.15;
+    font-weight: 800;
+    margin: 0;
+}
+.hero-subtitle {
+    color: #435b57;
+    font-size: 1rem;
+    margin: 0.55rem 0 0 0;
+    max-width: 860px;
+}
+.pipeline-strip {
+    display: inline-block;
+    background: #e3f2ed;
+    color: #1f4d4a;
+    border: 1px solid #b9d8cf;
+    border-radius: 999px;
+    padding: 0.38rem 0.72rem;
+    margin-top: 0.9rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+.section-kicker {
+    color: #2f8077;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 0.1rem;
+}
+.section-title {
+    color: #16312f;
+    font-size: 1.28rem;
+    font-weight: 800;
+    margin-bottom: 0.1rem;
+}
+.risk-banner {
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    margin: 0.25rem 0 1rem 0;
+    font-weight: 750;
+}
+.risk-low {
+    background: #e8f6ee;
+    border: 1px solid #acd9bd;
+    color: #145c35;
+}
+.risk-high {
+    background: #fff3df;
+    border: 1px solid #efc27f;
+    color: #7a4200;
+}
+.explain-box {
+    background: #fbfdfc;
+    border: 1px solid #c7d8d2;
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    box-shadow: 0 8px 20px rgba(31, 77, 74, 0.06);
+}
+.empty-state {
+    background: #f9fcfa;
+    border: 1px dashed #a8c1ba;
+    border-radius: 10px;
+    padding: 1.2rem;
+    color: #435b57;
 }
 </style>
 """
 
 
 @st.cache_data(show_spinner=False)
-def read_json(path: str) -> dict[str, Any]:
-    with open(path) as f:
+def load_unlabeled_data() -> pd.DataFrame:
+    return pd.read_csv(RAW_UNLABELED_PATH)
+
+
+@st.cache_resource(show_spinner=False)
+def load_live_artifacts() -> tuple[Any, Any, float]:
+    preprocessor = joblib.load(PREPROCESSOR_PATH)
+    model = load_model(MODEL_PATH)
+    threshold = load_threshold(THRESHOLD_PATH)
+    return preprocessor, model, threshold
+
+
+@st.cache_data(show_spinner=False)
+def load_evaluation_weights() -> dict[str, float]:
+    if not WEIGHTS_PATH.exists():
+        return DEFAULT_EVALUATION_WEIGHTS
+
+    with open(WEIGHTS_PATH) as f:
         return json.load(f)
-
-
-@st.cache_data(show_spinner=False)
-def read_text(path: str) -> str:
-    with open(path) as f:
-        return f.read()
-
-
-@st.cache_data(show_spinner=False)
-def read_csv(path: str) -> pd.DataFrame:
-    return pd.read_csv(path)
-
-
-def find_cases() -> dict[str, dict[str, Path]]:
-    cases: dict[str, dict[str, Path]] = {}
-
-    for demo_dir in DEMO_DIRS:
-        for evidence_path in sorted(demo_dir.glob("*_llm_evidence.json")):
-            case_id = evidence_path.name.removesuffix("_llm_evidence.json")
-            case_files = {
-                "evidence": evidence_path,
-                "generated_explanation": demo_dir / f"{case_id}_llm_explanation.txt",
-                "generated_validation": demo_dir / f"{case_id}_llm_validation.json",
-                "revised_explanation": demo_dir
-                / f"{case_id}_llm_revised_explanation.txt",
-                "revised_validation": demo_dir / f"{case_id}_llm_revised_validation.json",
-            }
-            cases[case_id] = {
-                name: path for name, path in case_files.items() if path.exists()
-            }
-
-    return cases
 
 
 def format_probability(value: Any) -> str:
@@ -110,10 +246,29 @@ def status_text(passed: bool | None) -> str:
     return "Not available"
 
 
-def status_markdown(label: str, passed: bool | None) -> None:
-    css_class = "status-pass" if passed else "status-fail"
-    symbol = "OK" if passed else "FAIL"
-    st.markdown(f"**{label}:** <span class='{css_class}'>{symbol}</span>", unsafe_allow_html=True)
+def render_hero() -> None:
+    st.markdown(
+        """
+        <div class="hero">
+            <div class="eyebrow">Live XAI Demo</div>
+            <div class="hero-title">ICU Mortality Explanation Dashboard</div>
+            <p class="hero-subtitle">
+                Run a patient-level mortality prediction, inspect local SHAP evidence,
+                generate an evidence-grounded LLM explanation, and validate the result
+                with deterministic safety checks.
+            </p>
+            <div class="pipeline-strip">Patient data -> LightGBM -> SHAP evidence -> LLM explanation -> Validator -> GPT-4o quality judge</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_section_header(title: str, caption: str, kicker: str | None = None) -> None:
+    if kicker:
+        st.markdown(f"<div class='section-kicker'>{kicker}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='section-title'>{title}</div>", unsafe_allow_html=True)
+    st.markdown(f"<p class='section-caption'>{caption}</p>", unsafe_allow_html=True)
 
 
 def evidence_to_frame(records: list[dict[str, Any]]) -> pd.DataFrame:
@@ -136,20 +291,6 @@ def evidence_to_frame(records: list[dict[str, Any]]) -> pd.DataFrame:
     ]
 
 
-def get_final_files(case_files: dict[str, Path]) -> tuple[Path, Path, str]:
-    if "revised_explanation" in case_files and "revised_validation" in case_files:
-        return (
-            case_files["revised_explanation"],
-            case_files["revised_validation"],
-            "revised",
-        )
-    return (
-        case_files["generated_explanation"],
-        case_files["generated_validation"],
-        "generated",
-    )
-
-
 def render_prediction(evidence: dict[str, Any]) -> None:
     prediction = evidence.get("prediction", {})
     probability = float(prediction.get("y_proba", 0.0))
@@ -157,7 +298,16 @@ def render_prediction(evidence: dict[str, Any]) -> None:
     predicted_label = int(prediction.get("y_pred", probability >= threshold))
     risk_label = "High mortality risk" if predicted_label == 1 else "Low mortality risk"
 
-    st.subheader("Prediction")
+    render_section_header(
+        title="Prediction Overview",
+        caption="Model output for the selected unlabeled ICU patient.",
+        kicker="Step 1",
+    )
+    risk_class = "risk-high" if predicted_label == 1 else "risk-low"
+    st.markdown(
+        f"<div class='risk-banner {risk_class}'>{risk_label} at threshold {threshold:.2f}</div>",
+        unsafe_allow_html=True,
+    )
     cols = st.columns(4)
     cols[0].metric("Mortality probability", format_probability(probability))
     cols[1].metric("Decision threshold", format_probability(threshold))
@@ -167,14 +317,14 @@ def render_prediction(evidence: dict[str, Any]) -> None:
 
 
 def render_evidence(evidence: dict[str, Any]) -> None:
-    st.subheader("SHAP Evidence Packet")
-    st.markdown(
-        "<p class='section-caption'>Local SHAP evidence used to ground the LLM explanation.</p>",
-        unsafe_allow_html=True,
+    render_section_header(
+        title="SHAP Evidence Packet",
+        caption="Local risk-increasing and risk-decreasing features passed to the explanation layer.",
+        kicker="Step 2",
     )
 
-    inc_tab, dec_tab, raw_tab = st.tabs(
-        ["Risk-increasing evidence", "Risk-decreasing evidence", "Raw packet"]
+    inc_tab, dec_tab = st.tabs(
+        ["Risk-increasing evidence", "Risk-decreasing evidence"]
     )
 
     with inc_tab:
@@ -182,6 +332,13 @@ def render_evidence(evidence: dict[str, Any]) -> None:
             evidence_to_frame(evidence.get("risk_increasing_evidence", [])),
             use_container_width=True,
             hide_index=True,
+            column_config={
+                "feature": st.column_config.TextColumn("Feature", width="medium"),
+                "value": st.column_config.TextColumn("Value", width="small"),
+                "shap_value": st.column_config.NumberColumn("SHAP", format="%.4f"),
+                "clinical_meaning": st.column_config.TextColumn("Clinical meaning", width="large"),
+                "caution": st.column_config.TextColumn("Caution", width="large"),
+            },
         )
 
     with dec_tab:
@@ -189,32 +346,14 @@ def render_evidence(evidence: dict[str, Any]) -> None:
             evidence_to_frame(evidence.get("risk_decreasing_evidence", [])),
             use_container_width=True,
             hide_index=True,
+            column_config={
+                "feature": st.column_config.TextColumn("Feature", width="medium"),
+                "value": st.column_config.TextColumn("Value", width="small"),
+                "shap_value": st.column_config.NumberColumn("SHAP", format="%.4f"),
+                "clinical_meaning": st.column_config.TextColumn("Clinical meaning", width="large"),
+                "caution": st.column_config.TextColumn("Caution", width="large"),
+            },
         )
-
-    with raw_tab:
-        st.json(evidence)
-
-
-def render_explanation(case_files: dict[str, Path], final_explanation_path: Path) -> None:
-    st.subheader("LLM Explanation")
-    st.markdown(
-        "<p class='section-caption'>Generated from the structured evidence packet; true labels are not shown to the LLM.</p>",
-        unsafe_allow_html=True,
-    )
-
-    generated = read_text(str(case_files["generated_explanation"]))
-    final_explanation = read_text(str(final_explanation_path))
-
-    if final_explanation_path == case_files["generated_explanation"]:
-        st.markdown(final_explanation)
-        return
-
-    before_tab, after_tab = st.tabs(["Generated explanation", "Revised final explanation"])
-    with before_tab:
-        st.markdown(generated)
-    with after_tab:
-        st.markdown(final_explanation)
-
 
 def render_validation_report(report: dict[str, Any], title: str) -> None:
     st.markdown(f"#### {title}")
@@ -233,17 +372,63 @@ def render_validation_report(report: dict[str, Any], title: str) -> None:
             check_rows.append(
                 {
                     "check": check_name,
-                    "passed": check_result.get("passed"),
+                    "status": "Pass" if check_result.get("passed") else "Fail",
                     "details": summarize_check(check_name, check_result),
                 }
             )
-        st.dataframe(pd.DataFrame(check_rows), use_container_width=True, hide_index=True)
+        st.dataframe(
+            pd.DataFrame(check_rows),
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "check": st.column_config.TextColumn("Check", width="medium"),
+                "status": st.column_config.TextColumn("Status", width="small"),
+                "details": st.column_config.TextColumn("Details", width="large"),
+            },
+        )
 
     feedback = report.get("revision_feedback", [])
     if feedback:
         st.markdown("**Revision feedback**")
         for item in feedback:
             st.write(f"- {item}")
+
+
+def render_gpt4o_report(report: dict[str, Any], hybrid_score: float | None) -> None:
+    cols = st.columns(3)
+    cols[0].metric(
+        "Clinical plausibility",
+        report.get("clinical_plausibility", {}).get("score", "N/A"),
+    )
+    cols[1].metric(
+        "Clarity",
+        report.get("clarity", {}).get("score", "N/A"),
+    )
+    cols[2].metric(
+        "Hybrid quality score",
+        format_probability(hybrid_score),
+    )
+
+    st.markdown("**Evaluator rationale**")
+    rationale_rows = [
+        {
+            "dimension": "clinical_plausibility",
+            "rationale": report.get("clinical_plausibility", {}).get("rationale", "-"),
+        },
+        {
+            "dimension": "clarity",
+            "rationale": report.get("clarity", {}).get("rationale", "-"),
+        },
+        {
+            "dimension": "overall",
+            "rationale": report.get("overall_comments", "-"),
+        },
+    ]
+    st.dataframe(pd.DataFrame(rationale_rows), use_container_width=True, hide_index=True)
+    st.caption(
+        f"Evaluator model: {report.get('evaluator_model', 'gpt-4o')}. "
+        "This score is advisory; deterministic validation remains the hard gate."
+    )
 
 
 def summarize_check(check_name: str, check_result: dict[str, Any]) -> str:
@@ -269,163 +454,250 @@ def summarize_check(check_name: str, check_result: dict[str, Any]) -> str:
     return "-"
 
 
-def render_validation(case_files: dict[str, Path], final_validation_path: Path) -> None:
-    st.subheader("Validation Panel")
-    st.markdown(
-        "<p class='section-caption'>Deterministic hard checks before an explanation is accepted.</p>",
-        unsafe_allow_html=True,
-    )
+def run_live_patient(
+    patient_position: int,
+    top_n: int,
+    run_llm: bool,
+    run_gpt4o: bool,
+    max_revision_rounds: int,
+) -> dict[str, Any]:
+    raw_unlabeled = load_unlabeled_data()
+    preprocessor, model, threshold = load_live_artifacts()
 
-    generated_report = read_json(str(case_files["generated_validation"]))
-    final_report = read_json(str(final_validation_path))
-
-    if final_validation_path == case_files["generated_validation"]:
-        render_validation_report(final_report, "Generated explanation")
-        return
-
-    before_tab, after_tab = st.tabs(["Generated validation", "Revised validation"])
-    with before_tab:
-        render_validation_report(generated_report, "Generated explanation")
-    with after_tab:
-        render_validation_report(final_report, "Revised final explanation")
-
-
-def render_gpt4o(case_id: str) -> None:
-    if not GPT4O_SUMMARY_PATH.exists():
-        return
-
-    summary = read_csv(str(GPT4O_SUMMARY_PATH))
-    matches = summary[summary["case_id"].str.startswith(case_id)]
-    if matches.empty:
-        return
-
-    row = matches.iloc[-1]
-    st.subheader("GPT-4o Subjective Evaluation")
-    st.markdown(
-        "<p class='section-caption'>Advisory evaluation for subjective quality only: clinical plausibility and clarity.</p>",
-        unsafe_allow_html=True,
-    )
-
-    cols = st.columns(3)
-    cols[0].metric("Clinical plausibility", int(row["clinical_plausibility"]))
-    cols[1].metric("Clarity", int(row["clarity"]))
-    cols[2].metric("Hybrid quality score", format_probability(row["hybrid_quality_score"]))
-
-
-def render_audit_context(case_id: str) -> None:
-    if not AUDIT_PATH.exists():
-        return
-
-    audit_df = read_csv(str(AUDIT_PATH))
-    st.subheader("Validation Audit Context")
-    case_rows = audit_df[audit_df["case_id"].str.startswith(case_id)]
-    if not case_rows.empty:
-        st.dataframe(
-            case_rows[
-                [
-                    "case_id",
-                    "passed",
-                    "revision_required",
-                    "deterministic_validation_score",
-                    "forbidden_phrases",
-                    "missing_caution_mentions",
-                    "ungrounded_features",
-                    "direction_errors",
-                ]
-            ],
-            use_container_width=True,
-            hide_index=True,
+    if patient_position < 0 or patient_position >= len(raw_unlabeled):
+        raise ValueError(
+            f"Patient position must be between 0 and {len(raw_unlabeled) - 1}."
         )
 
-    total = len(audit_df)
-    passed = int(audit_df["passed"].sum())
-    st.caption(f"Audit summary: {passed}/{total} saved explanations passed deterministic validation.")
+    patient_label = f"live_unlabeled_patient_{patient_position}"
+    raw_patient = raw_unlabeled.iloc[[patient_position]]
 
-
-def render_model_context() -> None:
-    st.subheader("Project Context")
-    st.markdown(
-        """
-        This dashboard displays saved outputs from the ICU mortality XAI pipeline:
-        LightGBM prediction, local SHAP evidence, evidence-grounded LLM explanation,
-        deterministic validation, revision trace, and optional GPT-4o subjective scoring.
-        """
+    result = run_patient_pipeline(
+        raw_patient=raw_patient,
+        preprocessor=preprocessor,
+        model=model,
+        threshold=threshold,
+        patient_label=patient_label,
+        test_row_index=int(raw_patient.index[0]),
+        y_true=None,
+        top_n=top_n,
     )
 
-    if MODEL_METRICS_PATH.exists():
-        metrics = read_csv(str(MODEL_METRICS_PATH))
-        if not metrics.empty:
-            row = metrics.iloc[0].to_dict()
-            cols = st.columns(6)
-            for col, metric in zip(
-                cols,
-                ["AUROC", "AUPRC", "Accuracy", "Precision", "Recall", "F1"],
-            ):
-                if metric in row:
-                    col.metric(metric, format_probability(row[metric]))
+    evidence_packet = result["evidence_packet"]
+    prompt = build_explanation_prompt(evidence_packet)
+    live_result = {
+        "patient_label": patient_label,
+        "evidence_packet": evidence_packet,
+        "prompt": prompt,
+        "generated_explanation": None,
+        "generated_validation": None,
+        "revised_explanation": None,
+        "revised_validation": None,
+        "revision_rounds": 0,
+        "gpt4o_evaluation": None,
+        "hybrid_quality_score": None,
+    }
 
-    figure_candidates = [
-        MODEL_FIGURES_DIR / "selected_lgbm_confusion_matrix.png",
-        SHAP_FIGURES_DIR / "global_shap_importance_top20.png",
-        SHAP_FIGURES_DIR / "shap_summary_top20.png",
-    ]
-    existing_figures = [path for path in figure_candidates if path.exists()]
-    if existing_figures:
-        fig_tabs = st.tabs([path.stem.replace("_", " ").title() for path in existing_figures])
-        for tab, path in zip(fig_tabs, existing_figures):
-            with tab:
-                st.image(str(path), use_container_width=True)
+    if not run_llm:
+        return live_result
+
+    generated_explanation = generate_explanation(prompt)
+    generated_validation = validate_explanation(
+        text=generated_explanation,
+        evidence_packet=evidence_packet,
+    )
+    revised_explanation, revised_validation, revision_rounds = revise_until_valid(
+        original_prompt=prompt,
+        generated_explanation=generated_explanation,
+        evidence_packet=evidence_packet,
+        validation_report=generated_validation,
+        max_rounds=max_revision_rounds,
+    )
+
+    live_result.update(
+        {
+            "generated_explanation": generated_explanation,
+            "generated_validation": generated_validation,
+            "revised_explanation": revised_explanation,
+            "revised_validation": revised_validation,
+            "revision_rounds": revision_rounds,
+        }
+    )
+
+    if run_gpt4o:
+        final_explanation = revised_explanation or generated_explanation
+        final_validation = revised_validation or generated_validation
+        gpt4o_evaluation = evaluate_subjective_quality(
+            explanation=final_explanation,
+            evidence_packet=evidence_packet,
+            deterministic_validation_report=final_validation,
+            model="gpt-4o",
+        )
+        hybrid_quality_score = compute_hybrid_quality_score(
+            deterministic_validation_report=final_validation,
+            subjective_evaluation_report=gpt4o_evaluation,
+            weights=load_evaluation_weights(),
+        )
+        live_result.update(
+            {
+                "gpt4o_evaluation": gpt4o_evaluation,
+                "hybrid_quality_score": hybrid_quality_score,
+            }
+        )
+
+    return live_result
+
+
+def render_live_result(result: dict[str, Any]) -> None:
+    evidence = result["evidence_packet"]
+
+    with st.container(border=True):
+        render_prediction(evidence)
+
+    with st.container(border=True):
+        render_evidence(evidence)
+
+    with st.container(border=True):
+        render_section_header(
+            title="Prompt",
+            caption="The structured instruction produced from the evidence packet.",
+            kicker="Step 3",
+        )
+        with st.expander("Show prompt sent to the LLM"):
+            st.code(result["prompt"], language="text")
+
+    generated_explanation = result.get("generated_explanation")
+    if generated_explanation is None:
+        st.markdown(
+            """
+            <div class="empty-state">
+                Live LLM generation was not requested. The dashboard ran local preprocessing,
+                prediction, SHAP, evidence construction, and prompt generation only.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        return
+
+    with st.container(border=True):
+        render_section_header(
+            title="LLM Explanation",
+            caption="Evidence-grounded narrative generated without access to the true label.",
+            kicker="Step 4",
+        )
+        revised_explanation = result.get("revised_explanation")
+        if revised_explanation:
+            before_tab, after_tab = st.tabs(
+                ["Generated explanation", "Revised final explanation"]
+            )
+            with before_tab:
+                st.markdown(generated_explanation)
+            with after_tab:
+                st.markdown(revised_explanation)
+        else:
+            st.markdown(generated_explanation)
+
+    with st.container(border=True):
+        render_section_header(
+            title="Validation Panel",
+            caption="Deterministic checks decide whether revision is required.",
+            kicker="Step 5",
+        )
+        generated_validation = result["generated_validation"]
+        revised_validation = result.get("revised_validation")
+        if revised_validation is not None and revised_explanation:
+            before_tab, after_tab = st.tabs(["Generated validation", "Revised validation"])
+            with before_tab:
+                render_validation_report(generated_validation, "Generated explanation")
+            with after_tab:
+                render_validation_report(revised_validation, "Revised final explanation")
+                st.caption(f"Revision rounds: {result['revision_rounds']}")
+        else:
+            render_validation_report(generated_validation, "Generated explanation")
+
+    with st.container(border=True):
+        render_section_header(
+            title="GPT-4o Subjective Evaluation",
+            caption="Advisory scoring for clinical plausibility and clarity only.",
+            kicker="Step 6",
+        )
+        gpt4o_evaluation = result.get("gpt4o_evaluation")
+        if gpt4o_evaluation is None:
+            st.markdown(
+                """
+                <div class="empty-state">
+                    GPT-4o subjective evaluation was not requested. The deterministic
+                    validator above remains the hard acceptance gate.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            render_gpt4o_report(
+                report=gpt4o_evaluation,
+                hybrid_score=result.get("hybrid_quality_score"),
+            )
+
+
+def render_live_mode() -> None:
+    raw_unlabeled = load_unlabeled_data()
+
+    with st.sidebar:
+        st.header("Patient Demo")
+        st.caption("Run the final pipeline on one unlabeled ICU row.")
+        patient_position = st.number_input(
+            "Patient position",
+            min_value=0,
+            max_value=len(raw_unlabeled) - 1,
+            value=0,
+            step=1,
+        )
+        top_n = st.slider("Top SHAP features per direction", 3, 12, 8)
+        run_llm = st.checkbox("Run live LLM explanation and revision", value=False)
+        run_gpt4o = st.checkbox(
+            "Run GPT-4o subjective evaluation",
+            value=False,
+            disabled=not run_llm,
+        )
+        max_revision_rounds = st.slider("Max revision rounds", 1, 3, 3)
+        run_button = st.button("Run live patient pipeline", type="primary")
+        st.markdown("---")
+        st.markdown(
+            "<p class='small-note'>LLM calls are optional. If unchecked, the dashboard runs only local model and SHAP artifacts.</p>",
+            unsafe_allow_html=True,
+        )
+
+    if run_button:
+        with st.spinner("Running live patient pipeline..."):
+            st.session_state["live_result"] = run_live_patient(
+                patient_position=int(patient_position),
+                top_n=int(top_n),
+                run_llm=run_llm,
+                run_gpt4o=run_gpt4o,
+                max_revision_rounds=int(max_revision_rounds),
+            )
+
+    result = st.session_state.get("live_result")
+    if result is None:
+        st.markdown(
+            """
+            <div class="empty-state">
+                Select a patient position in the sidebar, choose whether to run the LLM,
+                then start the live pipeline.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        return
+
+    render_live_result(result)
 
 
 def main() -> None:
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
-    st.title("ICU Mortality XAI Dashboard")
-    st.caption("Patient-level prediction, SHAP evidence, LLM explanation, and validation trace.")
+    render_hero()
 
-    cases = find_cases()
-    if not cases:
-        st.error("No saved LLM demo cases were found under reports/07_pipeline_demo or reports/08_unlabeled_demo.")
-        return
-
-    with st.sidebar:
-        st.header("Demo Controls")
-        selected_case = st.selectbox("Select patient case", sorted(cases))
-        show_project_context = st.checkbox("Show project context", value=True)
-        show_audit_context = st.checkbox("Show audit context", value=True)
-        show_gpt4o = st.checkbox("Show GPT-4o subjective score", value=True)
-        st.markdown("---")
-        st.markdown(
-            "<p class='small-note'>This dashboard reads saved report files only. It does not call the OpenAI API.</p>",
-            unsafe_allow_html=True,
-        )
-
-    case_files = cases[selected_case]
-    evidence = read_json(str(case_files["evidence"]))
-    final_explanation_path, final_validation_path, final_kind = get_final_files(case_files)
-
-    if show_project_context:
-        render_model_context()
-        st.divider()
-
-    render_prediction(evidence)
-    st.divider()
-
-    render_evidence(evidence)
-    st.divider()
-
-    render_explanation(case_files, final_explanation_path)
-    st.caption(f"Displayed final explanation version: {final_kind}.")
-    st.divider()
-
-    render_validation(case_files, final_validation_path)
-    st.divider()
-
-    if show_gpt4o:
-        render_gpt4o(selected_case)
-        st.divider()
-
-    if show_audit_context:
-        render_audit_context(selected_case)
+    render_live_mode()
 
 
 if __name__ == "__main__":
