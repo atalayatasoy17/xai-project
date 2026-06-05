@@ -5,6 +5,7 @@ data/processed/
 # ── API anahtarları ve gizli bilgiler ─────────────────────────────────────────
 .env
 .env.*
+.streamlit/secrets.toml
 
 # ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
@@ -12,6 +13,11 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # ── Sanal ortam ───────────────────────────────────────────────────────────────
 venv/
@@ -27,6 +33,7 @@ env/
 .AppleDouble
 
 # ── Çıktılar (isteğe bağlı — büyük figürler commit edilmeyebilir) ─────────────
+outputs/
 # outputs/figures/
 # outputs/reports/
 
@@ -34,3 +41,4 @@ env/
 .vscode/
 .idea/
 *.swp
+*.log

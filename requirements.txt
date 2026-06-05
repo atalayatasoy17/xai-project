@@ -8,9 +8,11 @@ seaborn>=0.13
 streamlit>=1.35
 
 # ── Makine öğrenmesi ───────────────────────────────────────────────────────────
-scikit-learn>=1.4
+scikit-learn>=1.5
 xgboost>=2.0
 lightgbm>=4.3
+optuna>=3.6
+joblib>=1.4
 
 # ── XAI / Açıklanabilirlik ─────────────────────────────────────────────────────
 shap>=0.45
