@@ -411,14 +411,6 @@ http://localhost:8501
 On first startup, the container downloads the required raw CSV files automatically
 into `data/raw/`. No Kaggle login is required for the dashboard demo.
 
-If port `8501` is already in use, run the same container on another local port:
-
-```bash
-docker run --rm -p 8502:8501 xai-project
-```
-
-Then open `http://localhost:8502`.
-
 LLM generation and GPT-4o evaluation are optional. To enable live LLM calls, pass an
 OpenAI API key:
 
