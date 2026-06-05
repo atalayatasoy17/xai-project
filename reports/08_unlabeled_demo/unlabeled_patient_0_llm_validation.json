@@ -1,18 +1,16 @@
 {
-  "passed": false,
-  "revision_required": true,
-  "deterministic_validation_score": 4.231,
+  "passed": true,
+  "revision_required": false,
+  "deterministic_validation_score": 5.0,
   "dimension_scores": {
-    "faithfulness_no_hallucination": 4,
-    "caution_awareness": 4,
+    "faithfulness_no_hallucination": 5,
+    "caution_awareness": 5,
     "completeness": 5
   },
   "checks": {
     "forbidden_phrases": {
-      "passed": false,
-      "found": [
-        "favorable"
-      ]
+      "passed": true,
+      "found": []
     },
     "true_label_leakage": {
       "passed": true,
@@ -31,22 +29,21 @@
     },
     "prediction_consistency": {
       "passed": true,
-      "expected_probability": 0.02909931112897766,
-      "matched_probability": 0.0291,
+      "expected_probability": 0.18247659966500343,
+      "matched_probability": 0.1825,
       "candidates": [
-        0.0291,
-        1.0,
-        0.0
+        0.1825,
+        0.73,
+        1.0
       ],
       "tolerance": 0.01
     },
     "caution_mentions": {
-      "passed": false,
-      "missing_features": [
-        "icu_id"
-      ],
-      "mentioned_features": [],
-      "caution_feature_count": 1
+      "passed": true,
+      "missing_features": [],
+      "mention_matches": [],
+      "caution_feature_count": 0,
+      "matching_mode": "alias_aware_caution_section"
     },
     "feature_grounding": {
       "passed": true,
@@ -55,20 +52,20 @@
       "mentioned_features": [],
       "evidence_features": [
         "age",
-        "apache_3j_diagnosis",
-        "d1_bun_max",
-        "d1_glucose_min",
+        "apache_3j_bodysystem_Neurological",
+        "d1_hemaglobin_max",
         "d1_hemaglobin_min",
+        "d1_potassium_min",
         "d1_resprate_max",
         "d1_spo2_min",
         "d1_sysbp_min",
+        "d1_sysbp_noninvasive_min",
         "d1_wbc_min",
         "gcs_eyes_apache",
         "gcs_motor_apache",
         "gcs_verbal_apache",
         "h1_resprate_min",
-        "icu_id",
-        "resprate_apache",
+        "icu_type_Neuro ICU",
         "ventilated_apache"
       ],
       "matching_mode": "exact_feature_name"
@@ -83,9 +80,6 @@
       "matching_mode": "exact_feature_name"
     }
   },
-  "revision_feedback": [
-    "Remove or rephrase unsupported/risky wording: favorable.",
-    "Mention caution for flagged features: icu_id."
-  ],
+  "revision_feedback": [],
   "schema_version": "1.0"
 }

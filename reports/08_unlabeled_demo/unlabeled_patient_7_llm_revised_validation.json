@@ -29,50 +29,43 @@
     },
     "prediction_consistency": {
       "passed": true,
-      "expected_probability": 0.08056957431824724,
-      "matched_probability": 0.0806,
+      "expected_probability": 0.2141172246297535,
+      "matched_probability": 0.2141,
       "candidates": [
-        0.0806
+        0.2141,
+        0.73,
+        0.2
       ],
       "tolerance": 0.01
     },
     "caution_mentions": {
       "passed": true,
       "missing_features": [],
-      "mentioned_features": [
-        "icu_id"
-      ],
-      "caution_feature_count": 1
+      "mention_matches": [],
+      "caution_feature_count": 0,
+      "matching_mode": "alias_aware_caution_section"
     },
     "feature_grounding": {
       "passed": true,
       "ungrounded_features": [],
-      "grounded_features": [
-        "apache_3j_diagnosis",
-        "icu_id",
-        "ventilated_apache"
-      ],
-      "mentioned_features": [
-        "apache_3j_diagnosis",
-        "icu_id",
-        "ventilated_apache"
-      ],
+      "grounded_features": [],
+      "mentioned_features": [],
       "evidence_features": [
         "age",
+        "apache_3j_bodysystem_Neurological",
         "apache_3j_diagnosis",
-        "bun_apache",
+        "d1_bilirubin_max",
+        "d1_bilirubin_min",
+        "d1_bun_max",
         "d1_bun_min",
-        "d1_diasbp_noninvasive_min",
         "d1_glucose_min",
-        "d1_hco3_max",
         "d1_heartrate_max",
         "d1_heartrate_min",
         "d1_resprate_max",
         "d1_resprate_min",
-        "d1_sysbp_min",
         "gcs_motor_apache",
         "gcs_verbal_apache",
-        "icu_id",
+        "pre_icu_los_days",
         "ventilated_apache"
       ],
       "matching_mode": "exact_feature_name"
@@ -81,13 +74,9 @@
       "passed": true,
       "direction_errors": [],
       "mentioned_in_risk_increasing_section": [
-        "age",
-        "apache_3j_diagnosis"
+        "age"
       ],
-      "mentioned_in_risk_decreasing_section": [
-        "icu_id",
-        "ventilated_apache"
-      ],
+      "mentioned_in_risk_decreasing_section": [],
       "matching_mode": "exact_feature_name"
     }
   },

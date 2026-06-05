@@ -1,14 +1,14 @@
 1. Prediction summary  
-The model predicted a low mortality probability of 0.0291 for this ICU patient.
+The model predicted a mortality probability of 0.1825, below the decision threshold of 0.73.
 
 2. Main risk-increasing factors  
-Impaired neurological response indicated by low GCS verbal (1.0), motor (5.0), and eye (2.0) scores increased the predicted risk. Low systolic blood pressure (79.0) suggesting hemodynamic instability and elevated BUN (19.0) indicating possible renal dysfunction or metabolic stress also contributed to increased risk. Additionally, diagnosis category (405.01), minimum glucose (167.0), and respiratory rate (5.0) increased the model’s predicted risk.
+Impaired neurological response indicated by low GCS verbal (1.0), motor (5.0), and eye (2.0) scores increased the predicted risk. Low systolic blood pressure (79.0) suggested hemodynamic instability, further increasing risk. Additional risk was contributed by the neurological body system involvement, Neuro ICU admission, minimum noninvasive systolic blood pressure (79.0), and minimum potassium level (4.8).
 
 3. Main risk-decreasing factors  
-The ICU unit identifier (1105) decreased risk, though it reflects unit-level patterns rather than patient status. Younger age (56.0) decreased risk, as did absence of mechanical ventilation (0.0). Respiratory rates including minimum at hour 1 (8.0) and maximum on day 1 (20.0), minimum oxygen saturation (96.0), white blood cell count (4.7), and hemoglobin (13.8) also decreased the predicted risk.
+Younger age (56.0) decreased the predicted risk. Absence of mechanical ventilation reduced risk. Respiratory rate values (maximum 20.0 and minimum 8.0) decreased risk. Higher minimum oxygen saturation (96.0) and hemoglobin levels (minimum and maximum 13.8) also lowered risk. A white blood cell count of 4.7 further decreased risk.
 
 4. Caution notes  
-The ICU unit identifier should be interpreted cautiously as it is a non-clinical location variable.
+No caution flags were present for the features influencing the prediction.
 
 5. Overall interpretation  
-Despite several indicators of impaired neurological function and hemodynamic instability increasing risk, other factors such as younger age, no mechanical ventilation, and favorable respiratory and laboratory parameters contributed to a low overall predicted mortality probability.
+The prediction reflects a balance between neurological impairment and hemodynamic instability increasing risk, and younger age, respiratory parameters, oxygenation, and blood counts decreasing risk, resulting in a mortality probability below the threshold.

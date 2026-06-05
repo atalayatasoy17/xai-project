@@ -1,179 +1,150 @@
 # Modeling Notes
 
-## Amaç
+## Purpose
 
-Bu aşamada amaç, yoğun bakım hastalarında hastane içi ölüm riskini tahmin eden bir sınıflandırma modeli kurmak, farklı model ailelerini karşılaştırmak ve final model seçimini metriklere dayalı olarak gerekçelendirmektir.
+The modeling stage builds a hospital mortality classifier for ICU patients and
+selects a final model that can be reused by the SHAP, evidence, LLM validation,
+and dashboard stages.
 
-Problem klinik risk tahmini olduğu için sadece accuracy'ye bakılmadı. Veri dengesiz olduğu için özellikle şu metrikler dikkate alındı:
+Because hospital death is an imbalanced target, the final decision was not based
+on accuracy alone. The main evaluation metrics were:
 
-- **AUPRC:** Pozitif sınıfın az olduğu durumlarda modelin ölüm sınıfını ne kadar iyi ayırdığını daha iyi gösterir.
-- **AUROC:** Genel ayrıştırma gücünü gösterir; destekleyici metrik olarak kullanıldı.
-- **Recall:** Gerçek ölüm vakalarının ne kadarını yakaladığımızı gösterir. Klinik bağlamda false negative kaçırmak önemli olduğu için kritik bir metriktir.
-- **Precision:** Ölüm riski dediğimiz hastaların ne kadarının gerçekten pozitif olduğunu gösterir.
-- **F1:** Precision ve recall dengesini özetler.
-- **Confusion matrix:** TP, FP, FN, TN sayılarını doğrudan görerek kararın klinik etkisini yorumlamak için kullanıldı.
+- **AUROC:** overall ranking ability.
+- **AUPRC:** performance on the minority positive class.
+- **Precision:** how many predicted high-risk patients were true deaths.
+- **Recall:** how many true deaths were detected.
+- **F1:** balance between precision and recall.
+- **Confusion matrix:** direct view of TP, FP, FN, and TN counts.
 
-## İzlenen Modelleme Sırası
+## Final Preprocessing Decision
 
-Önce basit ve yorumlanabilir bir baseline kuruldu, sonra daha güçlü ağaç tabanlı modeller denenerek performans karşılaştırıldı.
+The final pipeline uses the preprocessing strategy from
+`notebooks/09_model_experiment.ipynb` and `src/preprocessing.py`.
 
-Denediğimiz ana modeller:
+Key decisions:
 
-- Logistic Regression
-- Decision Tree
-- Random Forest
-- XGBoost
-- LightGBM
-- XGBoost + imbalance weighting
-- LightGBM + imbalance weighting
-- Optuna ile tuned XGBoost
-- Optuna ile tuned LightGBM
+- ID and location-like columns are removed:
+  - `encounter_id`
+  - `patient_id`
+  - `hospital_id`
+  - `icu_id`
+- APACHE leakage probability columns are removed:
+  - `apache_4a_hospital_death_prob`
+  - `apache_4a_icu_death_prob`
+- Numeric columns are median-imputed with missing indicators.
+- Binary columns are imputed and ordinal-encoded.
+- Categorical columns are imputed and one-hot encoded with infrequent-category
+  handling.
+- Numeric scaling is intentionally omitted because the final model is
+  tree-based LightGBM and evidence packets should retain clinically readable
+  values.
 
-Bu sıra bilinçli seçildi: önce basit baseline ile referans seviye görüldü, sonra non-linear modellerin katkısı değerlendirildi.
+This produced **379 final model features**.
 
-## Imbalance Kararı
+## Final Model
 
-Pozitif sınıf az olduğu için imbalance ayrıca incelendi. XGBoost tarafında `scale_pos_weight`, LightGBM tarafında class-weight/imbalance yaklaşımı denendi.
+The final model is a tuned LightGBM classifier trained with the experiment
+parameters selected in `notebooks/09_model_experiment.ipynb`.
 
-Balanced modeller recall'u artırdı:
+The saved final artifacts are:
 
-- XGBoost Balanced recall: **0.7100**
-- LightGBM Balanced recall: **0.7757**
+- `models/icu_preprocessor.pkl`
+- `models/lgbm_tuned_clean.pkl`
+- `models/lgbm_tuned_clean_threshold.json`
 
-Fakat bu artış yüksek false positive maliyetiyle geldi:
+The final training/export script is:
 
-- XGBoost Balanced FP: **2022**
-- LightGBM Balanced FP: **2541**
+- `scripts/16_train_final_lgbm_experiment.py`
 
-Bu nedenle balanced modeller ölüm vakalarını daha fazla yakalasa da precision ve genel denge tarafında final seçim için en uygun modeller olmadı. Bu sonuç, imbalance yaklaşımının faydalı olduğunu ama tek başına final model seçimi için yeterli olmadığını gösterdi.
+This script also refreshes `data/processed/` so downstream notebooks can keep
+their original structure while using the final preprocessing schema.
 
-## Hyperparameter Tuning
+## Threshold Decision
 
-Final aday modeller için Optuna ile hiperparametre optimizasyonu yapıldı. Optimizasyon metriği olarak **AUPRC** seçildi, çünkü pozitif sınıf az ve projenin hedefi ölüm sınıfını doğru yakalamak.
+The selected threshold is:
 
-Tuning sırasında validation setini doğrudan modele ezberletmemek için daha temiz bir yaklaşım izlendi:
+```text
+threshold = 0.7274
+```
 
-- `X_train` içinden `X_tr / X_val` ayrıldı.
-- Optuna tuning işlemi `X_tr` üzerinde 3-fold cross-validation ile yapıldı.
-- `X_val`, threshold analizi için ayrı tutuldu.
-- Final test değerlendirmesi yalnızca `X_test` üzerinde yapıldı.
+The threshold was selected using F1-oriented threshold tuning. Compared with a
+lower threshold, this choice produces fewer false positives and higher
+precision, while accepting a lower recall. This is now the explicit final
+trade-off of the project:
 
-Bu akış leakage riskini azaltır ve model seçimi ile final test değerlendirmesini daha savunulabilir hale getirir.
+- fewer patients are incorrectly flagged as high risk,
+- some additional true death cases are missed,
+- the precision/F1 balance improves for the final selected model.
 
-## Threshold Kararı
+Threshold sweep outputs are saved in:
 
-Tuned XGBoost ve tuned LightGBM için threshold sweep yapıldı. Threshold değişince AUROC ve AUPRC değişmez; çünkü bu metrikler olasılık sıralamasına bakar. Threshold değişimi daha çok precision, recall, F1 ve confusion matrix üzerinde etkilidir.
+- `reports/01_modeling/threshold_sweep_lgbm.csv`
+- `reports/01_modeling/figures/threshold_sweep_precision_recall_f1.png`
+- `reports/01_modeling/figures/threshold_sweep_fp_fn.png`
 
-LightGBM için F1'e göre 0.60 threshold iyi görünse de:
-
-- Threshold 0.60:
-  - Precision: **0.5144**
-  - Recall: **0.5534**
-  - F1: **0.5332**
-  - FN: **707**
-  - TP: **876**
-
-- Threshold 0.50:
-  - Precision: **0.4486**
-  - Recall: **0.6286**
-  - F1: **0.5235**
-  - FN: **588**
-  - TP: **995**
-
-F1 açısından 0.60 biraz daha yüksek olsa da klinik bağlamda false negative sayısını azaltmak daha önemli kabul edildi. Bu nedenle final threshold olarak **0.50** seçildi.
-
-Bu kararın anlamı: model, biraz daha fazla false positive üretmeyi kabul ederek daha fazla gerçek ölüm vakasını yakalar.
-
-Threshold sweep sonuçları ayrıca `threshold_sweep_lgbm.csv` ve iki figür olarak kaydedildi:
-
-- `figures/threshold_sweep_precision_recall_f1.png`
-- `figures/threshold_sweep_fp_fn.png`
-
-Bu görseller 0.50 threshold kararını raporlanabilir hale getirir: threshold yükseldikçe precision artar, fakat recall düşer ve false negative sayısı yükselir.
-
-## Final Model Seçimi
-
-Final model olarak **LightGBM Tuned Clean, threshold = 0.50** seçildi.
-
-Final test sonuçları:
+## Final Test Metrics
 
 | Metric | Value |
 | --- | ---: |
-| AUROC | 0.9019 |
-| AUPRC | 0.5824 |
-| Accuracy | 0.9013 |
-| Precision | 0.4486 |
-| Recall | 0.6286 |
-| F1 | 0.5235 |
-| TN | 15537 |
-| FP | 1223 |
-| FN | 588 |
-| TP | 995 |
+| AUROC | 0.9103 |
+| AUPRC | 0.5999 |
+| Accuracy | 0.9189 |
+| Precision | 0.5278 |
+| Recall | 0.5704 |
+| F1 | 0.5483 |
+| TN | 15952 |
+| FP | 808 |
+| FN | 680 |
+| TP | 903 |
 
-XGBoost modelinin AUROC/AUPRC değerleri çok yakın ve bazı metriklerde az farkla daha yüksek görünmektedir:
+The confusion matrix is saved as:
 
-- XGBoost AUPRC: **0.5835**
-- Selected LightGBM AUPRC: **0.5824**
-
-Ancak XGBoost threshold 0.50'de recall açısından zayıf kaldı:
-
-- XGBoost recall: **0.3361**
-- Selected LightGBM recall: **0.6286**
-
-Bu fark klinik problem için önemlidir. XGBoost daha az false positive üretse de çok daha fazla gerçek ölüm vakasını kaçırmaktadır:
-
-- XGBoost FN: **1051**
-- Selected LightGBM FN: **588**
-
-Bu nedenle final seçim sadece en yüksek AUPRC değerine göre değil, AUPRC + recall + FN dengesi birlikte düşünülerek yapıldı.
-
-Final modelin confusion matrix çıktısı `figures/selected_lgbm_confusion_matrix.png` olarak kaydedildi. Bu görsel final eşiğin klinik etkisini doğrudan gösterir:
-
-```text
-TN = 15537
-FP = 1223
-FN = 588
-TP = 995
-```
+- `reports/01_modeling/figures/selected_lgbm_confusion_matrix.png`
 
 ## Native LightGBM Feature Importance
 
-Final LightGBM modelinin kendi feature importance değerleri de ayrıca çıkarıldı. Bu analiz SHAP değildir; modelin ağaç yapısında hangi feature'ları nasıl kullandığını özetler.
+Native LightGBM importance was refreshed for the final saved model. This is not
+the same as SHAP:
 
-İki importance türü kaydedildi:
+- `split_importance` counts how often a feature is used in tree splits.
+- `gain_importance` measures how much a feature improves the model objective
+  when used in splits.
 
-- `split_importance`: feature'ın kaç split'te kullanıldığını gösterir.
-- `gain_importance`: feature kullanıldığında loss/objective tarafında ne kadar iyileşme sağlandığını gösterir.
-
-Gain importance'a göre en yüksek feature'lar şunlardı:
+Top native gain features:
 
 ```text
 ventilated_apache
-gcs_motor_apache
 apache_3j_diagnosis
-d1_sysbp_min
+gcs_motor_apache
 age
-d1_bun_max
+d1_sysbp_min
+d1_lactate_min
 d1_spo2_min
+d1_bun_max
 d1_bun_min
-d1_heartrate_min
-d1_heartrate_max
+gcs_verbal_apache
 ```
 
-Bu sonuç SHAP analiziyle aynı şey değildir. Native LightGBM importance modelin split/gain davranışını özetler; SHAP ise feature katkılarını prediction düzeyinde açıklar. Bu nedenle native importance, SHAP analizinin yerine değil, modelleme aşamasını destekleyen ek bir global model kontrolü olarak kullanıldı.
+This supports the SHAP analysis but does not replace it. Native importance is a
+model-structure diagnostic, while SHAP is used later to explain prediction-level
+feature contributions.
 
-## Kaydedilen Çıktılar
+Saved outputs:
 
-Modelleme aşamasında oluşturulan ana çıktılar:
+- `reports/01_modeling/native_lgbm_feature_importance.csv`
+- `reports/01_modeling/figures/native_lgbm_feature_importance_gain_top20.png`
 
-- `models/lgbm_tuned_clean.pkl`: final seçilen LightGBM modeli
-- `models/lgbm_tuned_clean_threshold.json`: final threshold bilgisi
-- `reports/01_modeling/final_model_comparison.csv`: tüm ana model sonuçlarının karşılaştırma tablosu
-- `reports/01_modeling/selected_lgbm_test_metrics.csv`: final model test metrikleri
-- `reports/01_modeling/threshold_sweep_lgbm.csv`: threshold sweep tablosu
-- `reports/01_modeling/native_lgbm_feature_importance.csv`: LightGBM native split/gain importance tablosu
+## Saved Modeling Outputs
 
-Kaydedilen modelleme figürleri:
+Main tables:
+
+- `reports/01_modeling/selected_lgbm_test_metrics.csv`
+- `reports/01_modeling/final_model_comparison.csv`
+- `reports/01_modeling/final_feature_names.csv`
+- `reports/01_modeling/threshold_sweep_lgbm.csv`
+- `reports/01_modeling/native_lgbm_feature_importance.csv`
+
+Main figures:
 
 - `reports/01_modeling/figures/model_comparison_metrics.png`
 - `reports/01_modeling/figures/selected_lgbm_confusion_matrix.png`
@@ -181,10 +152,12 @@ Kaydedilen modelleme figürleri:
 - `reports/01_modeling/figures/threshold_sweep_fp_fn.png`
 - `reports/01_modeling/figures/native_lgbm_feature_importance_gain_top20.png`
 
-## Sonuç
+## Conclusion
 
-Modelleme aşamasında final karar şu şekilde özetlenebilir:
+The final model is a tuned LightGBM classifier using the experiment preprocessing
+schema. The final pipeline removes ID/location and leakage probability columns,
+keeps numeric values clinically readable, and uses a tuned threshold of `0.7274`.
 
-> Final model olarak tuned LightGBM seçildi. Threshold 0.50 bırakıldı, çünkü bu eşik ölüm vakalarını yakalama açısından daha iyi recall ve daha düşük false negative sayısı sağladı. Projenin klinik risk tahmini bağlamında false negative vakaları kaçırmak kritik olduğundan, karar yalnızca accuracy veya en yüksek AUPRC değerine göre değil, confusion matrix ve recall dengesiyle birlikte verildi.
-
-Bu model sonraki aşamalarda SHAP explainability, evidence construction ve LLM tabanlı açıklama üretimi için temel model olarak kullanıldı.
+This final model is the basis for the refreshed SHAP analysis, evidence packet
+construction, LLM explanation generation, deterministic validation, GPT-4o
+subjective review, and Streamlit dashboard.

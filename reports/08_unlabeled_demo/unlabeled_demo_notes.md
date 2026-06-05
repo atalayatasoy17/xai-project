@@ -1,14 +1,17 @@
 # Unlabeled Patient Demo Notes
 
-## Amaç
+## Purpose
 
-Bu aşamada doğrulanmış saved artifact pipeline ilk kez `data/raw/unlabeled.csv` üzerinde çalıştırıldı. Amaç, proje pipeline'ının gerçek deployment senaryosuna benzer şekilde ham ve etiketsiz bir hasta satırını alıp tahmin, SHAP evidence ve LLM prompt çıktısı üretebildiğini göstermektir.
+This stage runs the final saved-artifact pipeline on `data/raw/unlabeled.csv`.
+The goal is to simulate a deployment-like setting where the model receives a raw
+patient row without a known `hospital_death` label.
 
-Bu demo bir performans değerlendirmesi değildir. `unlabeled.csv` içinde gerçek `hospital_death` etiketi olmadığı için accuracy, recall, precision veya confusion matrix hesaplanamaz.
+This is not a performance evaluation because unlabeled rows do not contain true
+outcomes. It demonstrates inference, explanation, validation, and reporting.
 
-## Kullanılan Akış
+## Saved Artifact Flow
 
-Bu demo artık training verisi üzerinde yeniden preprocessing fit etmez. Bunun yerine kaydedilmiş artifact'ler kullanılır:
+The unlabeled demo uses saved artifacts only:
 
 ```text
 models/icu_preprocessor.pkl
@@ -16,181 +19,137 @@ models/lgbm_tuned_clean.pkl
 models/lgbm_tuned_clean_threshold.json
 ```
 
-Çalıştırılan script:
-
-```text
-scripts/11_run_unlabeled_patient_demo.py
-```
-
-Akış:
+Flow:
 
 ```text
 raw unlabeled patient
 → saved preprocessor transform
-→ saved LightGBM model prediction
-→ threshold decision
+→ saved LightGBM prediction
 → local SHAP explanation
 → structured evidence packet
 → LLM prompt
+→ optional LLM explanation
+→ deterministic validation/revision
 ```
 
-## Üretilen Çıktılar
-
-Demo çıktıları `reports/08_unlabeled_demo/` altında kaydedildi:
-
-- `unlabeled_patient_0_prediction.json`
-- `unlabeled_patient_0_evidence.json`
-- `unlabeled_patient_0_prompt.txt`
-
-Bu dosyalar sırasıyla model tahminini, SHAP tabanlı evidence packet'i ve LLM açıklaması için hazırlanmış prompt'u içerir.
-
-## Prediction Sonucu
-
-Seçilen hasta:
+Main scripts:
 
 ```text
-patient_label: unlabeled_patient_0
-original index: 0
-```
-
-Model tahmini:
-
-```text
-death_probability: 0.0291
-prediction: 0
-threshold: 0.50
-```
-
-Bu, modelin bu etiketsiz hasta için düşük mortalite olasılığı verdiğini ve threshold 0.50 altında kaldığı için sınıf tahminini `0` olarak ürettiğini gösterir.
-
-Gerçek etiket olmadığı için bu tahminin doğru veya yanlış olduğu söylenemez. Bu demo yalnızca inference ve explanation pipeline'ın çalıştığını gösterir.
-
-## Evidence Özeti
-
-Evidence packet, model tahminini artıran ve azaltan SHAP katkılarını iki gruba ayırdı.
-
-Başlıca risk artırıcı evidence:
-
-- `gcs_verbal_apache = 1.0`
-- `gcs_motor_apache = 5.0`
-- `gcs_eyes_apache = 2.0`
-- `d1_glucose_min = 167.0`
-- `apache_3j_diagnosis = 405.01`
-- `d1_sysbp_min = 79.0`
-- `d1_bun_max = 19.0`
-- `resprate_apache = 5.0`
-
-Başlıca risk azaltıcı evidence:
-
-- `icu_id = 1105`
-- `age = 56.0`
-- `ventilated_apache = 0.0`
-- `h1_resprate_min = 8.0`
-- `d1_resprate_max = 20.0`
-- `d1_spo2_min = 96.0`
-- `d1_wbc_min = 4.7`
-- `d1_hemaglobin_min = 13.8`
-
-## Caution Note
-
-Evidence içinde `icu_id` risk azaltıcı yönde güçlü bir SHAP katkısı verdi:
-
-```text
-icu_id = 1105
-shap_value = -0.8035
-```
-
-Ancak `icu_id` klinik bir hasta özelliği değil, ICU unit/location identifier niteliğinde bir değişkendir. Bu nedenle evidence packet otomatik caution flag ekledi:
-
-```text
-Non-clinical unit/location identifier; interpret cautiously.
-```
-
-Bu önemli bir noktadır. Model bu değişkenden sinyal almış olabilir, fakat bu sinyal hasta seviyesinde doğrudan klinik neden gibi yorumlanmamalıdır. Daha önce SHAP analizinde de `icu_id` için sensitivity analizi yapılması not edilmişti.
-
-## LLM Prompt
-
-`unlabeled_patient_0_prompt.txt` dosyası, evidence packet'i LLM açıklamasına dönüştürmek için hazırlandı.
-
-Prompt içinde:
-
-- prediction bilgisi
-- risk-increasing evidence
-- risk-decreasing evidence
-- clinical meaning
-- caution flags
-- hallucination ve true-label leakage önleyici kurallar
-
-yer alır.
-
-## LLM Generation, Validation ve Revision
-
-Prediction/evidence/prompt pipeline doğrulandıktan sonra test patient için kurulan LLM generation + validation + revision loop aynı unlabeled hasta üzerinde de çalıştırıldı.
-
-Script:
-
-```text
+scripts/11_run_unlabeled_patient_demo.py
 scripts/12_run_unlabeled_patient_llm_demo.py
 ```
 
-Bu script şu akışı uygular:
+Both scripts support:
 
 ```text
-unlabeled evidence packet
-→ LLM prompt
-→ initial LLM explanation
-→ deterministic validation
-→ revision if needed
-→ revised validation
+--patient-position <row>
+--no-save
 ```
 
-Üretilen LLM çıktıları:
+## Refreshed Demo Patients
 
-- `unlabeled_patient_0_llm_evidence.json`
-- `unlabeled_patient_0_llm_prompt.txt`
-- `unlabeled_patient_0_llm_explanation.txt`
-- `unlabeled_patient_0_llm_validation.json`
-- `unlabeled_patient_0_llm_revised_explanation.txt`
-- `unlabeled_patient_0_llm_revised_validation.json`
+The refreshed final model outputs were generated for four unlabeled examples:
 
-Initial LLM explanation üretildikten sonra validator açıklamanın bazı yerlerinde evidence'tan daha yorumlayıcı dile kaydığını tespit etti. Güncel deterministic validation sonucunda `unlabeled_patient_0` initial explanation için temel sorun unsupported wording oldu:
+| Patient | Probability | Threshold | Prediction | LLM validation result |
+| --- | ---: | ---: | ---: | --- |
+| `unlabeled_patient_0` | 0.1825 | 0.7274 | 0 | passed directly |
+| `unlabeled_patient_3` | 0.5217 | 0.7274 | 0 | passed directly |
+| `unlabeled_patient_7` | 0.2141 | 0.7274 | 0 | revised, then passed |
+| `unlabeled_patient_15` | 0.9940 | 0.7274 | 1 | passed directly |
+
+Because true labels are unavailable, none of these predictions can be called
+correct or incorrect.
+
+## Example: `unlabeled_patient_0`
+
+The model predicted:
 
 ```text
-favorable
+death_probability: 0.1825
+prediction: 0
+threshold: 0.7274
 ```
 
-Bu ifade, explanation'ın evidence içinde açıkça desteklenmeyen pozitif/yorumlayıcı bir dil kullandığını gösterdi. Bu nedenle revision loop otomatik olarak devreye girdi.
+The main risk-increasing evidence included impaired GCS components, low
+systolic blood pressure, neurological body-system information, Neuro ICU
+admission, and other patient-level features.
 
-Revision sonrası validation sonucu:
+The main risk-decreasing evidence included younger age, absence of mechanical
+ventilation, respiratory-rate values, oxygen saturation, hemoglobin, and white
+blood cell count.
+
+The LLM explanation passed deterministic validation directly with score `5.0`.
+
+## Example: `unlabeled_patient_15`
+
+The model predicted:
 
 ```text
-Revised validation passed: True
-Revised deterministic validation score: 5.0
+death_probability: 0.9940
+prediction: 1
+threshold: 0.7274
 ```
 
-Bu sonuç, agentic revision adımının unlabeled hasta üzerinde de çalıştığını gösterir. Yani pipeline LLM çıktısını doğrudan final kabul etmedi; önce deterministic validation yaptı, sorunlu ifade bulunca revizyon istedi ve revize edilmiş açıklamayı tekrar kontrol etti.
+The explanation described high-risk evidence including:
 
-Unlabeled hasta için revised explanation, modelin düşük mortalite olasılığı tahminini şu şekilde açıklar:
+- `d1_heartrate_min = 0.0`
+- low minimum SpO2
+- low GCS motor score
+- mechanical ventilation
+- low systolic blood pressure
+- diagnosis category information
+- high lactate
+- low arterial pH
 
-- risk artıran kanıtlar: GCS bileşenleri, düşük sistolik kan basıncı, BUN, diagnosis category ve bazı ek model sinyalleri
-- risk azaltan kanıtlar: yaş, ventilasyon olmaması, bazı solunum/oksijenasyon ve laboratuvar sinyalleri
-- caution note: `icu_id` non-clinical unit/location identifier olduğu için dikkatle yorumlanmalıdır
+The zero-valued minimum heart rate received a caution note because it may
+represent an extreme clinical event or a recording artifact.
 
-## Validation Audit Bağlantısı
+## Validation and Revision
 
-Daha sonra tüm kaydedilmiş LLM açıklamaları `scripts/14_audit_saved_explanations.py` ile toplu olarak denetlendi. Audit sonucunda `unlabeled_patient_0` initial explanation hâlâ fail olarak kaldı; ancak fail nedeni artık caution eksikliği değil, unsupported wording (`favorable`) idi.
+The refreshed deterministic audit shows:
 
-Bu ayrım önemlidir. İlk exact-match caution validator bazı doğru caution ifadelerini, örneğin `ICU unit identifier`, `icu_id` literal adı geçmediği için eksik sayabiliyordu. Daha sonra caution matching alias-aware hale getirildi. Böylece `icu_id` için `ICU unit identifier` gibi klinik ifadeler doğru caution diliyle birlikte kullanıldığında kabul edilir.
+- direct pass for `unlabeled_patient_0`
+- direct pass for `unlabeled_patient_3`
+- direct pass for `unlabeled_patient_15`
+- revision required for `unlabeled_patient_7`, followed by revised pass
 
-Güncel audit özetinde:
+For `unlabeled_patient_7`, the initial explanation used unsupported wording
+(`abnormal`). The revision loop removed/rephrased the unsupported wording and
+the revised explanation passed with deterministic score `5.0`.
 
-- `unlabeled_patient_0_llm_explanation`: fail, çünkü unsupported wording içeriyor
-- `unlabeled_patient_0_llm_revised_explanation`: pass, deterministic score `5.0`
-- `unlabeled_patient_3_llm_explanation` ve `unlabeled_patient_15_llm_explanation`: alias-aware caution matching sonrası doğrudan pass
-- `unlabeled_patient_7_llm_explanation`: fail, çünkü `abnormal` gibi unsupported wording içeriyor; revised version pass
+## Important Final-Model Difference
 
-## Sonuç
+Earlier prototype outputs included `icu_id` as evidence and therefore required
+explicit caution handling for unit/location identifiers. In the refreshed final
+model, ID and location-like columns are removed during preprocessing. Therefore,
+unlabeled explanations no longer use `icu_id` as model evidence.
 
-Unlabeled demo başarıyla çalıştı. Pipeline ham etiketsiz hasta verisini kaydedilmiş preprocessing artifact ile model input formatına dönüştürdü, final LightGBM modeli ile ölüm olasılığı tahmini üretti, SHAP tabanlı evidence packet oluşturdu, LLM açıklaması için prompt hazırladı ve deterministic validation/revision loop ile açıklama üretimini tamamladı.
+Remaining caution behavior focuses on values such as zero-valued vital signs and
+unusual time-related features when they appear in the evidence packet.
 
-Bu adım, projenin doğrulanmış test pipeline'ından deployment benzeri etiketsiz hasta inference senaryosuna geçtiğini gösterir.
+## Outputs
+
+Main files are stored in:
+
+```text
+reports/08_unlabeled_demo/
+```
+
+For each selected patient, the demo may include:
+
+- `*_prediction.json`
+- `*_evidence.json`
+- `*_prompt.txt`
+- `*_llm_evidence.json`
+- `*_llm_prompt.txt`
+- `*_llm_explanation.txt`
+- `*_llm_validation.json`
+- `*_llm_revised_explanation.txt` only when revision was needed
+- `*_llm_revised_validation.json` only when revision was needed
+
+## Conclusion
+
+The unlabeled demo confirms that the final project can process raw, unlabeled
+patient rows with saved artifacts and produce model predictions, SHAP evidence,
+LLM explanations, deterministic validation reports, and revised explanations
+when needed.

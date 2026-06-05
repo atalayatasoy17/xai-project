@@ -100,6 +100,9 @@ def main() -> None:
                 f,
                 indent=2,
             )
+    else:
+        revised_explanation_path.unlink(missing_ok=True)
+        revised_validation_path.unlink(missing_ok=True)
 
     print("=== Test Patient LLM Demo Saved ===")
     print(f"Patient label : {patient_label}")

@@ -63,13 +63,14 @@ data/processed/
 
 Preprocessing decisions were learned from the training split only:
 
-- removed ID and leakage-prone APACHE death probability columns
-- dropped columns with more than 50% missingness
-- added missingness indicators for remaining missing columns
-- imputed numeric features with train medians
-- imputed categorical features with `Unknown`
-- one-hot encoded categorical variables
-- aligned train/test feature schemas
+- removed ID/location columns: `encounter_id`, `patient_id`, `hospital_id`, `icu_id`
+- removed leakage-prone APACHE death probability columns
+- imputed numeric features with train medians and added missingness indicators
+- imputed binary/categorical features
+- ordinal-encoded binary features
+- one-hot encoded categorical variables with infrequent-category handling
+- omitted numeric scaling because LightGBM is tree-based and evidence values should remain clinically readable
+- aligned train/test/new-patient feature schemas
 
 The final preprocessing logic was converted into `ICUPreprocessor` and saved as `models/icu_preprocessor.pkl`.
 
@@ -98,26 +99,26 @@ F1        = 2 * Precision * Recall / (Precision + Recall)
 Final model:
 
 ```text
-LightGBM Tuned Clean
-threshold = 0.50
+LightGBM Tuned Experiment
+threshold = 0.7274
 ```
 
 Final test performance:
 
 | Metric | Value |
 | --- | ---: |
-| AUROC | 0.9019 |
-| AUPRC | 0.5824 |
-| Accuracy | 0.9013 |
-| Precision | 0.4486 |
-| Recall | 0.6286 |
-| F1 | 0.5235 |
-| TN | 15537 |
-| FP | 1223 |
-| FN | 588 |
-| TP | 995 |
+| AUROC | 0.9103 |
+| AUPRC | 0.5999 |
+| Accuracy | 0.9189 |
+| Precision | 0.5278 |
+| Recall | 0.5704 |
+| F1 | 0.5483 |
+| TN | 15952 |
+| FP | 808 |
+| FN | 680 |
+| TP | 903 |
 
-Threshold `0.50` was kept because it produced a better recall / false-negative balance than higher thresholds in this clinical risk context.
+The final threshold was selected through F1-oriented threshold tuning. It improves precision and F1 while accepting lower recall than the earlier low-threshold prototype.
 
 ### 3. SHAP Explainability
 
@@ -134,7 +135,8 @@ The project includes:
 - local patient-level explanations
 - TP / FN / FP / TN case analysis
 - group-level SHAP error analysis
-- caution notes for variables such as `icu_id`, zero-valued vital signs, and negative `pre_icu_los_days`
+- exploratory SHAP interaction and feature-correlation checks
+- caution notes for zero-valued vital signs, unusual timing values, and coded diagnosis/category features
 
 ### 4. Structured Evidence Packets
 
@@ -198,7 +200,7 @@ score =
 
 Clinical plausibility and clarity are evaluated separately because they are more subjective.
 
-The caution validator uses limited alias-aware matching for caution-flagged features. For example, `ICU unit identifier` can be accepted as a clinical alias for `icu_id` when used in the `Caution notes` section with caution language.
+The caution validator uses limited alias-aware matching for caution-flagged features. This remains useful for readable caution phrasing, although `icu_id` itself is no longer a final model feature because ID/location columns are removed during preprocessing.
 
 ### 7. Validation Audit and GPT-4o Evaluation
 
@@ -210,10 +212,9 @@ scripts/14_audit_saved_explanations.py
 
 Current audit result:
 
-- 10 saved explanations audited
-- 7 passed deterministic validation
-- 3 failed due to unsupported wording
-- all revised explanations passed deterministic validation
+- 7 current saved explanations audited
+- 5 final accepted explanations passed deterministic validation directly or after revision
+- 2 initial explanations failed due to unsupported wording and passed after revision
 
 GPT-4o is used only as an advisory evaluator for:
 
@@ -224,7 +225,7 @@ It does not decide hard pass/fail status. The hard gatekeeper remains the determ
 
 Current GPT-4o evaluation:
 
-- 7 validated explanations evaluated
+- 5 final accepted explanations evaluated
 - hybrid scores ranged from `4.65` to `4.90`
 
 ## Notebooks vs Final Pipeline
@@ -258,7 +259,8 @@ xai-project/
 │   ├── 05_evidence_construction.ipynb
 │   ├── 06_llm_reasoning.ipynb
 │   ├── 07_explanation_evaluation.ipynb
-│   └── 08_llm_generation_and_agentic_review.ipynb
+│   ├── 08_llm_generation_and_agentic_review.ipynb
+│   └── 09_model_experiment.ipynb
 ├── reports/
 │   ├── 01_modeling/
 │   ├── 02_explainability/
@@ -287,7 +289,11 @@ xai-project/
 │   ├── 12_run_unlabeled_patient_llm_demo.py
 │   ├── 13_verify_validation.py
 │   ├── 14_audit_saved_explanations.py
-│   └── 15_run_gpt4o_subjective_evaluation.py
+│   ├── 15_run_gpt4o_subjective_evaluation.py
+│   ├── 16_train_final_lgbm_experiment.py
+│   ├── 17_refresh_explainability_reports.py
+│   ├── 18_refresh_modeling_reports.py
+│   └── 19_refresh_evidence_packets.py
 └── src/
     ├── preprocessing.py
     ├── prediction.py
@@ -323,6 +329,15 @@ python scripts/03_verify_explainability.py
 python scripts/04_verify_evidence.py
 python scripts/05_verify_patient_pipeline.py
 python scripts/06_verify_prompt.py
+```
+
+Refresh final model and report artifacts:
+
+```bash
+python scripts/16_train_final_lgbm_experiment.py
+python scripts/17_refresh_explainability_reports.py
+python scripts/18_refresh_modeling_reports.py
+python scripts/19_refresh_evidence_packets.py
 ```
 
 Run a saved-artifact patient demo:
@@ -389,6 +404,6 @@ Then open `http://localhost:8501`. LLM and GPT-4o calls are optional controls in
 - The deterministic validator is the hard gatekeeper for explanation safety checks.
 - GPT-4o is used only as an advisory evaluator for subjective quality dimensions.
 - An exploratory GPT-4o evaluator produced a false-positive faithfulness concern in one case; this motivated keeping deterministic validation as the hard pass/fail layer.
-- `icu_id` is interpreted cautiously because it may reflect unit-level patterns rather than patient-level clinical status.
+- Earlier exploratory analysis found that `icu_id` could capture unit/location patterns; the final preprocessing schema removes ID/location columns from the model.
 - Alias-aware caution matching is intentionally limited to a small set of caution-flagged features.
 - Raw data and API keys are intentionally excluded from Git.

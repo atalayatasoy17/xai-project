@@ -1,443 +1,216 @@
 # Pipeline Demo Notes
 
-## Amaç
+## Purpose
 
-Bu aşamada notebook'larda parça parça geliştirilen akış `.py` modüllerine taşındı. Amaç, ham bir hasta satırı geldiğinde aynı preprocessing kararlarını uygulayan, final modeli kullanan, tahmin üreten ve bu tahmini SHAP/evidence/prompt katmanına taşıyan tekrar kullanılabilir bir pipeline kurmaktır.
-
-Bu bölümde `unlabeled.csv` henüz kullanılmadı. Önce pipeline'ın doğruluğunu bildiğimiz held-out test verisi üzerinde kanıtlamak istedik. Çünkü test setinde gerçek etiketler var ve daha önce notebook'ta üretilmiş `X_test.csv` ile karşılaştırma yapabiliyoruz.
-
-## Kurulan Modüller
-
-Pipeline kodu `src/` altında modüler şekilde kuruldu:
-
-- `src/preprocessing.py`: ham WiDS formatındaki veriyi modelin beklediği processed feature formatına dönüştürür.
-- `src/prediction.py`: final LightGBM modelini ve threshold bilgisini yükler, ölüm olasılığı ve sınıf tahmini üretir.
-- `src/explainability.py`: tek hasta için local SHAP explanation üretir.
-- `src/evidence.py`: SHAP tablosunu structured evidence packet formatına çevirir.
-- `src/pipeline.py`: preprocessing, prediction, SHAP ve evidence adımlarını tek hasta için birleştirir.
-- `src/prompts.py`: evidence packet'ten LLM'e verilecek açıklama prompt'unu üretir.
-
-Bu yapı sayesinde pipeline şu akışı çalıştırabilir:
+This stage turns the notebook workflow into reusable `.py` modules. The goal is
+to take one raw ICU patient row and run the full final pipeline:
 
 ```text
 raw patient
-→ preprocessing
-→ model prediction
+→ saved/fitted preprocessing
+→ LightGBM prediction
 → local SHAP explanation
 → structured evidence packet
 → LLM prompt
+→ optional LLM explanation
+→ deterministic validation/revision
 ```
 
-## Preprocessing Doğrulaması
+## Final Pipeline Modules
 
-Önce preprocessing adımı doğrulandı. `training_v2.csv` yeniden yüklendi, aynı `train_test_split` ayarları kullanıldı ve `ICUPreprocessor` sadece training split üzerinde fit edildi.
+The production-style code lives in `src/`:
 
-Doğrulama script'i:
+- `src/preprocessing.py`: converts raw WiDS rows into the final 379-feature model schema.
+- `src/prediction.py`: loads the model/threshold and produces mortality probabilities.
+- `src/explainability.py`: produces local SHAP explanations.
+- `src/evidence.py`: converts SHAP rows into structured evidence packets.
+- `src/prompts.py`: builds LLM prompts from evidence packets without true-label leakage.
+- `src/llm.py`: generates and revises explanations.
+- `src/validation.py`: deterministically validates explanation quality.
+- `src/pipeline.py`: combines preprocessing, prediction, SHAP, and evidence.
+
+## Preprocessing Verification
+
+The final preprocessing verification script is:
 
 ```text
 scripts/01_verify_preprocessing.py
 ```
 
-Kontrol edilenler:
+It checks that:
 
-- yeniden oluşturulan `X_test` shape'i
-- kaydedilmiş `data/processed/X_test.csv` shape'i
-- kolon sırası
-- tüm değerlerin birebir eşleşmesi
-- `y_test` eşleşmesi
+- train and test splits use the same 379-feature schema,
+- dropped ID/location/leakage/target columns are absent,
+- feature names match the fitted preprocessor,
+- train/test class balance is preserved by stratified splitting.
 
-Sonuç:
+Current verification summary:
 
 ```text
-Recreated X_test shape : (18343, 263)
-Saved X_test shape     : (18343, 263)
-Columns match          : True
-Values match           : True
-y_test matches         : True
+Processed train shape : (73370, 379)
+Processed test shape  : (18343, 379)
+Leaked columns present: []
+Train death rate      : 0.0863
+Test death rate       : 0.0863
 ```
 
-Bu sonuç pipeline preprocessing kodunun notebook preprocessing çıktısını birebir yeniden ürettiğini gösterir.
+The old direct comparison to a static `data/processed/X_test.csv` was removed
+because the final preprocessing schema is generated from the saved experiment
+pipeline. The processed files are now refreshed by
+`scripts/16_train_final_lgbm_experiment.py`.
 
-## Prediction Doğrulaması
+## Prediction Verification
 
-Preprocessing doğrulandıktan sonra final model prediction adımı test edildi.
-
-Doğrulama script'i:
+Prediction verification is run with:
 
 ```text
 scripts/02_verify_prediction.py
 ```
 
-Bu script:
-
-- ham `training_v2.csv` verisini yükledi
-- aynı train/test split'i yaptı
-- test split'i preprocessing pipeline ile dönüştürdü
-- `models/lgbm_tuned_clean.pkl` modelini yükledi
-- `models/lgbm_tuned_clean_threshold.json` içinden threshold = 0.50 değerini okudu
-- final test metriklerini yeniden hesapladı
-
-Sonuçlar notebook modelleme aşamasıyla birebir eşleşti:
+Final test metrics:
 
 | Metric | Value |
 | --- | ---: |
-| AUROC | 0.9019 |
-| AUPRC | 0.5824 |
-| Accuracy | 0.9013 |
-| Precision | 0.4486 |
-| Recall | 0.6286 |
-| F1 | 0.5235 |
-| TN | 15537 |
-| FP | 1223 |
-| FN | 588 |
-| TP | 995 |
+| Threshold | 0.7274 |
+| AUROC | 0.9103 |
+| AUPRC | 0.5999 |
+| Accuracy | 0.9189 |
+| Precision | 0.5278 |
+| Recall | 0.5704 |
+| F1 | 0.5483 |
+| TN | 15952 |
+| FP | 808 |
+| FN | 680 |
+| TP | 903 |
 
-Bu sonuç, `.py` pipeline'ın final model değerlendirmesini notebook dışından yeniden üretebildiğini gösterir.
+This confirms that the saved `.py` pipeline reproduces the final model
+evaluation outside the notebooks.
 
-## SHAP ve Evidence Doğrulaması
+## SHAP and Evidence Verification
 
-Prediction sonrası tek hasta için SHAP explanation üretildi.
-
-Doğrulama script'leri:
+Single-patient SHAP/evidence verification is run with:
 
 ```text
 scripts/03_verify_explainability.py
 scripts/04_verify_evidence.py
+scripts/05_verify_patient_pipeline.py
 ```
 
-Seçilen örnek hasta:
+The default held-out test patient is:
 
 ```text
 patient_label: test_patient_0
 test_row_index: 72745
-prediction_type: TN
 y_true: 0
 y_pred: 0
-y_proba: 0.0128
+y_proba: 0.0229
+threshold: 0.7274
+prediction_type: TN
 ```
 
-Bu hasta için model düşük mortalite riski verdi ve gerçek etiket de 0 olduğu için prediction type `TN` oldu.
-
-Evidence packet içinde iki ana kanıt grubu üretildi:
-
-- `risk_increasing_evidence`: SHAP değeri pozitif olan ve mortalite riskini artıran faktörler
-- `risk_decreasing_evidence`: SHAP değeri negatif olan ve mortalite riskini azaltan faktörler
-
-Her evidence kaydı şu alanları içerir:
-
-- feature
-- observed value
-- SHAP value
-- direction
-- clinical meaning
-- caution flags
-
-Örnek risk artırıcı faktörler:
+Example risk-increasing evidence:
 
 - `d1_wbc_min = 22.0`
-- `d1_resprate_max = 92.0`
 - `apache_3j_diagnosis = 306.01`
+- `d1_resprate_max = 92.0`
+- `d1_heartrate_min = 90.0`
 
-Örnek risk azaltıcı faktörler:
+Example risk-decreasing evidence:
 
 - `age = 52.0`
+- `urineoutput_apache = 3068.928`
 - `ventilated_apache = 0.0`
 - `d1_mbp_min = 89.0`
-- `d1_spo2_min = 98.0`
 
-Burada dikkat edilmesi gereken önemli nokta şudur: `clinical_meaning` genel klinik anlamı açıklar, SHAP yönü ise o hasta özelinde model katkısını gösterir. Örneğin `ventilated_apache` genel olarak ciddi hastalıkla ilişkilidir; fakat bu hastada değer 0 olduğu için model risk azaltıcı katkı vermiştir.
+The evidence packet separates general clinical meaning from patient-specific
+SHAP direction. For example, mechanical ventilation is generally a severity
+indicator, but `ventilated_apache = 0` can decrease risk for a specific patient.
 
-## Prompt Üretimi
+## Prompt Construction and Label Leakage Prevention
 
-Evidence packet'ten LLM'e verilecek prompt otomatik üretildi.
-
-Doğrulama script'i:
+Prompt verification is run with:
 
 ```text
 scripts/06_verify_prompt.py
 ```
 
-Prompt içinde:
+The prompt includes:
 
-- hasta tahmini
-- risk artırıcı evidence
-- risk azaltıcı evidence
-- klinik anlamlar
-- caution flag bilgileri
-- açıklama formatı
-- hallucination ve true-label leakage önleyici kurallar
+- predicted label,
+- predicted mortality probability,
+- decision threshold,
+- risk-increasing evidence,
+- risk-decreasing evidence,
+- clinical meanings,
+- caution flags,
+- strict grounding rules.
 
-yer aldı.
+The prompt intentionally excludes:
 
-Özellikle önceki LLM denemelerinde gözlenen riskleri azaltmak için prompt'a şu kurallar eklendi:
+- true label,
+- prediction type,
+- TP/FN/FP/TN case label,
+- any statement about whether the prediction was correct.
 
-- sadece verilen evidence kullan
-- klinik bilgi uydurma
-- true label'ı açıklamada kullanma
-- prediction correct/incorrect gibi ifadeler kullanma
-- evidence içinde yoksa ölçü birimi veya normal range ekleme
-- risk artırıcı ve azaltıcı evidence ayrımını doğru yap
+This prevents label leakage into generated explanations.
 
-Bu, LLM açıklamasının evidence-grounded kalması için önemlidir.
+## Saved Test Patient Demo
 
-### Label Leakage Temizliği
-
-Bu aşamada prompt construction tekrar kontrol edildi ve önemli bir metodolojik ayrım netleştirildi:
-
-```text
-evidence packet = bizim analiz kaydımız
-LLM prompt      = modelin gördüğü bilgi
-```
-
-Evidence packet içinde `y_true` ve `prediction_type` bilgileri kalabilir; çünkü bunlar test hastalarında hata analizi, TP/FN/FP/TN sınıflaması ve raporlama için gereklidir. Ancak bu bilgiler LLM'e açıklama üretimi sırasında verilmemelidir. Aksi halde açıklama, modelin kendi prediction evidence'ı yerine gerçek sonuçtan veya `TP/TN/FN/FP` bilgisinden etkilenebilir.
-
-Bu nedenle `src/prompts.py` güncellendi. Prompt artık şunları içermez:
-
-- `True label`
-- `Case type`
-- `TP`, `FN`, `FP`, `TN` bilgisi
-
-Promptta yalnızca modelin kendi çıktıları ve evidence kalır:
-
-```text
-Predicted label
-Predicted mortality probability
-Decision threshold
-Risk-increasing SHAP evidence
-Risk-decreasing SHAP evidence
-Caution flags
-```
-
-Bu değişiklikten sonra `scripts/06_verify_prompt.py`, `scripts/07_run_test_patient_demo.py`, `scripts/10_run_saved_artifact_patient_demo.py`, `scripts/11_run_unlabeled_patient_demo.py`, `scripts/08_run_test_patient_llm_demo.py` ve `scripts/12_run_unlabeled_patient_llm_demo.py` tekrar çalıştırıldı. Böylece kaydedilmiş demo prompt ve LLM çıktıları temiz prompt yapısıyla güncellendi.
-
-## Test Hasta Demo Çıktıları
-
-Son olarak full test patient demo çalıştırıldı.
-
-Script:
+The non-LLM pipeline demo is:
 
 ```text
 scripts/07_run_test_patient_demo.py
 ```
 
-Bu script held-out test setinden bir hasta seçip tüm pipeline'ı çalıştırdı ve çıktıları kaydetti:
+It writes:
 
 - `reports/07_pipeline_demo/test_patient_0_prediction.json`
 - `reports/07_pipeline_demo/test_patient_0_evidence.json`
 - `reports/07_pipeline_demo/test_patient_0_prompt.txt`
 
-Bu demo, pipeline'ın tek hasta için uçtan uca çalıştığını gösterir:
-
-```text
-raw test patient
-→ preprocessing
-→ prediction
-→ SHAP explanation
-→ evidence packet
-→ LLM prompt
-```
-
-## LLM Generation ve Validation
-
-Prompt üretimi doğrulandıktan sonra pipeline'a opsiyonel LLM generation adımı eklendi.
-
-Script:
-
-```text
-scripts/08_run_test_patient_llm_demo.py
-```
-
-Bu script aynı test hastası için şu akışı çalıştırır:
-
-```text
-raw test patient
-→ preprocessing
-→ prediction
-→ SHAP explanation
-→ evidence packet
-→ LLM prompt
-→ OpenAI explanation generation
-→ deterministic validation
-→ revision if needed
-→ revised validation
-```
-
-LLM generation için `gpt-4.1-mini` kullanıldı. API anahtarı `.env` dosyasındaki `OPENAI_API_KEY` üzerinden okunur. API key yoksa LLM adımı anlaşılır bir hata mesajı verir.
-
-Bu adım sonunda şu dosyalar oluşturuldu:
-
-- `reports/07_pipeline_demo/test_patient_0_llm_evidence.json`
-- `reports/07_pipeline_demo/test_patient_0_llm_prompt.txt`
-- `reports/07_pipeline_demo/test_patient_0_llm_explanation.txt`
-- `reports/07_pipeline_demo/test_patient_0_llm_validation.json`
-
-Generated explanation okunabilir ve genel akışı takip edebilir durumdadır; ancak LLM'in evidence dışına taşma riski tamamen ortadan kalkmamıştır. Bu nedenle açıklama üretildikten sonra deterministic validation uygulanmıştır.
-
-Final validation katmanı yalnızca forbidden phrase taraması yapmaz. `src/validation.py` şu kontrolleri birlikte yürütür:
-
-- unsupported / forbidden wording
-- true-label leakage
-- required section structure
-- prediction probability consistency
-- caution mentions
-- feature grounding
-- SHAP direction consistency
-
-Bu test hasta çıktısında initial explanation validator tarafından fail edildi. Başlıca nedenler unsupported wording ve prediction probability consistency problemiydi:
-
-```text
-stable
-adequate
-```
-
-Bu ifadeler, açıklamanın bazı yerlerinde evidence'tan daha yorumlayıcı bir dile kaydığını gösterir. Bu kötü bir sonuç olarak değil, pipeline'ın LLM çıktısını körlemesine kabul etmediğinin kanıtı olarak yorumlandı.
-
-Bu nedenle LLM çıktısı şu şekilde ele alınmalıdır:
-
-```text
-generated draft explanation
-→ deterministic validation report
-→ revision if needed
-→ revised validation report
-→ final explanation candidate
-```
-
-Bu yaklaşım notebook 08'de kurulan agentic review mantığıyla uyumludur. LLM açıklaması üretilebilir, fakat klinik bağlamda final kabul edilmeden önce faithfulness, hallucination ve caution awareness açısından değerlendirilmelidir.
-
-## LLM Revision Loop
-
-Validation katmanı eklendikten sonra pipeline'a otomatik revision loop da eklendi. Amaç, LLM'in ilk açıklamasında flag'lenen ifadeler varsa bu açıklamayı doğrudan final kabul etmemek ve ikinci bir LLM çağrısıyla daha sıkı bir revizyon üretmektir.
-
-Yeni akış şu şekildedir:
-
-```text
-initial LLM explanation
-→ deterministic validation
-→ if revision_required is true, build revision prompt from validation feedback
-→ revised LLM explanation
-→ revised validation
-```
-
-İlk LLM çıktısında validator unsupported wording ve probability consistency gibi sorunlar yakaladı. Revision prompt artık yalnızca flag'lenen kelimeleri değil, validation report içindeki yapılandırılmış feedback'i kullanır. Örneğin:
-
-```text
-Remove or rephrase unsupported/risky wording: stable, adequate.
-Correct the predicted mortality probability to match the evidence.
-```
-
-Bu feedback, LLM'e açıklamayı evidence'a daha uygun şekilde yeniden yazmasını söyler.
-
-Revision sonrası validation sonucu:
-
-```text
-Revised validation passed: True
-Revised deterministic validation score: 5.0
-```
-
-Bu sonuç, otomatik revision loop'un ilk açıklamadaki sorunları düzeltebildiğini gösterir.
-
-Ayrıca validator başlangıçta basit substring matching kullanıyordu. Bu yaklaşım `instability` gibi desteklenen klinik ifadelerin içinde geçen `stability` kelimesini yanlışlıkla flag'leyebilirdi. Bu nedenle validator whole-word matching kullanacak şekilde güncellendi. Daha sonra caution mention kontrolü de alias-aware hale getirildi. Böylece `icu_id` gibi teknik kolon adları yerine `ICU unit identifier` gibi klinik ifadeler, doğru caution diliyle birlikte kullanıldığında kabul edilebilir.
-
-Bu adım projenin agentic kısmı için önemlidir. Pipeline artık yalnızca LLM explanation üretmekle kalmaz; aynı zamanda çıktıyı denetler, problemli ifade bulursa revizyon ister ve revize edilmiş açıklamayı tekrar kontrol eder.
-
-## Saved Artifact Demo
-
-İlk pipeline doğrulamaları sırasında `ICUPreprocessor` her script içinde yeniden train split üzerinde fit ediliyordu. Bu yöntem doğrulama için uygundur; çünkü notebook preprocessing çıktısını yeniden üretmeyi test eder. Ancak deployment benzeri kullanım için daha doğru yapı, preprocessing kurallarını da model gibi kaydetmektir.
-
-Bu nedenle fitted preprocessor artifact olarak kaydedildi:
-
-```text
-models/icu_preprocessor.pkl
-```
-
-Bu artifact şu bilgileri içerir:
-
-- high-missing kolon kararları
-- missing indicator kolonları
-- numeric ve categorical kolon listeleri
-- train median değerleri
-- final feature schema
-
-Artifact kaydetme script'i:
-
-```text
-scripts/09_save_preprocessor_artifact.py
-```
-
-Bu script yalnızca preprocessor'ı kaydetmekle kalmadı, kaydedilen artifact'i tekrar yükleyip held-out test setini dönüştürdü ve kaydedilmiş `data/processed/X_test.csv` ile karşılaştırdı.
-
-Doğrulama sonucu:
-
-```text
-Feature count: 263
-X_test match : True
-```
-
-Bu, saved preprocessor artifact'inin notebook preprocessing çıktısını birebir yeniden üretebildiğini gösterir.
-
-Ardından deployment-style demo script'i eklendi:
+The saved-artifact version is:
 
 ```text
 scripts/10_run_saved_artifact_patient_demo.py
 ```
 
-Bu script artık preprocessing'i yeniden fit etmez. Bunun yerine şu artifact'leri yükler:
+It verifies that the serialized preprocessor/model/threshold can run the same
+single-patient inference workflow.
+
+## LLM Generation and Deterministic Validation
+
+The LLM pipeline demo is:
 
 ```text
-models/icu_preprocessor.pkl
-models/lgbm_tuned_clean.pkl
-models/lgbm_tuned_clean_threshold.json
+scripts/08_run_test_patient_llm_demo.py
 ```
 
-Sonra raw test hastası üzerinde aynı pipeline'ı çalıştırır:
+For the refreshed final model, the initial explanation required revision:
 
 ```text
-saved preprocessor
-+ saved model
-+ saved threshold
-+ raw patient
-→ prediction
-→ SHAP explanation
-→ evidence packet
-→ prompt
+Validation passed: False
+Revision required: True
+Validation score : 4.538
+Revision rounds  : 2
+Revised passed   : True
+Revised score    : 5.0
 ```
 
-Saved artifact demo çıktıları:
-
-- `reports/07_pipeline_demo/test_patient_0_saved_artifacts_prediction.json`
-- `reports/07_pipeline_demo/test_patient_0_saved_artifacts_evidence.json`
-- `reports/07_pipeline_demo/test_patient_0_saved_artifacts_prompt.txt`
-
-Prediction sonucu önceki test patient demo ile aynı çıktı:
+This demonstrates the intended agentic review loop:
 
 ```text
-death_probability: 0.0128
-prediction: 0
-threshold: 0.50
+generate explanation
+→ validate deterministically
+→ revise if needed
+→ validate revised explanation
 ```
 
-Bu adım `unlabeled.csv` demosu için doğrudan temel oluşturur. Çünkü etiketsiz yeni hasta verisinde artık training datasını yeniden fit etmeden, kaydedilmiş preprocessing ve model artifact'leri ile tahmin ve açıklama üretilebilir.
+The explanation is not accepted blindly; it must pass deterministic checks for
+forbidden wording, probability consistency, caution awareness, section
+structure, feature grounding, and SHAP direction consistency.
 
-## Neden Unlabeled En Sona Bırakıldı?
+## Conclusion
 
-`data/raw/unlabeled.csv` gerçek deployment demosu için uygundur; çünkü ham formatta gelir ve `hospital_death` değerleri boştur. Ancak etiketsiz olduğu için prediction doğruluğunu kontrol edemeyiz.
-
-Bu nedenle önce held-out test verisi kullanıldı:
-
-- gerçek etiketler biliniyor
-- notebook çıktılarıyla birebir karşılaştırma yapılabiliyor
-- preprocessing ve prediction doğrulanabiliyor
-- SHAP/evidence/prompt akışı kontrollü şekilde incelenebiliyor
-
-Bu doğrulama tamamlandıktan sonra aynı pipeline `unlabeled.csv` üzerinde güvenle uygulanabilir.
-
-## Sonuç
-
-Bu aşamada notebook tabanlı analizlerden tekrar kullanılabilir bir Python pipeline'a geçildi. Pipeline artık ham test hastasını alıp modelin beklediği feature formatına dönüştürebiliyor, final LightGBM modeliyle tahmin üretiyor, local SHAP explanation çıkarıyor, structured evidence packet oluşturuyor, LLM için evidence-grounded prompt hazırlıyor ve LLM açıklamasını deterministic validation/revision katmanından geçirebiliyor. Ayrıca saved preprocessor artifact ile deployment-style kullanım da doğrulandı.
-
-Bu adım projenin deployment benzeri akışa geçişidir. Daha sonraki aşamalarda bu yapı genişletildi:
-
-- aynı saved-artifact pipeline `unlabeled.csv` üzerinde çalıştırıldı
-- saved LLM explanations deterministic audit'ten geçirildi
-- alias-aware caution validation eklendi
-- GPT-4o yalnızca clinical plausibility ve clarity için advisory evaluator olarak kullanıldı
+The pipeline demo confirms that the final model can be used end-to-end from raw
+patient row to validated explanation. The same code path supports held-out test
+patients, unlabeled patients, and the Streamlit dashboard.

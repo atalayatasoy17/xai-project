@@ -1,14 +1,14 @@
 1. Prediction summary  
-The model predicted a mortality probability of 0.0128 for this ICU patient.
+The model predicted a low mortality probability of 0.0229 for this ICU patient.
 
 2. Main risk-increasing factors  
-Elevated white blood cell count (d1_wbc_min = 22.0) reflecting inflammatory or immune status increased the predicted risk. A high respiratory rate (d1_resprate_max = 92.0) indicating possible respiratory distress also increased risk. The diagnosis category (apache_3j_diagnosis = 306.01) contributed baseline clinical severity information that raised risk. Additionally, a minimum heart rate of 90.0, which may indicate severe instability or data quality issues, increased risk. Other features such as wbc_apache = 22.0, h1_resprate_max = 31.0, d1_wbc_max = 22.0, and d1_hemaglobin_min = 8.8 increased the model’s predicted risk without predefined clinical interpretations.
+Elevated white blood cell count (22.0) reflecting inflammatory or immune status increased the predicted risk. The diagnosis category (306.01) contributed baseline clinical severity information that raised risk. High respiratory rate values, including a maximum of 92.0 on day 1 and 31.0 in hour 1, increased risk, with the day 1 maximum indicating possible respiratory distress. A minimum heart rate of 90.0 on day 1, which may indicate severe instability, also increased risk. Hemaglobin maximum (9.9) and minimum (8.8) on day 1 increased the model’s predicted risk. The absence of elective surgery increased risk as well.
 
 3. Main risk-decreasing factors  
-Younger age (52.0) decreased risk, as older age is associated with higher mortality. The absence of mechanical ventilation (ventilated_apache = 0.0) decreased risk since ventilation indicates severe illness. Minimum mean blood pressure (d1_mbp_min = 89.0) decreased risk, as low values indicate hemodynamic instability. Lower minimum respiratory rate (h1_resprate_min = 10.0) and minimum noninvasive mean blood pressure (d1_mbp_noninvasive_min = 89.0) also decreased risk without specific clinical interpretations. A minimum oxygen saturation of 98.0 decreased risk, as low values indicate hypoxemia. A GCS motor score of 6.0 and a maximum heart rate of 97.0 decreased risk, reflecting impaired neurological response and physiological stress respectively.
+Age = 52.0 decreased the model’s predicted risk, although older age is associated with higher mortality. A minimum mean blood pressure of 89.0 on day 1 decreased risk, as low values indicate instability. Glasgow Coma Scale motor score of 6.0 and verbal score of 5.0 decreased risk, despite indicating impaired neurological response. A maximum heart rate of 97.0 on day 1 decreased risk.
 
 4. Caution notes  
 No caution flags were present for the features contributing to this prediction.
 
 5. Overall interpretation  
-The model integrated risk-increasing factors related to inflammation, respiratory distress, and clinical severity with risk-decreasing factors including younger age, absence of mechanical ventilation, and measures related to blood pressure, oxygenation, and neurological response. This combination resulted in a low predicted mortality probability.
+The model combined inflammatory and respiratory indicators that increased risk with younger age, blood pressure, neurological scores, and heart rate that decreased risk. This combination resulted in a low predicted mortality probability.

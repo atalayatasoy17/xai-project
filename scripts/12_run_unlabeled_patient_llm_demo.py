@@ -117,6 +117,9 @@ def main() -> None:
                     f,
                     indent=2,
                 )
+        else:
+            revised_explanation_path.unlink(missing_ok=True)
+            revised_validation_path.unlink(missing_ok=True)
 
     title = (
         "=== Unlabeled Patient LLM Demo ==="

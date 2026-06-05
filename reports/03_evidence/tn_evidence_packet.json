@@ -1,0 +1,143 @@
+{
+  "patient_label": "TN",
+  "prediction": {
+    "y_pred": 0,
+    "y_proba": 0.0015095454124674245,
+    "threshold": 0.7273530450209328,
+    "y_true": 0,
+    "prediction_type": "TN"
+  },
+  "risk_increasing_evidence": [
+    {
+      "feature": "elective_surgery",
+      "value": 0,
+      "shap_value": 0.03284562398143364,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "h1_temp_min",
+      "value": null,
+      "shap_value": 0.024615746104372938,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "bmi",
+      "value": 23.59688361,
+      "shap_value": 0.023549094772930435,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "icu_admit_source_Operating Room / Recovery",
+      "value": 0.0,
+      "shap_value": 0.020177709742170636,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "gender",
+      "value": "M",
+      "shap_value": 0.018640290791207756,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "bilirubin_apache",
+      "value": null,
+      "shap_value": 0.0180129417027799,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_mbp_min",
+      "value": 59.0,
+      "shap_value": 0.01708758179542593,
+      "direction": "risk_increasing",
+      "clinical_meaning": "low mean blood pressure indicates hemodynamic instability",
+      "caution_flags": []
+    },
+    {
+      "feature": "apache_3j_bodysystem_Cardiovascular",
+      "value": 0.0,
+      "shap_value": 0.01407107837417939,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    }
+  ],
+  "risk_decreasing_evidence": [
+    {
+      "feature": "age",
+      "value": 28.0,
+      "shap_value": -0.9898189232819941,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "older age is associated with higher mortality risk",
+      "caution_flags": []
+    },
+    {
+      "feature": "apache_3j_bodysystem_Metabolic",
+      "value": 1.0,
+      "shap_value": -0.31115057642579824,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "apache_3j_diagnosis",
+      "value": 703.03,
+      "shap_value": -0.28348449731057934,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "diagnosis category contributes baseline clinical severity information",
+      "caution_flags": []
+    },
+    {
+      "feature": "ventilated_apache",
+      "value": 0.0,
+      "shap_value": -0.21050589056027466,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_resprate_max",
+      "value": 19.0,
+      "shap_value": -0.19100813880155768,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "high respiratory rate may indicate respiratory distress",
+      "caution_flags": []
+    },
+    {
+      "feature": "urineoutput_apache",
+      "value": 2128.9824,
+      "shap_value": -0.18539111530995342,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_hemaglobin_min",
+      "value": 14.7,
+      "shap_value": -0.12810001149237246,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_bun_min",
+      "value": 12.0,
+      "shap_value": -0.12258253164021386,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "BUN reflects renal function and metabolic status",
+      "caution_flags": []
+    }
+  ],
+  "test_row_index": 10107
+}

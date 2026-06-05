@@ -1,10 +1,10 @@
 {
-  "passed": false,
-  "revision_required": true,
-  "deterministic_validation_score": 4.385,
+  "passed": true,
+  "revision_required": false,
+  "deterministic_validation_score": 5.0,
   "dimension_scores": {
     "faithfulness_no_hallucination": 5,
-    "caution_awareness": 3,
+    "caution_awareness": 5,
     "completeness": 5
   },
   "checks": {
@@ -29,59 +29,115 @@
     },
     "prediction_consistency": {
       "passed": true,
-      "expected_probability": 0.9919451201704785,
-      "matched_probability": 0.9919,
+      "expected_probability": 0.9940162392391094,
+      "matched_probability": 0.994,
       "candidates": [
-        0.9919,
+        0.994,
+        0.73,
         0.0,
+        1.0,
         1.0
       ],
       "tolerance": 0.01
     },
     "caution_mentions": {
-      "passed": false,
-      "missing_features": [
-        "d1_heartrate_min",
-        "icu_id"
+      "passed": true,
+      "missing_features": [],
+      "mention_matches": [
+        {
+          "feature": "d1_heartrate_min",
+          "matched_text": "minimum heart rate",
+          "matched_sentence": "The zero-valued minimum heart rate may reflect an extreme clinical event or a recording artifact and requires careful interpretation."
+        }
       ],
-      "mentioned_features": [],
-      "caution_feature_count": 2
+      "caution_feature_count": 1,
+      "matching_mode": "alias_aware_caution_section"
     },
     "feature_grounding": {
       "passed": true,
       "ungrounded_features": [],
-      "grounded_features": [],
-      "mentioned_features": [],
-      "evidence_features": [
+      "grounded_features": [
         "apache_3j_diagnosis",
-        "d1_diasbp_noninvasive_min",
-        "d1_hco3_max",
+        "d1_arterial_ph_min",
         "d1_heartrate_min",
-        "d1_sodium_max",
+        "d1_hemaglobin_max",
+        "d1_lactate_min",
         "d1_spo2_min",
         "d1_sysbp_min",
-        "d1_temp_max",
         "d1_wbc_min",
         "gcs_motor_apache",
         "glucose_apache",
         "h1_heartrate_max",
-        "h1_heartrate_min",
-        "hematocrit_apache",
-        "icu_id",
-        "ventilated_apache"
+        "h1_resprate_max",
+        "h1_sysbp_noninvasive_max",
+        "urineoutput_apache",
+        "ventilated_apache",
+        "wbc_apache"
+      ],
+      "mentioned_features": [
+        "apache_3j_diagnosis",
+        "d1_arterial_ph_min",
+        "d1_heartrate_min",
+        "d1_hemaglobin_max",
+        "d1_lactate_min",
+        "d1_spo2_min",
+        "d1_sysbp_min",
+        "d1_wbc_min",
+        "gcs_motor_apache",
+        "glucose_apache",
+        "h1_heartrate_max",
+        "h1_resprate_max",
+        "h1_sysbp_noninvasive_max",
+        "urineoutput_apache",
+        "ventilated_apache",
+        "wbc_apache"
+      ],
+      "evidence_features": [
+        "apache_3j_diagnosis",
+        "d1_arterial_ph_min",
+        "d1_heartrate_min",
+        "d1_hemaglobin_max",
+        "d1_lactate_min",
+        "d1_spo2_min",
+        "d1_sysbp_min",
+        "d1_wbc_min",
+        "gcs_motor_apache",
+        "glucose_apache",
+        "h1_heartrate_max",
+        "h1_resprate_max",
+        "h1_sysbp_noninvasive_max",
+        "urineoutput_apache",
+        "ventilated_apache",
+        "wbc_apache"
       ],
       "matching_mode": "exact_feature_name"
     },
     "direction_consistency": {
       "passed": true,
       "direction_errors": [],
-      "mentioned_in_risk_increasing_section": [],
-      "mentioned_in_risk_decreasing_section": [],
+      "mentioned_in_risk_increasing_section": [
+        "apache_3j_diagnosis",
+        "d1_arterial_ph_min",
+        "d1_heartrate_min",
+        "d1_lactate_min",
+        "d1_spo2_min",
+        "d1_sysbp_min",
+        "gcs_motor_apache",
+        "ventilated_apache"
+      ],
+      "mentioned_in_risk_decreasing_section": [
+        "d1_hemaglobin_max",
+        "d1_wbc_min",
+        "glucose_apache",
+        "h1_heartrate_max",
+        "h1_resprate_max",
+        "h1_sysbp_noninvasive_max",
+        "urineoutput_apache",
+        "wbc_apache"
+      ],
       "matching_mode": "exact_feature_name"
     }
   },
-  "revision_feedback": [
-    "Mention caution for flagged features: d1_heartrate_min, icu_id."
-  ],
+  "revision_feedback": [],
   "schema_version": "1.0"
 }

@@ -1,0 +1,7 @@
+column,present_in_final_X_shap
+encounter_id,False
+patient_id,False
+hospital_id,False
+icu_id,False
+apache_4a_hospital_death_prob,False
+apache_4a_icu_death_prob,False

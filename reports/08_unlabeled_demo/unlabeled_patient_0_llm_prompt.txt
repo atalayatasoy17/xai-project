@@ -19,15 +19,15 @@ If a feature has a caution flag, mention it carefully.
 
 Patient prediction:
 - Predicted label: 0
-- Predicted mortality probability: 0.0291
-- Decision threshold: 0.50
+- Predicted mortality probability: 0.1825
+- Decision threshold: 0.73
 
 Risk-increasing evidence:
 [
   {
     "feature": "gcs_verbal_apache",
     "value": 1.0,
-    "shap_value": 0.32038058143110787,
+    "shap_value": 0.3663655629876568,
     "direction": "risk_increasing",
     "clinical_meaning": "low GCS verbal score indicates impaired neurological response",
     "caution_flags": []
@@ -35,55 +35,55 @@ Risk-increasing evidence:
   {
     "feature": "gcs_motor_apache",
     "value": 5.0,
-    "shap_value": 0.29834452044090276,
+    "shap_value": 0.21018512570250888,
     "direction": "risk_increasing",
     "clinical_meaning": "low GCS motor score indicates impaired neurological response",
     "caution_flags": []
   },
   {
-    "feature": "gcs_eyes_apache",
-    "value": 2.0,
-    "shap_value": 0.20398188111498508,
-    "direction": "risk_increasing",
-    "clinical_meaning": "low GCS eye score indicates impaired neurological response",
-    "caution_flags": []
-  },
-  {
-    "feature": "d1_glucose_min",
-    "value": 167.0,
-    "shap_value": 0.15515543748451893,
-    "direction": "risk_increasing",
-    "clinical_meaning": "No predefined clinical interpretation available.",
-    "caution_flags": []
-  },
-  {
-    "feature": "apache_3j_diagnosis",
-    "value": 405.01,
-    "shap_value": 0.15037851425816157,
-    "direction": "risk_increasing",
-    "clinical_meaning": "diagnosis category contributes baseline clinical severity information",
-    "caution_flags": []
-  },
-  {
     "feature": "d1_sysbp_min",
     "value": 79.0,
-    "shap_value": 0.14730636337699615,
+    "shap_value": 0.16092546112725375,
     "direction": "risk_increasing",
     "clinical_meaning": "low systolic blood pressure indicates hemodynamic instability",
     "caution_flags": []
   },
   {
-    "feature": "d1_bun_max",
-    "value": 19.0,
-    "shap_value": 0.08218903625043442,
+    "feature": "apache_3j_bodysystem_Neurological",
+    "value": 1.0,
+    "shap_value": 0.14724579508378835,
     "direction": "risk_increasing",
-    "clinical_meaning": "elevated BUN may indicate renal dysfunction or metabolic stress",
+    "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
   },
   {
-    "feature": "resprate_apache",
-    "value": 5.0,
-    "shap_value": 0.07605521640986647,
+    "feature": "gcs_eyes_apache",
+    "value": 2.0,
+    "shap_value": 0.12828912507137205,
+    "direction": "risk_increasing",
+    "clinical_meaning": "low GCS eye score indicates impaired neurological response",
+    "caution_flags": []
+  },
+  {
+    "feature": "icu_type_Neuro ICU",
+    "value": 1.0,
+    "shap_value": 0.11934138666473355,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_sysbp_noninvasive_min",
+    "value": 79.0,
+    "shap_value": 0.11171391964811599,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_potassium_min",
+    "value": 4.8,
+    "shap_value": 0.09747647591243928,
     "direction": "risk_increasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
@@ -93,19 +93,9 @@ Risk-increasing evidence:
 Risk-decreasing evidence:
 [
   {
-    "feature": "icu_id",
-    "value": 1105,
-    "shap_value": -0.8035050237291431,
-    "direction": "risk_decreasing",
-    "clinical_meaning": "ICU unit identifier; may reflect unit-level patterns rather than patient-level clinical status",
-    "caution_flags": [
-      "Non-clinical unit/location identifier; interpret cautiously."
-    ]
-  },
-  {
     "feature": "age",
     "value": 56.0,
-    "shap_value": -0.4717985255393449,
+    "shap_value": -0.3261292619118961,
     "direction": "risk_decreasing",
     "clinical_meaning": "older age is associated with higher mortality risk",
     "caution_flags": []
@@ -113,49 +103,57 @@ Risk-decreasing evidence:
   {
     "feature": "ventilated_apache",
     "value": 0.0,
-    "shap_value": -0.26311187161024097,
+    "shap_value": -0.20148007157490078,
     "direction": "risk_decreasing",
     "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
     "caution_flags": []
   },
   {
-    "feature": "h1_resprate_min",
-    "value": 8.0,
-    "shap_value": -0.242213524210563,
-    "direction": "risk_decreasing",
-    "clinical_meaning": "No predefined clinical interpretation available.",
-    "caution_flags": []
-  },
-  {
     "feature": "d1_resprate_max",
     "value": 20.0,
-    "shap_value": -0.2206353249837463,
+    "shap_value": -0.1511919719521169,
     "direction": "risk_decreasing",
     "clinical_meaning": "high respiratory rate may indicate respiratory distress",
     "caution_flags": []
   },
   {
+    "feature": "d1_hemaglobin_min",
+    "value": 13.8,
+    "shap_value": -0.13595092882477539,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "h1_resprate_min",
+    "value": 8.0,
+    "shap_value": -0.12286033747786758,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
     "feature": "d1_spo2_min",
     "value": 96.0,
-    "shap_value": -0.17675908805156645,
+    "shap_value": -0.12120149104820233,
     "direction": "risk_decreasing",
     "clinical_meaning": "low minimum oxygen saturation indicates hypoxemia",
     "caution_flags": []
   },
   {
-    "feature": "d1_wbc_min",
-    "value": 4.7,
-    "shap_value": -0.13734719672396517,
+    "feature": "d1_hemaglobin_max",
+    "value": 13.8,
+    "shap_value": -0.11316080343923704,
     "direction": "risk_decreasing",
-    "clinical_meaning": "white blood cell count reflects inflammatory or immune status",
+    "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
   },
   {
-    "feature": "d1_hemaglobin_min",
-    "value": 13.8,
-    "shap_value": -0.1305251124933027,
+    "feature": "d1_wbc_min",
+    "value": 4.7,
+    "shap_value": -0.11225134008260512,
     "direction": "risk_decreasing",
-    "clinical_meaning": "No predefined clinical interpretation available.",
+    "clinical_meaning": "white blood cell count reflects inflammatory or immune status",
     "caution_flags": []
   }
 ]

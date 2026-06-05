@@ -132,7 +132,7 @@ Rules:
 - For features without explicit clinical_meaning, use this exact style: "<feature> = <value> increased/decreased the model's predicted risk."
 - Do not use any flagged unsupported wording.
 - Correct any prediction probability, feature grounding, caution, section, or SHAP-direction issues identified in the feedback.
-- When revising caution notes, include the exact flagged feature name, such as "icu_id", in the Caution notes section.
+- When revising caution notes, include the exact flagged feature name identified in the validation feedback.
 - Preserve the same section structure:
   1. Prediction summary
   2. Main risk-increasing factors

@@ -1,10 +1,10 @@
 {
   "passed": false,
   "revision_required": true,
-  "deterministic_validation_score": 4.231,
+  "deterministic_validation_score": 4.538,
   "dimension_scores": {
     "faithfulness_no_hallucination": 4,
-    "caution_awareness": 4,
+    "caution_awareness": 5,
     "completeness": 5
   },
   "checks": {
@@ -31,50 +31,43 @@
     },
     "prediction_consistency": {
       "passed": true,
-      "expected_probability": 0.08056957431824724,
-      "matched_probability": 0.0806,
+      "expected_probability": 0.2141172246297535,
+      "matched_probability": 0.2141,
       "candidates": [
-        0.0806
+        0.2141,
+        0.73,
+        0.2
       ],
       "tolerance": 0.01
     },
     "caution_mentions": {
-      "passed": false,
-      "missing_features": [
-        "icu_id"
-      ],
-      "mentioned_features": [],
-      "caution_feature_count": 1
+      "passed": true,
+      "missing_features": [],
+      "mention_matches": [],
+      "caution_feature_count": 0,
+      "matching_mode": "alias_aware_caution_section"
     },
     "feature_grounding": {
       "passed": true,
       "ungrounded_features": [],
-      "grounded_features": [
-        "apache_3j_diagnosis",
-        "icu_id",
-        "ventilated_apache"
-      ],
-      "mentioned_features": [
-        "apache_3j_diagnosis",
-        "icu_id",
-        "ventilated_apache"
-      ],
+      "grounded_features": [],
+      "mentioned_features": [],
       "evidence_features": [
         "age",
+        "apache_3j_bodysystem_Neurological",
         "apache_3j_diagnosis",
-        "bun_apache",
+        "d1_bilirubin_max",
+        "d1_bilirubin_min",
+        "d1_bun_max",
         "d1_bun_min",
-        "d1_diasbp_noninvasive_min",
         "d1_glucose_min",
-        "d1_hco3_max",
         "d1_heartrate_max",
         "d1_heartrate_min",
         "d1_resprate_max",
         "d1_resprate_min",
-        "d1_sysbp_min",
         "gcs_motor_apache",
         "gcs_verbal_apache",
-        "icu_id",
+        "pre_icu_los_days",
         "ventilated_apache"
       ],
       "matching_mode": "exact_feature_name"
@@ -83,19 +76,14 @@
       "passed": true,
       "direction_errors": [],
       "mentioned_in_risk_increasing_section": [
-        "age",
-        "apache_3j_diagnosis"
+        "age"
       ],
-      "mentioned_in_risk_decreasing_section": [
-        "icu_id",
-        "ventilated_apache"
-      ],
+      "mentioned_in_risk_decreasing_section": [],
       "matching_mode": "exact_feature_name"
     }
   },
   "revision_feedback": [
-    "Remove or rephrase unsupported/risky wording: abnormal.",
-    "Mention caution in the Caution notes section using the exact feature name(s): icu_id."
+    "Remove or rephrase unsupported/risky wording: abnormal."
   ],
   "schema_version": "1.0"
 }

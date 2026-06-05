@@ -100,6 +100,18 @@ def main() -> None:
     with open(ROOT / "models/lgbm_tuned_clean_threshold.json", "w") as f:
         json.dump({"threshold": threshold}, f, indent=2)
 
+    processed_dir = ROOT / "data/processed"
+    processed_dir.mkdir(parents=True, exist_ok=True)
+    X_train.to_csv(processed_dir / "X_train.csv", index=False)
+    X_test.to_csv(processed_dir / "X_test.csv", index=False)
+    y_train.to_csv(processed_dir / "y_train.csv", index=False)
+    y_test.to_csv(processed_dir / "y_test.csv", index=False)
+    pd.DataFrame({"feature": preprocessor.feature_names_}).to_csv(
+        processed_dir / "feature_names.csv",
+        index=False,
+        header=False,
+    )
+
     modeling_dir = ROOT / "reports/01_modeling"
     modeling_dir.mkdir(parents=True, exist_ok=True)
 
@@ -116,6 +128,7 @@ def main() -> None:
     print("Preprocessor : models/icu_preprocessor.pkl")
     print("Model        : models/lgbm_tuned_clean.pkl")
     print("Threshold    : models/lgbm_tuned_clean_threshold.json")
+    print("Processed data: data/processed/")
     print(f"Feature count: {len(preprocessor.feature_names_)}")
     print()
     print("=== Test Metrics ===")

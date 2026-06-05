@@ -2,18 +2,37 @@
 
 ## Global SHAP Observations
 
-- The global SHAP analysis identified clinically meaningful high-importance features such as `age`, `ventilated_apache`, `d1_spo2_min`, `gcs_motor_apache`, vital signs, and laboratory values.
-- `icu_id` also appeared among the top global SHAP features. Since this is likely a unit/location identifier rather than a direct clinical measurement, it should not be interpreted as a patient-level clinical risk factor.
+The refreshed SHAP analysis uses the final tuned LightGBM model and the final
+379-feature preprocessing schema.
+
+Top global SHAP features by mean absolute SHAP value:
+
+```text
+age
+ventilated_apache
+apache_3j_diagnosis
+d1_bun_max
+d1_spo2_min
+gcs_motor_apache
+gcs_verbal_apache
+d1_heartrate_min
+d1_heartrate_max
+d1_resprate_max
+```
+
+Compared with the earlier prototype, `icu_id` is no longer part of the final
+model input. The earlier `icu_id` analysis was useful because it identified a
+unit/location signal that should not be treated as patient-level clinical
+evidence. In the final preprocessing schema, ID/location columns are removed.
 
 ## Saved Explainability Outputs
 
-The main visual and tabular outputs from `notebooks/04_shap_explainability.ipynb`
-were archived under:
+The refreshed report artifacts are stored under:
 
-- `figures/`
-- `tables/`
+- `reports/02_explainability/figures/`
+- `reports/02_explainability/tables/`
 
-Key saved figures include:
+Key figures:
 
 - `figures/predicted_probability_distribution.png`
 - `figures/global_shap_importance_top20.png`
@@ -29,123 +48,231 @@ Key saved figures include:
 - `figures/top20_shap_interaction_heatmap.png`
 - `figures/top20_feature_correlation_heatmap.png`
 
-Key saved tables include:
+Key tables:
 
 - `tables/global_shap_importance.csv`
-- `tables/age_shap_grouped.csv`
-- `tables/spo2_shap_grouped.csv`
-- `tables/ventilated_shap_grouped.csv`
-- `tables/gcs_motor_shap_grouped.csv`
+- `tables/top20_shap_features.csv`
+- `tables/prediction_types.csv`
 - `tables/selected_local_cases.csv`
 - `tables/local_explanation_tp.csv`
 - `tables/local_explanation_fn.csv`
 - `tables/local_explanation_fp.csv`
 - `tables/local_explanation_tn.csv`
+- `tables/age_shap_grouped.csv`
+- `tables/spo2_shap_grouped.csv`
+- `tables/ventilated_shap_grouped.csv`
+- `tables/gcs_motor_shap_grouped.csv`
 - `tables/zero_vital_summary.csv`
-- `tables/group_top_shap_summary.csv`
+- `tables/top20_shap_interactions.csv`
+- `tables/top20_feature_correlations.csv`
 
-These outputs separate reusable report artifacts from exploratory notebook
-cells. The root-level CSV files are retained for backward compatibility with
-earlier project stages, while the `figures/` and `tables/` folders provide a
-cleaner archive for reporting.
+Root-level CSV files are retained for compatibility with earlier scripts.
 
-## Top-20 SHAP Feature Review
+## Prediction Type Counts
 
-- The top 20 features by mean absolute SHAP value were exported to `top20_shap_features.csv`.
-- The highest-ranked features were `age`, `ventilated_apache`, `apache_3j_diagnosis`, `d1_spo2_min`, `gcs_motor_apache`, `d1_heartrate_min`, `d1_resprate_max`, and `icu_id`.
-- Selected SHAP dependence plots were inspected to understand how clinically meaningful feature values were associated with model-level SHAP contributions.
-- Features such as `age`, `d1_spo2_min`, `gcs_motor_apache`, and `ventilated_apache` showed clinically interpretable patterns. In contrast, coded or non-clinical variables such as `apache_3j_diagnosis` and `icu_id` require cautious interpretation.
+Using the final threshold `0.7274`, the held-out test set produced:
 
-## Caution Feature Check: `icu_id`
+```text
+TN = 15952
+TP = 903
+FP = 808
+FN = 680
+```
 
-- `icu_id` was reviewed separately because it is a unit/location identifier, not a direct patient-level clinical measurement.
-- The analysis in `caution_analysis/` shows that `icu_id` appears as a meaningful model signal and that ICU-level mortality rates vary across units with sufficient sample size.
-- This supports using `icu_id` as model evidence, but only with a caution flag. It should be described as a possible unit-level or case-mix pattern, not as a causal patient-level clinical factor.
+This matches the final modeling metrics and provides the case groups used for
+local SHAP review.
+
+## Feature-Level Interpretation
+
+### Age
+
+Age showed a clear monotonic pattern:
+
+- `<=40`: mean SHAP `-0.8650`
+- `41-50`: mean SHAP `-0.5693`
+- `51-60`: mean SHAP `-0.3125`
+- `61-70`: mean SHAP `0.1749`
+- `71-80`: mean SHAP `0.3799`
+- `80+`: mean SHAP `0.6177`
+
+This indicates that the model treats older age as increasing predicted
+mortality risk, while younger age decreases predicted risk.
+
+### Minimum SpO2
+
+Minimum oxygen saturation showed clinically plausible behavior:
+
+- `<85`: mean SHAP `0.4482`
+- `85-90`: mean SHAP `0.0293`
+- `90-95`: mean SHAP `-0.0961`
+- `95-100`: mean SHAP `-0.0929`
+
+Low SpO2 therefore increases predicted mortality risk, while higher values are
+generally risk-decreasing.
+
+### Mechanical Ventilation
+
+Mechanical ventilation showed strong separation:
+
+- `ventilated_apache = 0`: mean SHAP `-0.2234`
+- `ventilated_apache = 1`: mean SHAP `0.3916`
+
+This is clinically plausible because ventilation often reflects severe
+respiratory failure or critical illness.
+
+### GCS Motor
+
+Lower GCS motor scores increased predicted risk:
+
+- `gcs_motor_apache = 1`: mean SHAP `0.5355`
+- `gcs_motor_apache = 2`: mean SHAP `0.5907`
+- `gcs_motor_apache = 3`: mean SHAP `0.5161`
+- `gcs_motor_apache = 4`: mean SHAP `0.2821`
+- `gcs_motor_apache = 5`: mean SHAP `0.1330`
+- `gcs_motor_apache = 6`: mean SHAP `-0.0863`
+
+This supports the interpretation that impaired motor response is a mortality
+risk signal in the model.
+
+## Local Case Review
+
+The selected local cases were:
+
+```text
+TP row_position = 7773,  p = 0.9989
+FN row_position = 7920,  p = 0.0192
+FP row_position = 1963,  p = 0.9971
+TN row_position = 14835, p = 0.0015
+```
+
+### True Positive
+
+The selected true positive case had a very high predicted mortality probability.
+The strongest risk-increasing features included:
+
+- `d1_heartrate_min = 0`
+- `d1_lactate_min = 8.7`
+- `d1_spo2_min = 70`
+- `apache_3j_diagnosis = 102.01`
+- `gcs_motor_apache = 1`
+- low arterial pH values
+- mechanical ventilation
+- low systolic blood pressure
+
+This is clinically understandable as a high-risk case with severe physiological
+instability.
+
+### False Negative
+
+The selected false negative had true mortality but a low predicted probability.
+The strongest risk-decreasing features included:
+
+- younger age (`28`)
+- absence of mechanical ventilation
+- low BUN values
+- higher urine output
+- near-zero pre-ICU length of stay
+
+Some risk-increasing signals were present, including neurological body-system
+category and glucose/calcium features, but they did not outweigh the
+risk-decreasing evidence. This suggests the model can miss mortality cases when
+classical high-risk signals are weak or offset by lower-risk features.
+
+### False Positive
+
+The selected false positive survived but received a high predicted probability.
+Strong risk-increasing features included:
+
+- `d1_heartrate_min = 0`
+- high lactate
+- very low SpO2
+- low systolic and mean blood pressure
+- low arterial pH
+- mechanical ventilation
+
+Although the prediction was incorrect, the high-risk estimate is clinically
+understandable because the early physiological profile was severe.
+
+### True Negative
+
+The selected true negative had a very low predicted probability. Strong
+risk-decreasing features included:
+
+- younger age
+- metabolic body-system/diagnosis categories
+- absence of mechanical ventilation
+- lower-risk respiratory and laboratory patterns
+- higher urine output
+
+This case is consistent with a low-risk model profile.
+
+## Zero-Valued Vital Signs
+
+Zero-valued vital signs remain caution-worthy even after `icu_id` removal:
+
+| Feature | n_zero | zero_rate | death_rate_zero | death_rate_nonzero |
+| --- | ---: | ---: | ---: | ---: |
+| `d1_heartrate_min` | 129 | 0.0070 | 0.6512 | 0.0823 |
+| `d1_resprate_min` | 767 | 0.0418 | 0.2034 | 0.0812 |
+| `h1_resprate_min` | 147 | 0.0080 | 0.1293 | 0.0860 |
+
+These values may represent true extreme clinical events, recording artifacts, or
+data quality issues. They are retained as model inputs but should be interpreted
+carefully in evidence packets and LLM explanations.
 
 ## Exploratory SHAP Interaction Analysis
 
-- An exploratory SHAP interaction analysis was performed on the top 20 globally important SHAP features using a 300-patient sample.
-- The interaction matrix was saved as `top20_shap_interaction_matrix.csv`, and the ranked pairwise interactions were saved as `top20_shap_interactions.csv`.
-- The strongest model-level interaction pairs included:
-  - `ventilated_apache` x `apache_3j_diagnosis`
-  - `age` x `ventilated_apache`
-  - `ventilated_apache` x `d1_resprate_max`
-  - `ventilated_apache` x `gcs_verbal_apache`
-  - `age` x `d1_resprate_max`
-- These patterns suggest that the model may combine respiratory support, diagnosis/severity category, age, respiratory status, and neurological response in non-additive ways.
-- The strongest interaction, `ventilated_apache` x `apache_3j_diagnosis`, is clinically plausible as a model-level pattern because the meaning of mechanical ventilation may differ across diagnosis or severity categories. However, `apache_3j_diagnosis` is a coded diagnosis category and was not decoded into specific diagnoses in this project.
-- The `age` x `ventilated_apache` interaction suggests that the model may combine age and ventilation status when estimating mortality risk, rather than treating them as fully independent signals.
-- These interaction findings were interpreted as model-level patterns only, not causal clinical relationships.
-- Interaction evidence was not added to the final LLM evidence packet. The LLM pipeline intentionally remains based on patient-specific local SHAP main effects to keep explanations concise, auditable, and easier to validate deterministically.
+An exploratory SHAP interaction analysis was performed on the top 20 globally
+important SHAP features using a 300-patient sample.
+
+Strongest pairwise interaction patterns included:
+
+- `ventilated_apache` x `elective_surgery`
+- `ventilated_apache` x `apache_3j_diagnosis`
+- `age` x `d1_heartrate_max`
+- `ventilated_apache` x `d1_bun_min`
+- `apache_3j_diagnosis` x `gcs_motor_apache`
+- `age` x `ventilated_apache`
+- `ventilated_apache` x `gcs_motor_apache`
+
+These are model-level interaction patterns, not causal clinical findings. They
+suggest that the model combines respiratory support, diagnosis category, age,
+neurological status, renal markers, and surgical context in non-additive ways.
+
+Interaction evidence was not added to the LLM evidence packet. The LLM pipeline
+intentionally uses patient-specific local SHAP main effects to keep explanations
+concise, auditable, and easier to validate deterministically.
 
 ## Top-20 Feature Correlation Review
 
-- A supplementary Spearman correlation heatmap was generated for the top 20 SHAP features and saved as `top20_feature_correlation_heatmap.png`. Ranked feature-pair correlations were also saved as `top20_feature_correlations.csv`.
-- The strongest correlations were observed among clinically related measurement families:
-  - `d1_bun_max` x `d1_bun_min`
-  - `d1_sysbp_min` x `d1_mbp_min`
-  - `gcs_motor_apache` x `gcs_verbal_apache`
-  - `gcs_motor_apache` x `gcs_eyes_apache`
-  - `gcs_verbal_apache` x `gcs_eyes_apache`
-- This correlation analysis is a data-level analysis, not a model explanation. It complements the SHAP interaction heatmap by showing which high-importance features are naturally related in the input data.
-- High feature correlation and high SHAP interaction are not the same. Correlation describes relationships between feature values, while SHAP interaction describes how the model combines feature pairs in its prediction function.
+Spearman correlation was also computed for the top 20 SHAP features. Strong
+correlations were found among related feature families:
 
-## Local True Positive Case
+- `d1_bun_max` x `d1_bun_min`
+- GCS components with each other
+- heart-rate minimum and maximum
+- blood pressure-related features
 
-- The selected true positive case had true mortality (`y_true = 1`) and received an extremely high predicted mortality probability (`p = 0.9995`).
-- Risk-increasing signals included severe hypoxemia (`d1_spo2_min = 31`), mechanical ventilation, very low systolic and mean blood pressure, low GCS motor score, low bicarbonate values, and low platelets.
-- `d1_heartrate_min = 0` had the largest positive SHAP contribution. This value is physiologically extreme and may represent a true critical event, recording artifact, or data quality issue.
-- In the test set, 129 patients had `d1_heartrate_min = 0`, corresponding to 0.7% of the test cohort. Their observed mortality rate was 65.1%, compared with 8.2% among patients with `d1_heartrate_min > 0`.
-
-## False Negative Case
-
-- The selected false negative case had true mortality (`y_true = 1`) but received a very low predicted mortality probability (`p = 0.0037`).
-- Risk-increasing signals included older age, high maximum respiratory rate, low diastolic blood pressure, and diagnosis-related information.
-- Risk-decreasing signals included absence of mechanical ventilation, normal WBC, relatively non-extreme heart rate values, low/normal BUN, and higher early mean blood pressure values.
-- This suggests that the model may miss mortality cases when classical high-risk indicators are not strongly present.
-
-## False Positive Case
-
-- The selected false positive case survived (`y_true = 0`) but received a very high predicted mortality probability (`p = 0.9954`).
-- Risk-increasing signals included `d1_heartrate_min = 0`, advanced age, low systolic blood pressure, low maximum SpO2, impaired GCS motor and verbal scores, low body temperature, low respiratory rate, and low bicarbonate values.
-- Although the patient survived, the high-risk prediction is clinically understandable because several features suggested severe physiological instability.
-- This case may represent a patient with strong early risk signals who survived due to clinical intervention, recovery, or transient instability.
-- The case reinforces the need to interpret zero-valued vital signs cautiously, since both `d1_heartrate_min = 0` and `d1_resprate_min = 0` contributed to the high-risk prediction.
-
-## True Negative Case
-
-- The selected true negative case survived (`y_true = 0`) and received a very low predicted mortality probability (`p = 0.0002`).
-- Risk-decreasing signals included younger age, absence of mechanical ventilation, stable mean blood pressure, non-extreme respiratory rate, normal minimum heart rate, and diagnosis-related information.
-- The explanation also showed strong negative contributions from `icu_id` and `pre_icu_los_days`.
-- `pre_icu_los_days` can contain negative values and should be reviewed as a potential data quality or interpretation issue.
-
-## Local Waterfall Summary
-
-- The local waterfall explanations generally supported the tabular SHAP explanations.
-- The true positive case was driven by severe clinical signals, including hypoxemia, mechanical ventilation, hypotension, impaired GCS response, low bicarbonate values, and thrombocytopenia.
-- The true negative case was driven by lower-risk signals, including younger age, absence of mechanical ventilation, stable vital signs, and less extreme clinical measurements.
-- The false negative case suggests that the model may miss mortality cases when strong classical high-risk indicators are absent or outweighed by survival-associated features.
-- The false positive case was clinically understandable despite being incorrect, because the patient had multiple severe early risk signals but ultimately survived.
-- Across local waterfall explanations, `icu_id`, zero-valued vital signs, and negative `pre_icu_los_days` repeatedly appeared as variables requiring cautious interpretation.
-
-## Group-Level SHAP Patterns
-
-- Group-level SHAP analysis compared average feature contributions across TP, FN, FP, and TN groups.
-- TP cases were characterized by strong positive SHAP contributions from clinically severe signals such as mechanical ventilation, impaired GCS motor response, diagnosis information, low SpO2, heart rate abnormalities, low systolic blood pressure, and older age.
-- FN cases had risk-increasing signals, but these were weaker on average than in TP cases. This suggests that missed mortality cases may have less obvious or less extreme high-risk patterns.
-- FP cases showed risk-increasing patterns similar to TP cases, including ventilation, older age, impaired GCS, low SpO2, low blood pressure, BUN, and heart rate features. This suggests that many false positives may be clinically understandable high-risk survivors rather than arbitrary model errors.
-- TN cases had very small positive SHAP values, indicating that the model did not detect strong mortality-increasing signals in correctly predicted survivors.
-- Mean SHAP values were used to understand direction of effect, while mean absolute SHAP values were used to understand feature influence regardless of direction.
+Correlation is a data-level relationship, while SHAP interaction describes how
+the model combines feature pairs. They are complementary but not equivalent.
 
 ## Variables Requiring Caution
 
-- `icu_id` appears in local explanations and should be interpreted cautiously because it is likely a unit/location identifier rather than a direct clinical measurement.
-- Zero-valued vital signs such as `d1_heartrate_min = 0` and `h1_resprate_min = 0` may represent true extreme clinical events, recording artifacts, or data quality issues.
-- Negative values in `pre_icu_los_days` should be interpreted carefully and may require additional preprocessing review.
+Final model caution emphasis changed after preprocessing:
 
-## Future Sensitivity Analyses
+- `icu_id` and other ID/location columns are removed from the final model.
+- Zero-valued vital signs remain caution-worthy.
+- Negative or unusual time-related values such as `pre_icu_los_days` should be
+  interpreted carefully if they appear in local evidence.
+- Coded diagnosis/category features such as `apache_3j_diagnosis` are useful
+  model signals, but they should be described as diagnosis category information,
+  not decoded into specific diagnoses unless a reliable mapping is provided.
 
-- Compare model performance with and without `icu_id`.
-- Evaluate model behavior after treating physiologically implausible zero vital signs as missing or outlier values.
-- Review and potentially transform or flag negative `pre_icu_los_days` values.
-- Check whether false negative cases share common hidden patterns not captured by the current feature set.
+## Conclusion
+
+The refreshed SHAP analysis supports the final model as clinically plausible at
+the global and local levels. The dominant signals are age, ventilation,
+diagnosis/severity categories, oxygenation, neurological response, renal/lab
+markers, and vital signs. The earlier `icu_id` concern was addressed by the
+final preprocessing design, while zero-valued vital signs remain explicit
+caution features for evidence and LLM interpretation.

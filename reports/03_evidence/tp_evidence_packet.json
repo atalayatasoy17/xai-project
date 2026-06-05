@@ -1,0 +1,145 @@
+{
+  "patient_label": "TP",
+  "prediction": {
+    "y_pred": 1,
+    "y_proba": 0.998874831964749,
+    "threshold": 0.7273530450209328,
+    "y_true": 1,
+    "prediction_type": "TP"
+  },
+  "risk_increasing_evidence": [
+    {
+      "feature": "d1_heartrate_min",
+      "value": 0.0,
+      "shap_value": 1.1382217805524988,
+      "direction": "risk_increasing",
+      "clinical_meaning": "extreme or very low heart rate may indicate severe instability or data quality issue",
+      "caution_flags": [
+        "Zero-valued vital sign; may reflect extreme clinical event or recording artifact."
+      ]
+    },
+    {
+      "feature": "d1_lactate_min",
+      "value": 8.7,
+      "shap_value": 0.7821194077129602,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_spo2_min",
+      "value": 70.0,
+      "shap_value": 0.5613483450223526,
+      "direction": "risk_increasing",
+      "clinical_meaning": "low minimum oxygen saturation indicates hypoxemia",
+      "caution_flags": []
+    },
+    {
+      "feature": "apache_3j_diagnosis",
+      "value": 102.01,
+      "shap_value": 0.4405324871956819,
+      "direction": "risk_increasing",
+      "clinical_meaning": "diagnosis category contributes baseline clinical severity information",
+      "caution_flags": []
+    },
+    {
+      "feature": "gcs_motor_apache",
+      "value": 1.0,
+      "shap_value": 0.3381073351015612,
+      "direction": "risk_increasing",
+      "clinical_meaning": "low GCS motor score indicates impaired neurological response",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_arterial_ph_min",
+      "value": 6.89,
+      "shap_value": 0.33646950169565626,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "ventilated_apache",
+      "value": 1.0,
+      "shap_value": 0.3251054402340411,
+      "direction": "risk_increasing",
+      "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_sysbp_min",
+      "value": 60.0,
+      "shap_value": 0.314143725232163,
+      "direction": "risk_increasing",
+      "clinical_meaning": "low systolic blood pressure indicates hemodynamic instability",
+      "caution_flags": []
+    }
+  ],
+  "risk_decreasing_evidence": [
+    {
+      "feature": "ethnicity_African American",
+      "value": 1.0,
+      "shap_value": -0.07761499497187811,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "diabetes_mellitus",
+      "value": 1.0,
+      "shap_value": -0.06426218811190906,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "h1_lactate_min",
+      "value": 8.7,
+      "shap_value": -0.06380686963490588,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "h1_heartrate_max",
+      "value": 134.0,
+      "shap_value": -0.04847921730447824,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "h1_arterial_po2_min",
+      "value": 62.0,
+      "shap_value": -0.03985559265245237,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "ethnicity_Caucasian",
+      "value": 0.0,
+      "shap_value": -0.032689774827512626,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_temp_min",
+      "value": 36.27,
+      "shap_value": -0.03077864861087984,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_sodium_max",
+      "value": 143.0,
+      "shap_value": -0.026805096638078053,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    }
+  ],
+  "test_row_index": 67105
+}

@@ -1,0 +1,143 @@
+{
+  "patient_label": "FN",
+  "prediction": {
+    "y_pred": 0,
+    "y_proba": 0.019213475153308103,
+    "threshold": 0.7273530450209328,
+    "y_true": 1,
+    "prediction_type": "FN"
+  },
+  "risk_increasing_evidence": [
+    {
+      "feature": "apache_3j_bodysystem_Neurological",
+      "value": 1.0,
+      "shap_value": 0.16277850706818234,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_calcium_min",
+      "value": 9.4,
+      "shap_value": 0.11524395329659819,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "icu_type_Neuro ICU",
+      "value": 1.0,
+      "shap_value": 0.10910408999733517,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_glucose_min",
+      "value": 173.0,
+      "shap_value": 0.10360905748481285,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_potassium_min",
+      "value": 5.1,
+      "shap_value": 0.07311882333995881,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_heartrate_min",
+      "value": 81.0,
+      "shap_value": 0.06572080353838076,
+      "direction": "risk_increasing",
+      "clinical_meaning": "extreme or very low heart rate may indicate severe instability or data quality issue",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_glucose_max",
+      "value": 210.0,
+      "shap_value": 0.058750141593286676,
+      "direction": "risk_increasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_resprate_max",
+      "value": 27.0,
+      "shap_value": 0.05628601308860745,
+      "direction": "risk_increasing",
+      "clinical_meaning": "high respiratory rate may indicate respiratory distress",
+      "caution_flags": []
+    }
+  ],
+  "risk_decreasing_evidence": [
+    {
+      "feature": "age",
+      "value": 28.0,
+      "shap_value": -1.074370471588799,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "older age is associated with higher mortality risk",
+      "caution_flags": []
+    },
+    {
+      "feature": "ventilated_apache",
+      "value": 0.0,
+      "shap_value": -0.25484412365852904,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_bun_max",
+      "value": 8.0,
+      "shap_value": -0.23189442979400024,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "elevated BUN may indicate renal dysfunction or metabolic stress",
+      "caution_flags": []
+    },
+    {
+      "feature": "urineoutput_apache",
+      "value": 1790.1216,
+      "shap_value": -0.2268387827333385,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_bun_min",
+      "value": 8.0,
+      "shap_value": -0.11920316629551118,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "BUN reflects renal function and metabolic status",
+      "caution_flags": []
+    },
+    {
+      "feature": "pre_icu_los_days",
+      "value": 0.000694444,
+      "shap_value": -0.11023480588926265,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "time between hospital admission and ICU admission; negative values require caution",
+      "caution_flags": []
+    },
+    {
+      "feature": "d1_spo2_min",
+      "value": 94.0,
+      "shap_value": -0.09943899381247363,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "low minimum oxygen saturation indicates hypoxemia",
+      "caution_flags": []
+    },
+    {
+      "feature": "icu_admit_source_Operating Room / Recovery",
+      "value": 1.0,
+      "shap_value": -0.0963556343747194,
+      "direction": "risk_decreasing",
+      "clinical_meaning": "No predefined clinical interpretation available.",
+      "caution_flags": []
+    }
+  ],
+  "test_row_index": 35328
+}

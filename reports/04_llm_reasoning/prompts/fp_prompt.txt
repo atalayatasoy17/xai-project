@@ -2,18 +2,32 @@ You are a clinical AI explanation assistant.
 
 Your task is to explain why the mortality prediction model made its prediction for this ICU patient.
 
-Use only the provided evidence. Do not invent clinical facts. If a feature has a caution flag, mention it carefully.
+Use only the provided evidence.
+Do not invent clinical facts.
+Do not mention or use the true label in the explanation.
+Do not say the prediction was correct, incorrect, consistent with the true outcome, or inconsistent with the true outcome.
+Do not add measurement units unless they are explicitly present in the evidence.
+Do not invent normal ranges, diagnoses, mechanisms, or clinical details beyond the provided clinical_meaning.
+If clinical_meaning is "No predefined clinical interpretation available.", do not infer a clinical interpretation for that feature.
+For features without explicit clinical_meaning, only state that they increased or decreased the model's predicted risk.
+For features without explicit clinical_meaning, do not describe the value as low, high, normal, adequate, stable, unstable, elevated, reduced, or moderate.
+For features with "No predefined clinical interpretation available.", use this exact style: "<feature> = <value> increased/decreased the model's predicted risk."
+Do not paraphrase feature names when clinical_meaning is not available.
+Do not use interpretive adjectives such as protective, adequate, stable, unstable, normal, abnormal, elevated, low, high, moderate, favorable, or unfavorable unless the provided clinical_meaning explicitly supports that wording.
+Correctly distinguish risk-increasing and risk-decreasing evidence.
+If a feature has a caution flag, mention it carefully.
 
 Patient prediction:
 - Predicted label: 1
-- Predicted mortality probability: 0.9954
+- Predicted mortality probability: 0.9971
+- Decision threshold: 0.73
 
 Risk-increasing evidence:
 [
   {
     "feature": "d1_heartrate_min",
     "value": 0.0,
-    "shap_value": 2.115243139115996,
+    "shap_value": 1.13951379039488,
     "direction": "risk_increasing",
     "clinical_meaning": "extreme or very low heart rate may indicate severe instability or data quality issue",
     "caution_flags": [
@@ -21,61 +35,59 @@ Risk-increasing evidence:
     ]
   },
   {
-    "feature": "age",
-    "value": 84.0,
-    "shap_value": 0.6824602692814827,
-    "direction": "risk_increasing",
-    "clinical_meaning": "older age is associated with higher mortality risk",
-    "caution_flags": []
-  },
-  {
-    "feature": "d1_sysbp_min",
-    "value": 61.0,
-    "shap_value": 0.6071994809861627,
-    "direction": "risk_increasing",
-    "clinical_meaning": "low systolic blood pressure indicates hemodynamic instability",
-    "caution_flags": []
-  },
-  {
-    "feature": "d1_spo2_max",
-    "value": 90.0,
-    "shap_value": 0.416093696979029,
-    "direction": "risk_increasing",
-    "clinical_meaning": "low maximum oxygen saturation may indicate persistent oxygenation impairment",
-    "caution_flags": []
-  },
-  {
-    "feature": "gcs_motor_apache",
-    "value": 4.0,
-    "shap_value": 0.3706077515026537,
-    "direction": "risk_increasing",
-    "clinical_meaning": "low GCS motor score indicates impaired neurological response",
-    "caution_flags": []
-  },
-  {
-    "feature": "d1_temp_max",
-    "value": 35.9,
-    "shap_value": 0.3299957095977676,
+    "feature": "d1_lactate_min",
+    "value": 11.9,
+    "shap_value": 1.0142551935690993,
     "direction": "risk_increasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
   },
   {
-    "feature": "d1_resprate_min",
-    "value": 0.0,
-    "shap_value": 0.2356240319144439,
+    "feature": "d1_spo2_min",
+    "value": 32.0,
+    "shap_value": 0.6168565593178378,
     "direction": "risk_increasing",
-    "clinical_meaning": "extreme or very low respiratory rate may indicate respiratory instability or data quality issue",
-    "caution_flags": [
-      "Zero-valued vital sign; may reflect extreme clinical event or recording artifact."
-    ]
+    "clinical_meaning": "low minimum oxygen saturation indicates hypoxemia",
+    "caution_flags": []
   },
   {
-    "feature": "gcs_verbal_apache",
-    "value": 1.0,
-    "shap_value": 0.2295069604710034,
+    "feature": "d1_sysbp_min",
+    "value": 41.0,
+    "shap_value": 0.4035142130754406,
     "direction": "risk_increasing",
-    "clinical_meaning": "low GCS verbal score indicates impaired neurological response",
+    "clinical_meaning": "low systolic blood pressure indicates hemodynamic instability",
+    "caution_flags": []
+  },
+  {
+    "feature": "apache_3j_diagnosis",
+    "value": 101.01,
+    "shap_value": 0.3959454026019251,
+    "direction": "risk_increasing",
+    "clinical_meaning": "diagnosis category contributes baseline clinical severity information",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_arterial_ph_max",
+    "value": 7.05428,
+    "shap_value": 0.34174945136878887,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_arterial_ph_min",
+    "value": 6.9,
+    "shap_value": 0.3370432524393829,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "ventilated_apache",
+    "value": 1.0,
+    "shap_value": 0.3227052508940914,
+    "direction": "risk_increasing",
+    "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
     "caution_flags": []
   }
 ]
@@ -83,65 +95,65 @@ Risk-increasing evidence:
 Risk-decreasing evidence:
 [
   {
-    "feature": "ventilated_apache",
-    "value": 0.0,
-    "shap_value": -0.2628558411183459,
+    "feature": "age",
+    "value": 47.0,
+    "shap_value": -0.46139672901087947,
     "direction": "risk_decreasing",
-    "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
+    "clinical_meaning": "older age is associated with higher mortality risk",
     "caution_flags": []
   },
   {
-    "feature": "d1_diasbp_noninvasive_max",
-    "value": 46.0,
-    "shap_value": -0.1833185972892735,
+    "feature": "h1_glucose_max",
+    "value": 61.0,
+    "shap_value": -0.09972189782728383,
     "direction": "risk_decreasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
   },
   {
-    "feature": "d1_resprate_max",
-    "value": 24.0,
-    "shap_value": -0.1130107439251801,
-    "direction": "risk_decreasing",
-    "clinical_meaning": "high respiratory rate may indicate respiratory distress",
-    "caution_flags": []
-  },
-  {
-    "feature": "h1_diasbp_noninvasive_max",
-    "value": 43.0,
-    "shap_value": -0.1124607729617193,
+    "feature": "h1_spo2_min",
+    "value": 64.0,
+    "shap_value": -0.09078042584979308,
     "direction": "risk_decreasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
-    "caution_flags": []
-  },
-  {
-    "feature": "d1_spo2_min",
-    "value": 90.0,
-    "shap_value": -0.1060046794668976,
-    "direction": "risk_decreasing",
-    "clinical_meaning": "low minimum oxygen saturation indicates hypoxemia",
     "caution_flags": []
   },
   {
     "feature": "diabetes_mellitus",
     "value": 1.0,
-    "shap_value": -0.0750908187977174,
+    "shap_value": -0.05876118995884423,
     "direction": "risk_decreasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
   },
   {
-    "feature": "gcs_eyes_apache",
-    "value": 4.0,
-    "shap_value": -0.0518849145808764,
+    "feature": "pre_icu_los_days",
+    "value": 0.033333333,
+    "shap_value": -0.052177876368808544,
     "direction": "risk_decreasing",
-    "clinical_meaning": "low GCS eye score indicates impaired neurological response",
+    "clinical_meaning": "time between hospital admission and ICU admission; negative values require caution",
     "caution_flags": []
   },
   {
-    "feature": "resprate_apache",
-    "value": 12.0,
-    "shap_value": -0.0503092436468959,
+    "feature": "d1_mbp_max",
+    "value": 123.0,
+    "shap_value": -0.04216077104414504,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_diasbp_max",
+    "value": 115.0,
+    "shap_value": -0.04144281103483762,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "h1_mbp_invasive_min",
+    "value": 64.0,
+    "shap_value": -0.04123646532012163,
     "direction": "risk_decreasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []

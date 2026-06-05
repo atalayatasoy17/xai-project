@@ -2,18 +2,32 @@ You are a clinical AI explanation assistant.
 
 Your task is to explain why the mortality prediction model made its prediction for this ICU patient.
 
-Use only the provided evidence. Do not invent clinical facts. If a feature has a caution flag, mention it carefully.
+Use only the provided evidence.
+Do not invent clinical facts.
+Do not mention or use the true label in the explanation.
+Do not say the prediction was correct, incorrect, consistent with the true outcome, or inconsistent with the true outcome.
+Do not add measurement units unless they are explicitly present in the evidence.
+Do not invent normal ranges, diagnoses, mechanisms, or clinical details beyond the provided clinical_meaning.
+If clinical_meaning is "No predefined clinical interpretation available.", do not infer a clinical interpretation for that feature.
+For features without explicit clinical_meaning, only state that they increased or decreased the model's predicted risk.
+For features without explicit clinical_meaning, do not describe the value as low, high, normal, adequate, stable, unstable, elevated, reduced, or moderate.
+For features with "No predefined clinical interpretation available.", use this exact style: "<feature> = <value> increased/decreased the model's predicted risk."
+Do not paraphrase feature names when clinical_meaning is not available.
+Do not use interpretive adjectives such as protective, adequate, stable, unstable, normal, abnormal, elevated, low, high, moderate, favorable, or unfavorable unless the provided clinical_meaning explicitly supports that wording.
+Correctly distinguish risk-increasing and risk-decreasing evidence.
+If a feature has a caution flag, mention it carefully.
 
 Patient prediction:
 - Predicted label: 1
-- Predicted mortality probability: 0.9995
+- Predicted mortality probability: 0.9989
+- Decision threshold: 0.73
 
 Risk-increasing evidence:
 [
   {
     "feature": "d1_heartrate_min",
     "value": 0.0,
-    "shap_value": 2.0046439410543497,
+    "shap_value": 1.1382217805524988,
     "direction": "risk_increasing",
     "clinical_meaning": "extreme or very low heart rate may indicate severe instability or data quality issue",
     "caution_flags": [
@@ -21,59 +35,59 @@ Risk-increasing evidence:
     ]
   },
   {
+    "feature": "d1_lactate_min",
+    "value": 8.7,
+    "shap_value": 0.7821194077129602,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
     "feature": "d1_spo2_min",
-    "value": 31.0,
-    "shap_value": 0.9487559313200912,
+    "value": 70.0,
+    "shap_value": 0.5613483450223526,
     "direction": "risk_increasing",
     "clinical_meaning": "low minimum oxygen saturation indicates hypoxemia",
     "caution_flags": []
   },
   {
-    "feature": "ventilated_apache",
-    "value": 1.0,
-    "shap_value": 0.7250477735108737,
+    "feature": "apache_3j_diagnosis",
+    "value": 102.01,
+    "shap_value": 0.4405324871956819,
     "direction": "risk_increasing",
-    "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
-    "caution_flags": []
-  },
-  {
-    "feature": "d1_hco3_max",
-    "value": 12.0,
-    "shap_value": 0.7218565753438608,
-    "direction": "risk_increasing",
-    "clinical_meaning": "low bicarbonate range may indicate metabolic acidosis",
-    "caution_flags": []
-  },
-  {
-    "feature": "d1_sysbp_min",
-    "value": 41.0,
-    "shap_value": 0.7210311274980737,
-    "direction": "risk_increasing",
-    "clinical_meaning": "low systolic blood pressure indicates hemodynamic instability",
+    "clinical_meaning": "diagnosis category contributes baseline clinical severity information",
     "caution_flags": []
   },
   {
     "feature": "gcs_motor_apache",
     "value": 1.0,
-    "shap_value": 0.5641844441562419,
+    "shap_value": 0.3381073351015612,
     "direction": "risk_increasing",
     "clinical_meaning": "low GCS motor score indicates impaired neurological response",
     "caution_flags": []
   },
   {
-    "feature": "d1_hco3_min",
-    "value": 8.0,
-    "shap_value": 0.3776690588888626,
+    "feature": "d1_arterial_ph_min",
+    "value": 6.89,
+    "shap_value": 0.33646950169565626,
     "direction": "risk_increasing",
-    "clinical_meaning": "low bicarbonate may indicate metabolic acidosis",
+    "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
   },
   {
-    "feature": "d1_platelets_min",
-    "value": 58.0,
-    "shap_value": 0.3447726088645324,
+    "feature": "ventilated_apache",
+    "value": 1.0,
+    "shap_value": 0.3251054402340411,
     "direction": "risk_increasing",
-    "clinical_meaning": "low platelet count may indicate severe illness or coagulation abnormalities",
+    "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_sysbp_min",
+    "value": 60.0,
+    "shap_value": 0.314143725232163,
+    "direction": "risk_increasing",
+    "clinical_meaning": "low systolic blood pressure indicates hemodynamic instability",
     "caution_flags": []
   }
 ]
@@ -81,65 +95,65 @@ Risk-increasing evidence:
 Risk-decreasing evidence:
 [
   {
-    "feature": "d1_wbc_min",
-    "value": 1.1,
-    "shap_value": -0.1174659406895149,
-    "direction": "risk_decreasing",
-    "clinical_meaning": "white blood cell count reflects inflammatory or immune status",
-    "caution_flags": []
-  },
-  {
-    "feature": "d1_bun_max",
-    "value": 18.0,
-    "shap_value": -0.0704022808920465,
-    "direction": "risk_decreasing",
-    "clinical_meaning": "elevated BUN may indicate renal dysfunction or metabolic stress",
-    "caution_flags": []
-  },
-  {
-    "feature": "d1_hematocrit_min",
-    "value": 19.5,
-    "shap_value": -0.0479285667791625,
+    "feature": "ethnicity_African American",
+    "value": 1.0,
+    "shap_value": -0.07761499497187811,
     "direction": "risk_decreasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
   },
   {
-    "feature": "h1_mbp_max",
-    "value": 122.0,
-    "shap_value": -0.0444452862419763,
+    "feature": "diabetes_mellitus",
+    "value": 1.0,
+    "shap_value": -0.06426218811190906,
     "direction": "risk_decreasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
   },
   {
-    "feature": "d1_diasbp_max",
-    "value": 108.0,
-    "shap_value": -0.0430483323441276,
+    "feature": "h1_lactate_min",
+    "value": 8.7,
+    "shap_value": -0.06380686963490588,
     "direction": "risk_decreasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
   },
   {
-    "feature": "hematocrit_apache",
-    "value": 19.5,
-    "shap_value": -0.0419272770221916,
+    "feature": "h1_heartrate_max",
+    "value": 134.0,
+    "shap_value": -0.04847921730447824,
     "direction": "risk_decreasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
   },
   {
-    "feature": "bmi",
-    "value": 33.25830072,
-    "shap_value": -0.0405732509425373,
+    "feature": "h1_arterial_po2_min",
+    "value": 62.0,
+    "shap_value": -0.03985559265245237,
     "direction": "risk_decreasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
   },
   {
-    "feature": "height",
-    "value": 154.9,
-    "shap_value": -0.0395229866505145,
+    "feature": "ethnicity_Caucasian",
+    "value": 0.0,
+    "shap_value": -0.032689774827512626,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_temp_min",
+    "value": 36.27,
+    "shap_value": -0.03077864861087984,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_sodium_max",
+    "value": 143.0,
+    "shap_value": -0.026805096638078053,
     "direction": "risk_decreasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []

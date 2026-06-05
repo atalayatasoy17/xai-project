@@ -1,4 +1,4 @@
-feature,zero_count,zero_pct,death_rate_when_zero,death_rate_when_nonzero
-d1_heartrate_min,129,0.703,0.6512,0.0823
-h1_resprate_min,147,0.801,0.1293,0.086
-d1_resprate_min,767,4.181,0.2034,0.0812
+feature,n_zero,zero_rate,death_rate_zero,death_rate_nonzero
+d1_heartrate_min,129,0.007032655508913482,0.6511627906976745,0.08229933018557153
+d1_resprate_min,767,0.041814316087880936,0.2033898305084746,0.08119025944469732
+h1_resprate_min,147,0.008013956277599084,0.1292517006802721,0.08595295669377885

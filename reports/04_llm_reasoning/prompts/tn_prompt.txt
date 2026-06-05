@@ -2,74 +2,88 @@ You are a clinical AI explanation assistant.
 
 Your task is to explain why the mortality prediction model made its prediction for this ICU patient.
 
-Use only the provided evidence. Do not invent clinical facts. If a feature has a caution flag, mention it carefully.
+Use only the provided evidence.
+Do not invent clinical facts.
+Do not mention or use the true label in the explanation.
+Do not say the prediction was correct, incorrect, consistent with the true outcome, or inconsistent with the true outcome.
+Do not add measurement units unless they are explicitly present in the evidence.
+Do not invent normal ranges, diagnoses, mechanisms, or clinical details beyond the provided clinical_meaning.
+If clinical_meaning is "No predefined clinical interpretation available.", do not infer a clinical interpretation for that feature.
+For features without explicit clinical_meaning, only state that they increased or decreased the model's predicted risk.
+For features without explicit clinical_meaning, do not describe the value as low, high, normal, adequate, stable, unstable, elevated, reduced, or moderate.
+For features with "No predefined clinical interpretation available.", use this exact style: "<feature> = <value> increased/decreased the model's predicted risk."
+Do not paraphrase feature names when clinical_meaning is not available.
+Do not use interpretive adjectives such as protective, adequate, stable, unstable, normal, abnormal, elevated, low, high, moderate, favorable, or unfavorable unless the provided clinical_meaning explicitly supports that wording.
+Correctly distinguish risk-increasing and risk-decreasing evidence.
+If a feature has a caution flag, mention it carefully.
 
 Patient prediction:
 - Predicted label: 0
-- Predicted mortality probability: 0.0002
+- Predicted mortality probability: 0.0015
+- Decision threshold: 0.73
 
 Risk-increasing evidence:
 [
   {
-    "feature": "d1_temp_max",
-    "value": 38.3,
-    "shap_value": 0.1551561403512001,
+    "feature": "elective_surgery",
+    "value": 0,
+    "shap_value": 0.03284562398143364,
     "direction": "risk_increasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
   },
   {
-    "feature": "d1_potassium_max",
-    "value": 3.3,
-    "shap_value": 0.0455545309674458,
+    "feature": "h1_temp_min",
+    "value": null,
+    "shap_value": 0.024615746104372938,
     "direction": "risk_increasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
   },
   {
-    "feature": "d1_diasbp_noninvasive_min",
+    "feature": "bmi",
+    "value": 23.59688361,
+    "shap_value": 0.023549094772930435,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "icu_admit_source_Operating Room / Recovery",
+    "value": 0.0,
+    "shap_value": 0.020177709742170636,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "gender",
+    "value": "M",
+    "shap_value": 0.018640290791207756,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "bilirubin_apache",
+    "value": null,
+    "shap_value": 0.0180129417027799,
+    "direction": "risk_increasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_mbp_min",
     "value": 59.0,
-    "shap_value": 0.0277602530616821,
+    "shap_value": 0.01708758179542593,
     "direction": "risk_increasing",
-    "clinical_meaning": "No predefined clinical interpretation available.",
-    "caution_flags": []
-  },
-  {
-    "feature": "h1_heartrate_min",
-    "value": 82.0,
-    "shap_value": 0.0250421507687113,
-    "direction": "risk_increasing",
-    "clinical_meaning": "No predefined clinical interpretation available.",
-    "caution_flags": []
-  },
-  {
-    "feature": "h1_diasbp_min",
-    "value": 59.0,
-    "shap_value": 0.0238568937861572,
-    "direction": "risk_increasing",
-    "clinical_meaning": "No predefined clinical interpretation available.",
+    "clinical_meaning": "low mean blood pressure indicates hemodynamic instability",
     "caution_flags": []
   },
   {
     "feature": "apache_3j_bodysystem_Cardiovascular",
-    "value": false,
-    "shap_value": 0.0217605546029623,
-    "direction": "risk_increasing",
-    "clinical_meaning": "No predefined clinical interpretation available.",
-    "caution_flags": []
-  },
-  {
-    "feature": "creatinine_apache",
-    "value": 0.84,
-    "shap_value": 0.0214345591570104,
-    "direction": "risk_increasing",
-    "clinical_meaning": "No predefined clinical interpretation available.",
-    "caution_flags": []
-  },
-  {
-    "feature": "d1_mbp_noninvasive_max",
-    "value": 126.0,
-    "shap_value": 0.0191263112916678,
+    "value": 0.0,
+    "shap_value": 0.01407107837417939,
     "direction": "risk_increasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
@@ -79,37 +93,17 @@ Risk-increasing evidence:
 Risk-decreasing evidence:
 [
   {
-    "feature": "pre_icu_los_days",
-    "value": -0.109722222,
-    "shap_value": -0.8327732946766595,
-    "direction": "risk_decreasing",
-    "clinical_meaning": "time between hospital admission and ICU admission; negative values require caution",
-    "caution_flags": [
-      "Negative pre-ICU length of stay; may reflect timing or data quality issue."
-    ]
-  },
-  {
-    "feature": "icu_id",
-    "value": 91.0,
-    "shap_value": -0.705731908847831,
-    "direction": "risk_decreasing",
-    "clinical_meaning": "ICU unit identifier; may reflect unit-level patterns rather than patient-level clinical status",
-    "caution_flags": [
-      "Non-clinical unit/location identifier; interpret cautiously."
-    ]
-  },
-  {
     "feature": "age",
-    "value": 46.0,
-    "shap_value": -0.619559332075509,
+    "value": 28.0,
+    "shap_value": -0.9898189232819941,
     "direction": "risk_decreasing",
     "clinical_meaning": "older age is associated with higher mortality risk",
     "caution_flags": []
   },
   {
     "feature": "apache_3j_bodysystem_Metabolic",
-    "value": true,
-    "shap_value": -0.3386969563885164,
+    "value": 1.0,
+    "shap_value": -0.31115057642579824,
     "direction": "risk_decreasing",
     "clinical_meaning": "No predefined clinical interpretation available.",
     "caution_flags": []
@@ -117,7 +111,7 @@ Risk-decreasing evidence:
   {
     "feature": "apache_3j_diagnosis",
     "value": 703.03,
-    "shap_value": -0.3206537412065032,
+    "shap_value": -0.28348449731057934,
     "direction": "risk_decreasing",
     "clinical_meaning": "diagnosis category contributes baseline clinical severity information",
     "caution_flags": []
@@ -125,25 +119,41 @@ Risk-decreasing evidence:
   {
     "feature": "ventilated_apache",
     "value": 0.0,
-    "shap_value": -0.2423471913011152,
+    "shap_value": -0.21050589056027466,
     "direction": "risk_decreasing",
     "clinical_meaning": "mechanical ventilation indicates severe respiratory failure or critical illness",
     "caution_flags": []
   },
   {
-    "feature": "d1_mbp_min",
-    "value": 86.0,
-    "shap_value": -0.2412591040344331,
+    "feature": "d1_resprate_max",
+    "value": 19.0,
+    "shap_value": -0.19100813880155768,
     "direction": "risk_decreasing",
-    "clinical_meaning": "low mean blood pressure indicates hemodynamic instability",
+    "clinical_meaning": "high respiratory rate may indicate respiratory distress",
     "caution_flags": []
   },
   {
-    "feature": "d1_resprate_max",
-    "value": 20.0,
-    "shap_value": -0.2054916086403208,
+    "feature": "urineoutput_apache",
+    "value": 2128.9824,
+    "shap_value": -0.18539111530995342,
     "direction": "risk_decreasing",
-    "clinical_meaning": "high respiratory rate may indicate respiratory distress",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_hemaglobin_min",
+    "value": 14.7,
+    "shap_value": -0.12810001149237246,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "No predefined clinical interpretation available.",
+    "caution_flags": []
+  },
+  {
+    "feature": "d1_bun_min",
+    "value": 12.0,
+    "shap_value": -0.12258253164021386,
+    "direction": "risk_decreasing",
+    "clinical_meaning": "BUN reflects renal function and metabolic status",
     "caution_flags": []
   }
 ]

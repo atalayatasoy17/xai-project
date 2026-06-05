@@ -32,7 +32,7 @@ The dimensions were selected based on the main risks of LLM-generated clinical e
 
 Because the project goal is not only to generate fluent explanations but to generate faithful and clinically grounded explanations, the highest weights were assigned to faithfulness/no hallucination and clinical plausibility.
 
-Caution awareness was also given a relatively high weight because the SHAP and local error analysis identified variables such as `icu_id`, zero-valued vital signs, and negative `pre_icu_los_days` that could mislead explanation if handled incorrectly.
+Caution awareness was also given a relatively high weight because SHAP and local error analysis identified variables that could mislead explanations if handled incorrectly. Earlier exploratory work found `icu_id` to be a unit/location concern, and the final preprocessing removes it from the model. Remaining caution examples include zero-valued vital signs and unusual timing values such as negative or near-zero `pre_icu_los_days`.
 
 ## Dimension Meanings
 
@@ -71,7 +71,7 @@ Overall Score =
 
 The weights prioritize faithfulness and clinical plausibility because an explanation that is fluent but unsupported or clinically misleading should not receive a high score.
 
-Caution awareness is weighted higher than completeness because mishandling caution flags such as `icu_id`, zero-valued vital signs, or negative timing variables can create misleading clinical interpretations.
+Caution awareness is weighted higher than completeness because mishandling caution flags such as zero-valued vital signs or unusual timing variables can create misleading clinical interpretations.
 
 ## Reference Explanation
 

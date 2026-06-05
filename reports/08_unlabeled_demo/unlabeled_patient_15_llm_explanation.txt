@@ -1,14 +1,14 @@
 1. Prediction summary  
-The model predicted a high mortality risk with a probability of 0.9919 for this ICU patient.
+The model predicted a high mortality risk with a probability of 0.9940, exceeding the decision threshold of 0.73.
 
 2. Main risk-increasing factors  
-Key factors increasing the predicted risk include an extreme low heart rate of 0.0, which may indicate severe instability or a data quality issue; a low minimum oxygen saturation of 59.0 indicating hypoxemia; a low Glasgow Coma Scale motor score of 1.0 reflecting impaired neurological response; the diagnosis category contributing baseline clinical severity; mechanical ventilation indicating severe respiratory failure or critical illness; a minimum systolic blood pressure of 61.0 indicating hemodynamic instability; and elevated maximum sodium at 157.0. Additionally, the maximum temperature of 35.2 increased risk without a predefined clinical interpretation.
+Key factors increasing the predicted risk include an extreme low heart rate (d1_heartrate_min = 0.0), which may indicate severe instability or a data quality issue; low minimum oxygen saturation (d1_spo2_min = 59.0) indicating hypoxemia; low Glasgow Coma Scale motor score (gcs_motor_apache = 1.0) reflecting impaired neurological response; mechanical ventilation status (ventilated_apache = 1.0) indicating severe respiratory failure or critical illness; low systolic blood pressure (d1_sysbp_min = 61.0) indicating hemodynamic instability; and the diagnosis category (apache_3j_diagnosis = 102.01) contributing baseline clinical severity information. Additionally, elevated lactate minimum (d1_lactate_min = 15.1) and low arterial pH minimum (d1_arterial_ph_min = 7.142) increased risk without predefined clinical interpretation.
 
 3. Main risk-decreasing factors  
-Factors that decreased the predicted risk include the ICU unit identifier, which may reflect unit-level patterns; a glucose value of 598.7; minimum and maximum heart rates of 54.0 and 164.0 respectively; a maximum bicarbonate of 26.0; a minimum white blood cell count of 4.5; a minimum noninvasive diastolic blood pressure of 32.0; and a hematocrit value of 24.0. These features contributed to lowering the model’s predicted risk.
+Factors decreasing the predicted risk include higher urine output (urineoutput_apache = 2515.8816), elevated glucose (glucose_apache = 598.7), higher maximum respiratory rate (h1_resprate_max = 59.0), and white blood cell counts (d1_wbc_min = 4.5 and wbc_apache = 4.5). Other decreasing factors were maximum hemoglobin (d1_hemaglobin_max = 14.3), maximum heart rate (h1_heartrate_max = 164.0), and maximum noninvasive systolic blood pressure (h1_sysbp_noninvasive_max = 75.0), all without predefined clinical interpretation.
 
 4. Caution notes  
-The zero-valued heart rate may represent an extreme clinical event or a recording artifact and requires careful interpretation. The ICU unit identifier is a non-clinical feature and should be interpreted cautiously.
+The zero-valued minimum heart rate may reflect an extreme clinical event or a recording artifact and requires careful interpretation.
 
 5. Overall interpretation  
-The prediction is primarily driven by clinical signs of severe physiological instability, including extreme heart rate, hypoxemia, impaired neurological status, respiratory failure, and hemodynamic compromise. Some features partially offset this risk, but the overall evidence supports a high predicted mortality risk.
+The prediction is driven primarily by indicators of severe physiological instability, including extreme heart rate, hypoxemia, impaired neurological status, mechanical ventilation, and hemodynamic compromise. Some features suggest risk reduction, but the dominant risk-increasing factors strongly influenced the high predicted mortality probability.
