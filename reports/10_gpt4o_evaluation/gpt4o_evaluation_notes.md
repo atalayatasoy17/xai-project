@@ -15,7 +15,7 @@ This keeps the evaluation design conservative: deterministic checks remain the g
 
 ## Method
 
-The script `scripts/15_run_gpt4o_subjective_evaluation.py` reads explanations that already passed deterministic validation from:
+The script `scripts/evaluation/gpt4o_subjective_evaluation.py` reads explanations that already passed deterministic validation from:
 
 `reports/09_validation_audit/validation_audit_summary.csv`
 

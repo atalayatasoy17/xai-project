@@ -222,8 +222,8 @@ The final production-style pipeline is now implemented in the Python modules and
 
 - deterministic validation: `src/validation.py`
 - LLM revision bridge: `src/llm.py`
-- validator fixture tests: `scripts/13_verify_validation.py`
-- saved explanation audit: `scripts/14_audit_saved_explanations.py`
+- validator fixture tests: `scripts/verify/validation.py`
+- saved explanation audit: `scripts/evaluation/audit_saved_explanations.py`
 - validation audit notes: `reports/09_validation_audit/validation_design_notes.md`
 - GPT-4o subjective evaluation: `reports/10_gpt4o_evaluation/gpt4o_evaluation_notes.md`
 

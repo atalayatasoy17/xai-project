@@ -16,7 +16,7 @@ import pandas as pd
 import shap
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(ROOT))
 
 from src.explainability import get_positive_class_shap_values

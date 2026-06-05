@@ -14,7 +14,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(ROOT))
 
 from src.prediction import load_model, load_threshold, predict_mortality

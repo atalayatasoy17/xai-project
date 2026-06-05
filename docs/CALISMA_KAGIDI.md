@@ -91,7 +91,7 @@ evidence packet daha okunabilir kalir.
 
 Final egitim scripti:
 
-- `scripts/16_train_final_lgbm_experiment.py`
+- `scripts/final/train_final_lgbm.py`
 
 Split mantigi:
 
@@ -310,13 +310,13 @@ Gorevi:
 
 Final demo scriptleri:
 
-- `scripts/08_run_test_patient_llm_demo.py`
-- `scripts/12_run_unlabeled_patient_llm_demo.py`
+- `scripts/demo/test_patient_llm.py`
+- `scripts/demo/unlabeled_patient_llm.py`
 
 Kaydetmeden deneme:
 
 ```bash
-python scripts/12_run_unlabeled_patient_llm_demo.py --patient-position 27 --no-save
+python scripts/demo/unlabeled_patient_llm.py --patient-position 27 --no-save
 ```
 
 ## 13. Deterministic Validator
@@ -423,16 +423,16 @@ Core modules:
 
 Refresh scripts:
 
-- `scripts/16_train_final_lgbm_experiment.py`
-- `scripts/17_refresh_explainability_reports.py`
-- `scripts/18_refresh_modeling_reports.py`
-- `scripts/19_refresh_evidence_packets.py`
+- `scripts/final/train_final_lgbm.py`
+- `scripts/final/refresh_explainability_reports.py`
+- `scripts/final/refresh_modeling_reports.py`
+- `scripts/final/refresh_evidence_packets.py`
 
 Verification/audit:
 
-- `scripts/13_verify_validation.py`
-- `scripts/14_audit_saved_explanations.py`
-- `scripts/15_run_gpt4o_subjective_evaluation.py`
+- `scripts/verify/validation.py`
+- `scripts/evaluation/audit_saved_explanations.py`
+- `scripts/evaluation/gpt4o_subjective_evaluation.py`
 
 Final report folders:
 

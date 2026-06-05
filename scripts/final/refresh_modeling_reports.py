@@ -23,7 +23,7 @@ from sklearn.metrics import (
 )
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(ROOT))
 
 from src.prediction import load_threshold

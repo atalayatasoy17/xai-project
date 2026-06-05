@@ -9,7 +9,7 @@ import joblib
 import pandas as pd
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(ROOT))
 
 from src.llm import generate_explanation, revise_until_valid

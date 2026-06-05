@@ -35,8 +35,8 @@ raw unlabeled patient
 Main scripts:
 
 ```text
-scripts/11_run_unlabeled_patient_demo.py
-scripts/12_run_unlabeled_patient_llm_demo.py
+scripts/demo/unlabeled_patient.py
+scripts/demo/unlabeled_patient_llm.py
 ```
 
 Both scripts support:

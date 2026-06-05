@@ -207,7 +207,7 @@ The caution validator uses limited alias-aware matching for caution-flagged feat
 Saved explanations are audited with:
 
 ```text
-scripts/14_audit_saved_explanations.py
+scripts/evaluation/audit_saved_explanations.py
 ```
 
 Current audit result:
@@ -275,25 +275,11 @@ xai-project/
 ├── dashboard/
 │   └── app.py
 ├── scripts/
-│   ├── 01_verify_preprocessing.py
-│   ├── 02_verify_prediction.py
-│   ├── 03_verify_explainability.py
-│   ├── 04_verify_evidence.py
-│   ├── 05_verify_patient_pipeline.py
-│   ├── 06_verify_prompt.py
-│   ├── 07_run_test_patient_demo.py
-│   ├── 08_run_test_patient_llm_demo.py
-│   ├── 09_save_preprocessor_artifact.py
-│   ├── 10_run_saved_artifact_patient_demo.py
-│   ├── 11_run_unlabeled_patient_demo.py
-│   ├── 12_run_unlabeled_patient_llm_demo.py
-│   ├── 13_verify_validation.py
-│   ├── 14_audit_saved_explanations.py
-│   ├── 15_run_gpt4o_subjective_evaluation.py
-│   ├── 16_train_final_lgbm_experiment.py
-│   ├── 17_refresh_explainability_reports.py
-│   ├── 18_refresh_modeling_reports.py
-│   └── 19_refresh_evidence_packets.py
+│   ├── final/                    # final model/report refresh scripts
+│   ├── verify/                   # deterministic regression checks
+│   ├── demo/                     # patient-level demo scripts
+│   ├── evaluation/               # validation audit and GPT-4o scoring
+│   └── eski/                     # archived old helper scripts
 └── src/
     ├── preprocessing.py
     ├── prediction.py
@@ -323,57 +309,57 @@ OPENAI_API_KEY=your_api_key_here
 Run core verification:
 
 ```bash
-python scripts/01_verify_preprocessing.py
-python scripts/02_verify_prediction.py
-python scripts/03_verify_explainability.py
-python scripts/04_verify_evidence.py
-python scripts/05_verify_patient_pipeline.py
-python scripts/06_verify_prompt.py
+python scripts/verify/preprocessing.py
+python scripts/verify/prediction.py
+python scripts/verify/explainability.py
+python scripts/verify/evidence.py
+python scripts/verify/patient_pipeline.py
+python scripts/verify/prompt.py
 ```
 
 Refresh final model and report artifacts:
 
 ```bash
-python scripts/16_train_final_lgbm_experiment.py
-python scripts/17_refresh_explainability_reports.py
-python scripts/18_refresh_modeling_reports.py
-python scripts/19_refresh_evidence_packets.py
+python scripts/final/train_final_lgbm.py
+python scripts/final/refresh_explainability_reports.py
+python scripts/final/refresh_modeling_reports.py
+python scripts/final/refresh_evidence_packets.py
 ```
 
 Run a saved-artifact patient demo:
 
 ```bash
-python scripts/10_run_saved_artifact_patient_demo.py
+python scripts/demo/saved_artifact_patient.py
 ```
 
 Run an unlabeled patient prediction demo:
 
 ```bash
-python scripts/11_run_unlabeled_patient_demo.py --patient-position 15 --no-save
+python scripts/demo/unlabeled_patient.py --patient-position 15 --no-save
 ```
 
 Run an unlabeled patient LLM explanation demo:
 
 ```bash
-python scripts/12_run_unlabeled_patient_llm_demo.py --patient-position 15 --no-save
+python scripts/demo/unlabeled_patient_llm.py --patient-position 15 --no-save
 ```
 
 Run validation fixture tests:
 
 ```bash
-python scripts/13_verify_validation.py
+python scripts/verify/validation.py
 ```
 
 Run saved explanation audit:
 
 ```bash
-python scripts/14_audit_saved_explanations.py
+python scripts/evaluation/audit_saved_explanations.py
 ```
 
 Run GPT-4o subjective evaluation:
 
 ```bash
-python scripts/15_run_gpt4o_subjective_evaluation.py
+python scripts/evaluation/gpt4o_subjective_evaluation.py
 ```
 
 Run the Streamlit dashboard:

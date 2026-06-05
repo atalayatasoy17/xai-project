@@ -43,7 +43,7 @@ optional GPT-4o subjective evaluator.
 
 ## Fixture Verification
 
-`scripts/13_verify_validation.py` verifies the validator with controlled
+`scripts/verify/validation.py` verifies the validator with controlled
 fixtures:
 
 - good explanation
@@ -60,7 +60,7 @@ outputs.
 
 ## Saved Explanation Audit
 
-`scripts/14_audit_saved_explanations.py` audits saved explanations in:
+`scripts/evaluation/audit_saved_explanations.py` audits saved explanations in:
 
 - `reports/07_pipeline_demo/`
 - `reports/08_unlabeled_demo/`

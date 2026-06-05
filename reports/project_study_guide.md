@@ -76,7 +76,7 @@ degildir. Scaler kullanmamak evidence packet'teki degerleri daha dogal tutar.
 Final model scripti:
 
 ```bash
-python scripts/16_train_final_lgbm_experiment.py
+python scripts/final/train_final_lgbm.py
 ```
 
 Saved artifacts:
@@ -138,7 +138,7 @@ Native LightGBM importance ile SHAP ayni sey degildir:
 Final SHAP refresh:
 
 ```bash
-python scripts/17_refresh_explainability_reports.py
+python scripts/final/refresh_explainability_reports.py
 ```
 
 Top global SHAP feature'lar:
@@ -234,7 +234,7 @@ cevirir.
 Script:
 
 ```bash
-python scripts/19_refresh_evidence_packets.py
+python scripts/final/refresh_evidence_packets.py
 ```
 
 Klasor:
@@ -302,13 +302,13 @@ Dosya:
 Unlabeled demo:
 
 ```bash
-python scripts/12_run_unlabeled_patient_llm_demo.py --patient-position 7
+python scripts/demo/unlabeled_patient_llm.py --patient-position 7
 ```
 
 Kaydetmeden deneme:
 
 ```bash
-python scripts/12_run_unlabeled_patient_llm_demo.py --patient-position 27 --no-save
+python scripts/demo/unlabeled_patient_llm.py --patient-position 27 --no-save
 ```
 
 ## J. Deterministic Validation
@@ -360,7 +360,7 @@ Bu tasarim LLM'i kendi haline birakmaz; deterministik rapora baglar.
 Audit script:
 
 ```bash
-python scripts/14_audit_saved_explanations.py
+python scripts/evaluation/audit_saved_explanations.py
 ```
 
 Output:
@@ -378,7 +378,7 @@ Final audit ozeti:
 Script:
 
 ```bash
-python scripts/15_run_gpt4o_subjective_evaluation.py
+python scripts/evaluation/gpt4o_subjective_evaluation.py
 ```
 
 GPT-4o ne yapar?
@@ -455,43 +455,43 @@ recall ve F1 dengesi incelenerek secildi.
 Final training:
 
 ```bash
-python scripts/16_train_final_lgbm_experiment.py
+python scripts/final/train_final_lgbm.py
 ```
 
 Explainability refresh:
 
 ```bash
-python scripts/17_refresh_explainability_reports.py
+python scripts/final/refresh_explainability_reports.py
 ```
 
 Modeling reports:
 
 ```bash
-python scripts/18_refresh_modeling_reports.py
+python scripts/final/refresh_modeling_reports.py
 ```
 
 Evidence packets:
 
 ```bash
-python scripts/19_refresh_evidence_packets.py
+python scripts/final/refresh_evidence_packets.py
 ```
 
 Validation fixtures:
 
 ```bash
-python scripts/13_verify_validation.py
+python scripts/verify/validation.py
 ```
 
 Validation audit:
 
 ```bash
-python scripts/14_audit_saved_explanations.py
+python scripts/evaluation/audit_saved_explanations.py
 ```
 
 GPT-4o advisory evaluation:
 
 ```bash
-python scripts/15_run_gpt4o_subjective_evaluation.py
+python scripts/evaluation/gpt4o_subjective_evaluation.py
 ```
 
 Dashboard:

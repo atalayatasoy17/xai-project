@@ -54,7 +54,7 @@ The saved final artifacts are:
 
 The final training/export script is:
 
-- `scripts/16_train_final_lgbm_experiment.py`
+- `scripts/final/train_final_lgbm.py`
 
 This script also refreshes `data/processed/` so downstream notebooks can keep
 their original structure while using the final preprocessing schema.

@@ -10,7 +10,7 @@ import sys
 import pandas as pd
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(ROOT))
 
 from src.evaluator import compute_hybrid_quality_score, evaluate_subjective_quality

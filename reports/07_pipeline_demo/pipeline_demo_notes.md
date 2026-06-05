@@ -34,7 +34,7 @@ The production-style code lives in `src/`:
 The final preprocessing verification script is:
 
 ```text
-scripts/01_verify_preprocessing.py
+scripts/verify/preprocessing.py
 ```
 
 It checks that:
@@ -57,14 +57,14 @@ Test death rate       : 0.0863
 The old direct comparison to a static `data/processed/X_test.csv` was removed
 because the final preprocessing schema is generated from the saved experiment
 pipeline. The processed files are now refreshed by
-`scripts/16_train_final_lgbm_experiment.py`.
+`scripts/final/train_final_lgbm.py`.
 
 ## Prediction Verification
 
 Prediction verification is run with:
 
 ```text
-scripts/02_verify_prediction.py
+scripts/verify/prediction.py
 ```
 
 Final test metrics:
@@ -91,9 +91,9 @@ evaluation outside the notebooks.
 Single-patient SHAP/evidence verification is run with:
 
 ```text
-scripts/03_verify_explainability.py
-scripts/04_verify_evidence.py
-scripts/05_verify_patient_pipeline.py
+scripts/verify/explainability.py
+scripts/verify/evidence.py
+scripts/verify/patient_pipeline.py
 ```
 
 The default held-out test patient is:
@@ -131,7 +131,7 @@ indicator, but `ventilated_apache = 0` can decrease risk for a specific patient.
 Prompt verification is run with:
 
 ```text
-scripts/06_verify_prompt.py
+scripts/verify/prompt.py
 ```
 
 The prompt includes:
@@ -159,7 +159,7 @@ This prevents label leakage into generated explanations.
 The non-LLM pipeline demo is:
 
 ```text
-scripts/07_run_test_patient_demo.py
+scripts/demo/test_patient.py
 ```
 
 It writes:
@@ -171,7 +171,7 @@ It writes:
 The saved-artifact version is:
 
 ```text
-scripts/10_run_saved_artifact_patient_demo.py
+scripts/demo/saved_artifact_patient.py
 ```
 
 It verifies that the serialized preprocessor/model/threshold can run the same
@@ -182,7 +182,7 @@ single-patient inference workflow.
 The LLM pipeline demo is:
 
 ```text
-scripts/08_run_test_patient_llm_demo.py
+scripts/demo/test_patient_llm.py
 ```
 
 For the refreshed final model, the initial explanation required revision:
