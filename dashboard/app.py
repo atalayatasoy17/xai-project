@@ -294,7 +294,7 @@ def evidence_to_frame(records: list[dict[str, Any]]) -> pd.DataFrame:
 def render_prediction(evidence: dict[str, Any]) -> None:
     prediction = evidence.get("prediction", {})
     probability = float(prediction.get("y_proba", 0.0))
-    threshold = float(prediction.get("threshold", 0.5))
+    threshold = float(prediction["threshold"])
     predicted_label = int(prediction.get("y_pred", probability >= threshold))
     risk_label = "High mortality risk" if predicted_label == 1 else "Low mortality risk"
 

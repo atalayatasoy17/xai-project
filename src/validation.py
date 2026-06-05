@@ -71,6 +71,8 @@ def check_true_label_leakage(text: str) -> dict[str, Any]:
         "passed": len(found) == 0,
         "found": found,
     }
+
+
 def check_section_structure(text: str) -> dict[str, Any]:
     """Check whether the explanation contains the required section headings."""
     missing = []
@@ -86,6 +88,7 @@ def check_section_structure(text: str) -> dict[str, Any]:
         "missing": missing,
         "required": REQUIRED_SECTIONS,
     }
+
 
 def _extract_probability_candidates(text: str) -> list[float]:
     """Extract decimal and percentage probability candidates from text."""
@@ -129,6 +132,7 @@ def check_prediction_consistency(
         "tolerance": tolerance,
     }
 
+
 CAUTION_LANGUAGE = [
     "caution",
     "cautiously",
@@ -136,25 +140,19 @@ CAUTION_LANGUAGE = [
     "carefully",
     "interpret",
     "interpreted",
-    "non-clinical",
-    "unit-level",
-    "location",
     "artifact",
     "recording",
     "data quality",
+    "timing",
+    "negative",
 ]
 
 CAUTION_FEATURE_ALIASES = {
-    "icu_id": [
-        "icu_id",
-        "icu unit identifier",
-        "unit identifier",
-        "unit-level",
-    ],
     "d1_heartrate_min": [
         "d1_heartrate_min",
         "minimum heart rate",
         "heart rate",
+        "zero-valued heart rate",
     ],
     "d1_resprate_min": [
         "d1_resprate_min",
@@ -185,6 +183,7 @@ def _get_caution_features(evidence_packet: dict[str, Any]) -> list[dict[str, Any
                 records.append(record)
 
     return records
+
 
 def _split_sentences(text: str) -> list[str]:
     """Split text into simple sentence-like chunks."""
@@ -227,6 +226,7 @@ def _find_caution_alias_match(
 
     return None
 
+
 def check_caution_mentions(text: str, evidence_packet: dict[str, Any]) -> dict[str, Any]:
     """Check whether caution-flagged features are mentioned with cautious language."""
     caution_records = _get_caution_features(evidence_packet)
@@ -258,6 +258,7 @@ def check_caution_mentions(text: str, evidence_packet: dict[str, Any]) -> dict[s
         "caution_feature_count": len(caution_records),
         "matching_mode": "alias_aware_caution_section",
     }
+
 
 def _get_evidence_features(evidence_packet: dict[str, Any]) -> set[str]:
     """Return feature names present in the evidence packet."""
@@ -297,6 +298,7 @@ def check_feature_grounding(text: str, evidence_packet: dict[str, Any]) -> dict[
         "evidence_features": sorted(evidence_features),
         "matching_mode": "exact_feature_name",
     }
+
 
 def _extract_section_text(
     text: str,
@@ -405,6 +407,7 @@ def check_direction_consistency(
         "matching_mode": "exact_feature_name",
     }
 
+
 DETERMINISTIC_SCORE_WEIGHTS = {
     "faithfulness_no_hallucination": 0.30,
     "caution_awareness": 0.20,
@@ -488,7 +491,7 @@ def _build_revision_feedback(checks: dict[str, Any]) -> list[str]:
     missing_caution = checks["caution_mentions"]["missing_features"]
     if missing_caution:
         feedback.append(
-            "Mention caution in the Caution notes section using the exact feature name(s): "
+            "Mention caution in the Caution notes section for flagged feature(s): "
             + ", ".join(missing_caution)
             + "."
         )

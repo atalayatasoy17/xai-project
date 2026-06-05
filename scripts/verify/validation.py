@@ -13,7 +13,7 @@ FIXTURE_PACKET = {
     "prediction": {
         "y_pred": 1,
         "y_proba": 0.9919,
-        "threshold": 0.5,
+        "threshold": 0.7274,
     },
     "risk_increasing_evidence": [
         {
@@ -21,9 +21,9 @@ FIXTURE_PACKET = {
             "caution_flags": [],
         },
         {
-            "feature": "icu_id",
+            "feature": "d1_heartrate_min",
             "caution_flags": [
-                "Non-clinical unit/location identifier; interpret cautiously.",
+                "Zero-valued vital sign; may reflect extreme clinical event or recording artifact.",
             ],
         },
     ],
@@ -41,13 +41,13 @@ GOOD_EXPLANATION = """
 The model predicted a mortality probability of 0.99.
 
 2. Main risk-increasing factors
-The feature d1_spo2_min increased risk. The feature icu_id increased risk.
+The feature d1_spo2_min increased risk. The feature d1_heartrate_min increased risk.
 
 3. Main risk-decreasing factors
 The feature age decreased risk.
 
 4. Caution notes
-The icu_id feature should be interpreted cautiously because it is a non-clinical unit/location variable.
+The d1_heartrate_min feature should be interpreted cautiously because a zero-valued vital sign may reflect a recording artifact.
 
 5. Overall interpretation
 The explanation is based on the provided evidence.
@@ -65,7 +65,7 @@ The feature potassium_apache increased risk. The feature d1_spo2_min increased r
 The feature age decreased risk.
 
 4. Caution notes
-The icu_id feature should be interpreted cautiously because it is a non-clinical unit/location variable.
+The d1_heartrate_min feature should be interpreted cautiously because a zero-valued vital sign may reflect a recording artifact.
 
 5. Overall interpretation
 The explanation is based on the provided evidence.
@@ -83,7 +83,7 @@ The feature age increased risk.
 The feature d1_spo2_min decreased risk.
 
 4. Caution notes
-The icu_id feature should be interpreted cautiously because it is a non-clinical unit/location variable.
+The d1_heartrate_min feature should be interpreted cautiously because a zero-valued vital sign may reflect a recording artifact.
 
 5. Overall interpretation
 The explanation is based on the provided evidence.
@@ -95,13 +95,13 @@ TRUE_LABEL_LEAK_EXPLANATION = """
 The model predicted a mortality probability of 0.99 and this was a correct prediction.
 
 2. Main risk-increasing factors
-The feature d1_spo2_min increased risk. The feature icu_id increased risk.
+The feature d1_spo2_min increased risk. The feature d1_heartrate_min increased risk.
 
 3. Main risk-decreasing factors
 The feature age decreased risk.
 
 4. Caution notes
-The icu_id feature should be interpreted cautiously because it is a non-clinical unit/location variable.
+The d1_heartrate_min feature should be interpreted cautiously because a zero-valued vital sign may reflect a recording artifact.
 
 5. Overall interpretation
 The patient died, so the model prediction was correct.
@@ -113,7 +113,7 @@ MISSING_SECTION_EXPLANATION = """
 The model predicted a mortality probability of 0.99.
 
 2. Main risk-increasing factors
-The feature d1_spo2_min increased risk. The feature icu_id increased risk.
+The feature d1_spo2_min increased risk. The feature d1_heartrate_min increased risk.
 
 3. Main risk-decreasing factors
 The feature age decreased risk.
@@ -128,13 +128,13 @@ WRONG_PROBABILITY_EXPLANATION = """
 The model predicted a mortality probability of 0.199.
 
 2. Main risk-increasing factors
-The feature d1_spo2_min increased risk. The feature icu_id increased risk.
+The feature d1_spo2_min increased risk. The feature d1_heartrate_min increased risk.
 
 3. Main risk-decreasing factors
 The feature age decreased risk.
 
 4. Caution notes
-The icu_id feature should be interpreted cautiously because it is a non-clinical unit/location variable.
+The d1_heartrate_min feature should be interpreted cautiously because a zero-valued vital sign may reflect a recording artifact.
 
 5. Overall interpretation
 The explanation is based on the provided evidence.
@@ -146,7 +146,7 @@ MISSING_CAUTION_EXPLANATION = """
 The model predicted a mortality probability of 0.99.
 
 2. Main risk-increasing factors
-The feature d1_spo2_min increased risk. The feature icu_id increased risk.
+The feature d1_spo2_min increased risk. The feature d1_heartrate_min increased risk.
 
 3. Main risk-decreasing factors
 The feature age decreased risk.
@@ -163,13 +163,13 @@ ALIAS_CAUTION_EXPLANATION = """
 The model predicted a mortality probability of 0.99.
 
 2. Main risk-increasing factors
-The feature d1_spo2_min increased risk. The feature icu_id increased risk.
+The feature d1_spo2_min increased risk. The feature d1_heartrate_min increased risk.
 
 3. Main risk-decreasing factors
 The feature age decreased risk.
 
 4. Caution notes
-The ICU unit identifier should be interpreted cautiously because it reflects unit-level rather than patient-level information.
+The zero-valued minimum heart rate should be interpreted cautiously because it may reflect a recording artifact.
 
 5. Overall interpretation
 The explanation is based on the provided evidence.

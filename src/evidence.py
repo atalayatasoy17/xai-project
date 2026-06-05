@@ -28,7 +28,6 @@ CLINICAL_MEANING_MAP = {
     "d1_platelets_min": "low platelet count may indicate severe illness or coagulation abnormalities",
     "d1_wbc_min": "white blood cell count reflects inflammatory or immune status",
     "pre_icu_los_days": "time between hospital admission and ICU admission; negative values require caution",
-    "icu_id": "ICU unit identifier; may reflect unit-level patterns rather than patient-level clinical status",
     "apache_3j_diagnosis": "diagnosis category contributes baseline clinical severity information",
 }
 
@@ -53,9 +52,6 @@ def make_json_safe(value: Any) -> Any:
 def get_caution_flags(feature: str, value: Any) -> list[str]:
     """Return caution flags for features that need careful interpretation."""
     flags = []
-
-    if feature == "icu_id":
-        flags.append("Non-clinical unit/location identifier; interpret cautiously.")
 
     if feature == "pre_icu_los_days" and value is not None and value < 0:
         flags.append("Negative pre-ICU length of stay; may reflect timing or data quality issue.")

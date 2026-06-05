@@ -2,31 +2,12 @@
 from __future__ import annotations
 
 import os
-import re
 from typing import Any
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
 from src.validation import validate_explanation
-
-
-DEFAULT_FORBIDDEN_PHRASES = [
-    "true label",
-    "correct prediction",
-    "incorrect prediction",
-    "consistent with the true outcome",
-    "inconsistent with the true outcome",
-    "stable",
-    "stability",
-    "adequate",
-    "protective",
-    "normal",
-    "abnormal",
-    "moderate",
-    "favorable",
-    "unfavorable",
-]
 
 
 GENERATOR_SYSTEM_MESSAGE = """
@@ -132,7 +113,7 @@ Rules:
 - For features without explicit clinical_meaning, use this exact style: "<feature> = <value> increased/decreased the model's predicted risk."
 - Do not use any flagged unsupported wording.
 - Correct any prediction probability, feature grounding, caution, section, or SHAP-direction issues identified in the feedback.
-- When revising caution notes, include the exact flagged feature name identified in the validation feedback.
+- When revising caution notes, clearly identify the flagged feature using either the feature name or faithful clinical wording from the evidence.
 - Preserve the same section structure:
   1. Prediction summary
   2. Main risk-increasing factors
@@ -215,23 +196,3 @@ def revise_until_valid(
         current_explanation = revised_explanation
 
     return revised_explanation, current_report, max_rounds
-
-
-def check_forbidden_phrases(
-    text: str,
-    forbidden_phrases: list[str] | None = None,
-) -> list[str]:
-    """Return forbidden or cautionary phrases found in generated text.
-
-    This legacy helper is kept for backwards compatibility. New validation
-    should use src.validation.validate_explanation.
-    """
-    phrases = forbidden_phrases or DEFAULT_FORBIDDEN_PHRASES
-    flags = []
-
-    for phrase in phrases:
-        pattern = r"\b" + re.escape(phrase.lower()) + r"\b"
-        if re.search(pattern, text.lower()):
-            flags.append(phrase)
-
-    return flags

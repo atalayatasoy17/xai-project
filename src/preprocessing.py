@@ -38,9 +38,7 @@ class ICUPreprocessor:
     numeric_cols_: list[str] = field(default_factory=list, init=False)
     binary_cols_: list[str] = field(default_factory=list, init=False)
     categorical_cols_: list[str] = field(default_factory=list, init=False)
-    ordinal_cols_: list[str] = field(default_factory=list, init=False)
     missing_indicator_cols_: list[str] = field(default_factory=list, init=False)
-    high_missing_cols_: list[str] = field(default_factory=list, init=False)
     feature_names_: list[str] = field(default_factory=list, init=False)
     preprocessor_: ColumnTransformer | None = field(default=None, init=False)
     fitted_: bool = field(default=False, init=False)
@@ -156,8 +154,6 @@ class ICUPreprocessor:
         self.numeric_cols_ = []
         self.binary_cols_ = []
         self.categorical_cols_ = []
-        self.ordinal_cols_ = []
-        self.high_missing_cols_ = []
 
         for column in X.columns:
             n_unique = X[column].nunique(dropna=True)
@@ -207,13 +203,3 @@ class ICUPreprocessor:
     def _check_is_fitted(self) -> None:
         if not self.fitted_:
             raise RuntimeError("ICUPreprocessor is not fitted. Call fit() first.")
-
-
-def load_feature_names(path: str) -> list[str]:
-    """Load one-column feature name files saved without a header."""
-    return pd.read_csv(path, header=None)[0].tolist()
-
-
-def align_to_features(X: pd.DataFrame, feature_names: Iterable[str]) -> pd.DataFrame:
-    """Align a processed frame to an expected feature list."""
-    return X.reindex(columns=list(feature_names), fill_value=0)

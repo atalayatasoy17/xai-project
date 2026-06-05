@@ -21,7 +21,7 @@ def load_threshold(threshold_path: str | Path) -> float:
     return float(threshold_info["threshold"])
 
 
-def predict_mortality(model, X: pd.DataFrame, threshold: float = 0.5) -> pd.DataFrame:
+def predict_mortality(model, X: pd.DataFrame, threshold: float) -> pd.DataFrame:
     """Return mortality probabilities and threshold-based predictions."""
     probabilities = model.predict_proba(X)[:, 1]
     predictions = (probabilities >= threshold).astype(int)
