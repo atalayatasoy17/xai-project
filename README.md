@@ -57,6 +57,10 @@ data/raw/
 data/processed/
 ```
 
+For the containerized dashboard, the required raw demo files are downloaded automatically
+from public Google Drive links by `src/data_fetch.py` when the app starts. This avoids
+requiring a Kaggle login or manual local data download during the Docker demo.
+
 ## Methodology Summary
 
 ### 1. Preprocessing
@@ -369,6 +373,36 @@ streamlit run dashboard/app.py
 ```
 
 Then open `http://localhost:8501`. LLM and GPT-4o calls are optional controls inside the dashboard.
+
+## Run with Docker
+
+Build the image:
+
+```bash
+docker build -t xai-project .
+```
+
+Run the dashboard:
+
+```bash
+docker run --rm -p 8501:8501 xai-project
+```
+
+Then open:
+
+```text
+http://localhost:8501
+```
+
+On first startup, the container downloads the required raw CSV files automatically
+into `data/raw/`. No Kaggle login is required for the dashboard demo.
+
+LLM generation and GPT-4o evaluation are optional. To enable live LLM calls, pass an
+OpenAI API key:
+
+```bash
+docker run --rm -p 8501:8501 -e OPENAI_API_KEY=your_api_key_here xai-project
+```
 
 ## Key Outputs
 
