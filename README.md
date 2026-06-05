@@ -61,6 +61,10 @@ For the containerized dashboard, the required raw demo files are downloaded auto
 from public Google Drive links by `src/data_fetch.py` when the app starts. This avoids
 requiring a Kaggle login or manual local data download during the Docker demo.
 
+Users who want to reproduce full training should still respect the original
+WiDS/Kaggle dataset terms and licensing. The repository does not commit raw data
+or API credentials.
+
 ## Methodology Summary
 
 ### 1. Preprocessing
@@ -248,6 +252,9 @@ In other words, notebooks explain how decisions were made, while the Python modu
 
 ```text
 xai-project/
+├── Dockerfile
+├── .dockerignore
+├── requirements.txt
 ├── data/
 │   ├── raw/                       # excluded from Git
 │   └── processed/                 # excluded from Git
@@ -293,6 +300,7 @@ xai-project/
     ├── llm.py
     ├── validation.py
     ├── evaluator.py
+    ├── data_fetch.py
     └── pipeline.py
 ```
 
@@ -308,6 +316,12 @@ For LLM scripts, create a local `.env` file:
 
 ```text
 OPENAI_API_KEY=your_api_key_here
+```
+
+Download required raw CSV files for local scripts:
+
+```bash
+python src/data_fetch.py
 ```
 
 Run core verification:
@@ -396,6 +410,14 @@ http://localhost:8501
 
 On first startup, the container downloads the required raw CSV files automatically
 into `data/raw/`. No Kaggle login is required for the dashboard demo.
+
+If port `8501` is already in use, run the same container on another local port:
+
+```bash
+docker run --rm -p 8502:8501 xai-project
+```
+
+Then open `http://localhost:8502`.
 
 LLM generation and GPT-4o evaluation are optional. To enable live LLM calls, pass an
 OpenAI API key:
