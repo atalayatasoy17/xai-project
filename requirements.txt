@@ -25,6 +25,9 @@ openai>=1.30       # OpenAI API — LLM explanation generation
 jupyterlab>=4.0
 ipykernel>=6.29
 
+# ── Veri indirme ───────────────────────────────────────────────────────────────
+gdown>=5.1           # public Google Drive'dan otomatik veri indirme (login gerektirmez)
+
 # ── Yardımcı ───────────────────────────────────────────────────────────────────
 python-dotenv>=1.0   # API key'leri .env dosyasından yüklemek için
 tqdm>=4.66           # ilerleme çubukları

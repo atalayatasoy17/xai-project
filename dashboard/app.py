@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
+from src.data_fetch import ensure_data
 from src.llm import generate_explanation, revise_until_valid
 from src.evaluator import compute_hybrid_quality_score, evaluate_subjective_quality
 from src.pipeline import run_patient_pipeline
@@ -1988,8 +1989,15 @@ def render_live_mode() -> None:
     render_live_result(result)
 
 
+@st.cache_resource(show_spinner="Veri indiriliyor (ilk açılış)...")
+def _bootstrap_data() -> bool:
+    ensure_data()
+    return True
+
+
 def main() -> None:
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+    _bootstrap_data()
     render_hero()
 
     tabs = st.tabs(
