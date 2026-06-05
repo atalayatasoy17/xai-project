@@ -268,6 +268,85 @@ hr {
     border-top: 1px solid #c7d8d2;
     margin: 1.4rem 0 1rem 0;
 }
+.agent-flow {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0 1.2rem 0;
+}
+.agent-node {
+    background: #fbfdfc;
+    border: 1px solid #b9d8cf;
+    border-radius: 8px;
+    padding: 0.95rem;
+    min-height: 150px;
+    box-shadow: 0 8px 20px rgba(31, 77, 74, 0.06);
+    position: relative;
+}
+.agent-node::after {
+    content: ">";
+    position: absolute;
+    right: -0.56rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #2f8077;
+    font-weight: 900;
+    background: #eef4f2;
+    padding: 0 0.15rem;
+}
+.agent-node:last-child::after {
+    content: "";
+}
+.agent-step {
+    display: inline-block;
+    background: #e3f2ed;
+    color: #1f4d4a;
+    border-radius: 999px;
+    padding: 0.18rem 0.52rem;
+    font-size: 0.74rem;
+    font-weight: 800;
+    margin-bottom: 0.55rem;
+}
+.agent-node strong {
+    color: #16312f;
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 0.35rem;
+}
+.agent-node p {
+    color: #435b57;
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.42;
+}
+.agent-stack {
+    background: #f9fcfa;
+    border: 1px solid #c7d8d2;
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    min-height: 170px;
+}
+.agent-stack h4 {
+    color: #16312f;
+    margin: 0 0 0.45rem 0;
+    font-size: 1rem;
+}
+.agent-stack ul {
+    margin: 0.25rem 0 0 1.1rem;
+    padding: 0;
+}
+.agent-stack li {
+    color: #435b57;
+    margin-bottom: 0.35rem;
+}
+@media (max-width: 980px) {
+    .agent-flow {
+        grid-template-columns: 1fr;
+    }
+    .agent-node::after {
+        content: "";
+    }
+}
 </style>
 """
 
@@ -324,7 +403,7 @@ def render_hero() -> None:
                 A presentation-ready walkthrough of the data, preprocessing, model,
                 SHAP explanations, LLM validation architecture, and live patient-level demo.
             </p>
-            <div class="pipeline-strip">EDA -> Preprocessing -> LightGBM -> SHAP -> LLM validation -> Live demo</div>
+            <div class="pipeline-strip">Black-box model -> SHAP evidence -> LLM explanation -> validation -> live demo</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -340,6 +419,153 @@ def render_section_header(title: str, caption: str, kicker: str | None = None) -
 
 def render_insight(text: str) -> None:
     st.markdown(f"<div class='insight-box'>{text}</div>", unsafe_allow_html=True)
+
+
+def render_agentic_pipeline_page() -> None:
+    render_section_header(
+        title="Agentic Pipeline Overview",
+        caption="A high-level map of how the project turns a black-box mortality model into a validated, patient-level explanation system.",
+        kicker="Opening",
+    )
+
+    st.markdown(
+        """
+        <div class="narrative-card">
+        <h4>Project idea in one sentence</h4>
+        <p>
+        The project starts with a predictive ICU mortality model, explains each prediction with SHAP,
+        converts the SHAP output into structured evidence, asks an LLM to write a readable explanation,
+        and then validates that explanation before it is shown in the patient demo.
+        </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="agent-flow">
+            <div class="agent-node">
+                <span class="agent-step">01</span>
+                <strong>Black-box model</strong>
+                <p>Raw ICU features are preprocessed and passed into the tuned LightGBM mortality model.</p>
+            </div>
+            <div class="agent-node">
+                <span class="agent-step">02</span>
+                <strong>Prediction</strong>
+                <p>The model outputs a mortality probability and compares it with the selected threshold.</p>
+            </div>
+            <div class="agent-node">
+                <span class="agent-step">03</span>
+                <strong>Local SHAP</strong>
+                <p>SHAP separates risk-increasing and risk-decreasing feature contributions for one patient.</p>
+            </div>
+            <div class="agent-node">
+                <span class="agent-step">04</span>
+                <strong>Evidence packet</strong>
+                <p>Prediction, SHAP values, feature values, clinical meanings, and caution flags are organized as JSON.</p>
+            </div>
+            <div class="agent-node">
+                <span class="agent-step">05</span>
+                <strong>Validated explanation</strong>
+                <p>The LLM explanation is checked, revised if needed, and optionally reviewed for subjective quality.</p>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    metric_cols = st.columns(4)
+    metric_cols[0].metric("Final model", "LightGBM")
+    metric_cols[1].metric("Threshold", "0.7274")
+    metric_cols[2].metric("Test AUROC", "0.9103")
+    metric_cols[3].metric("Test F1", "0.5483")
+
+    render_insight(
+        "<strong>Presentation message:</strong> the LLM is not the model and it is not the judge. "
+        "The model predicts, SHAP explains the model, the evidence packet constrains the LLM, "
+        "and deterministic validation decides whether the explanation is acceptable."
+    )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### What each layer contributes")
+
+    cols = st.columns(3)
+    with cols[0]:
+        st.markdown(
+            """
+            <div class="agent-stack">
+            <h4>Modeling layer</h4>
+            <ul>
+                <li>learns mortality risk patterns from ICU data</li>
+                <li>uses a tuned threshold instead of default 0.50</li>
+                <li>is evaluated with AUROC, AUPRC, precision, recall, F1, and confusion matrix</li>
+            </ul>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with cols[1]:
+        st.markdown(
+            """
+            <div class="agent-stack">
+            <h4>Explainability layer</h4>
+            <ul>
+                <li>uses global SHAP to understand model drivers</li>
+                <li>uses local SHAP to explain one patient</li>
+                <li>turns feature effects into risk-increasing and risk-decreasing evidence</li>
+            </ul>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with cols[2]:
+        st.markdown(
+            """
+            <div class="agent-stack">
+            <h4>Validation layer</h4>
+            <ul>
+                <li>generates readable LLM explanations from structured evidence</li>
+                <li>checks leakage, unsupported wording, probability consistency, caution, grounding, and direction</li>
+                <li>revises failed explanations before final use</li>
+            </ul>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### How to present the rest of the dashboard")
+    presentation_rows = pd.DataFrame(
+        [
+            {
+                "Dashboard tab": "EDA",
+                "What to show": "class imbalance, missingness, leakage-prone variables, and descriptive clinical patterns",
+                "Why it matters": "justifies preprocessing and metric choices",
+            },
+            {
+                "Dashboard tab": "Preprocessing & Modeling",
+                "What to show": "pipeline decisions, baseline models, final LightGBM, threshold tuning, and confusion matrix",
+                "Why it matters": "shows how the final predictive system was selected",
+            },
+            {
+                "Dashboard tab": "SHAP Explainability",
+                "What to show": "global SHAP, dependence patterns, local waterfalls, and interaction diagnostics",
+                "Why it matters": "shows that predictions are explained at both global and patient levels",
+            },
+            {
+                "Dashboard tab": "LLM & Validation",
+                "What to show": "evidence packet, prompt rules, deterministic checks, revision loop, and GPT-4o advisory scoring",
+                "Why it matters": "shows why LLM outputs are auditable instead of blindly trusted",
+            },
+            {
+                "Dashboard tab": "Live Patient Demo",
+                "What to show": "selected patient, prediction, SHAP evidence, LLM explanation, validation panel, and revision result",
+                "Why it matters": "proves the final pipeline works end to end",
+            },
+        ]
+    )
+    st.dataframe(presentation_rows, use_container_width=True, hide_index=True)
 
 
 def render_image(path: Path, caption: str | None = None) -> None:
@@ -2002,6 +2228,7 @@ def main() -> None:
 
     tabs = st.tabs(
         [
+            "Agentic Pipeline",
             "EDA",
             "Preprocessing & Modeling",
             "SHAP Explainability",
@@ -2011,18 +2238,21 @@ def main() -> None:
     )
 
     with tabs[0]:
-        render_eda_page()
+        render_agentic_pipeline_page()
 
     with tabs[1]:
-        render_modeling_page()
+        render_eda_page()
 
     with tabs[2]:
-        render_shap_page()
+        render_modeling_page()
 
     with tabs[3]:
-        render_architecture_page()
+        render_shap_page()
 
     with tabs[4]:
+        render_architecture_page()
+
+    with tabs[5]:
         render_live_mode()
 
 
