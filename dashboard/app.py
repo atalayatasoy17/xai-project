@@ -28,6 +28,13 @@ PREPROCESSOR_PATH = ROOT / "models" / "icu_preprocessor.pkl"
 MODEL_PATH = ROOT / "models" / "lgbm_tuned_clean.pkl"
 THRESHOLD_PATH = ROOT / "models" / "lgbm_tuned_clean_threshold.json"
 WEIGHTS_PATH = ROOT / "reports" / "05_evaluation" / "evaluation_weights.json"
+EDA_DIR = ROOT / "reports" / "00_eda"
+MODELING_DIR = ROOT / "reports" / "01_modeling"
+EXPLAINABILITY_DIR = ROOT / "reports" / "02_explainability"
+VALIDATION_AUDIT_PATH = ROOT / "reports" / "09_validation_audit" / "validation_audit_summary.csv"
+GPT4O_EVALUATION_PATH = (
+    ROOT / "reports" / "10_gpt4o_evaluation" / "gpt4o_subjective_evaluation_summary.csv"
+)
 DEFAULT_EVALUATION_WEIGHTS = {
     "faithfulness_no_hallucination": 0.30,
     "clinical_plausibility": 0.25,
@@ -205,6 +212,25 @@ hr {
     padding: 1.2rem;
     color: #435b57;
 }
+.insight-box {
+    background: #fbfdfc;
+    border: 1px solid #c7d8d2;
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+    margin: 0.45rem 0 1rem 0;
+    color: #334946;
+    box-shadow: 0 6px 16px rgba(31, 77, 74, 0.05);
+}
+.insight-box strong {
+    color: #16312f;
+}
+.step-box {
+    background: #f9fcfa;
+    border: 1px solid #c7d8d2;
+    border-radius: 8px;
+    padding: 1rem;
+    min-height: 145px;
+}
 </style>
 """
 
@@ -231,6 +257,11 @@ def load_evaluation_weights() -> dict[str, float]:
         return json.load(f)
 
 
+@st.cache_data(show_spinner=False)
+def load_csv(path: str) -> pd.DataFrame:
+    return pd.read_csv(path)
+
+
 def format_probability(value: Any) -> str:
     try:
         return f"{float(value):.4f}"
@@ -250,14 +281,13 @@ def render_hero() -> None:
     st.markdown(
         """
         <div class="hero">
-            <div class="eyebrow">Live XAI Demo</div>
+            <div class="eyebrow">DS 570 Project Dashboard</div>
             <div class="hero-title">ICU Mortality Explanation Dashboard</div>
             <p class="hero-subtitle">
-                Run a patient-level mortality prediction, inspect local SHAP evidence,
-                generate an evidence-grounded LLM explanation, and validate the result
-                with deterministic safety checks.
+                A presentation-ready walkthrough of the data, preprocessing, model,
+                SHAP explanations, LLM validation architecture, and live patient-level demo.
             </p>
-            <div class="pipeline-strip">Patient data -> LightGBM -> SHAP evidence -> LLM explanation -> Validator -> GPT-4o quality judge</div>
+            <div class="pipeline-strip">EDA -> Preprocessing -> LightGBM -> SHAP -> LLM validation -> Live demo</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -269,6 +299,317 @@ def render_section_header(title: str, caption: str, kicker: str | None = None) -
         st.markdown(f"<div class='section-kicker'>{kicker}</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='section-title'>{title}</div>", unsafe_allow_html=True)
     st.markdown(f"<p class='section-caption'>{caption}</p>", unsafe_allow_html=True)
+
+
+def render_insight(text: str) -> None:
+    st.markdown(f"<div class='insight-box'>{text}</div>", unsafe_allow_html=True)
+
+
+def render_image(path: Path, caption: str | None = None) -> None:
+    if not path.exists():
+        st.warning(f"Missing figure: {path.relative_to(ROOT)}")
+        return
+
+    st.image(str(path), use_container_width=True)
+    if caption:
+        render_insight(caption)
+
+
+def render_table(path: Path, columns: list[str] | None = None, n_rows: int = 10) -> None:
+    if not path.exists():
+        st.warning(f"Missing table: {path.relative_to(ROOT)}")
+        return
+
+    df = load_csv(str(path))
+    if columns:
+        df = df[[column for column in columns if column in df.columns]]
+    st.dataframe(df.head(n_rows), use_container_width=True, hide_index=True)
+
+
+def render_eda_page() -> None:
+    render_section_header(
+        title="Exploratory Data Analysis",
+        caption="Data understanding, target imbalance, missingness, leakage checks, and early feature patterns.",
+        kicker="Part 1",
+    )
+
+    cols = st.columns(3)
+    with cols[0]:
+        render_table(EDA_DIR / "tables" / "dataset_overview.csv", n_rows=8)
+    with cols[1]:
+        render_table(EDA_DIR / "tables" / "target_distribution.csv", n_rows=5)
+    with cols[2]:
+        render_table(EDA_DIR / "tables" / "duplicate_summary.csv", n_rows=5)
+
+    render_insight(
+        "<strong>Presentation point:</strong> the project starts with a real ICU mortality task, "
+        "not a toy dataset. The positive class is rare, so later modeling cannot rely on accuracy alone."
+    )
+
+    left, right = st.columns(2)
+    with left:
+        render_image(
+            EDA_DIR / "figures" / "target_distribution.png",
+            "<strong>Target imbalance:</strong> hospital death is a minority outcome. "
+            "This motivates AUROC, AUPRC, recall, precision, F1, and threshold analysis."
+        )
+    with right:
+        render_image(
+            EDA_DIR / "figures" / "feature_groups_summary.png",
+            "<strong>Feature structure:</strong> the data combines vital signs, labs, APACHE variables, "
+            "demographics, and categorical hospital/ICU descriptors."
+        )
+
+    left, right = st.columns(2)
+    with left:
+        render_image(
+            EDA_DIR / "figures" / "missingness_top20.png",
+            "<strong>Missingness is informative:</strong> many ICU variables have substantial missing values, "
+            "so preprocessing keeps missingness indicators for numeric features."
+        )
+    with right:
+        render_image(
+            EDA_DIR / "figures" / "missingness_by_target.png",
+            "<strong>Missingness by outcome:</strong> missing patterns can differ across mortality groups, "
+            "so imputation decisions are learned on the training split only."
+        )
+
+    left, right = st.columns(2)
+    with left:
+        render_image(
+            EDA_DIR / "figures" / "feature_distributions_by_target.png",
+            "<strong>Clinical separation:</strong> several numeric variables show different distributions "
+            "between survivors and non-survivors, supporting predictive modeling."
+        )
+    with right:
+        render_image(
+            EDA_DIR / "figures" / "categorical_mortality_top_groups.png",
+            "<strong>Categorical risk patterns:</strong> categorical variables have mortality-rate variation, "
+            "but high-cardinality fields are handled carefully during preprocessing."
+        )
+
+    left, right = st.columns(2)
+    with left:
+        render_image(
+            EDA_DIR / "figures" / "apache_leakage_by_target.png",
+            "<strong>Leakage check:</strong> APACHE death probability columns are strongly target-related. "
+            "They are removed from the final feature set to avoid using precomputed mortality scores."
+        )
+    with right:
+        render_image(
+            EDA_DIR / "figures" / "top_target_correlations.png",
+            "<strong>Correlation screening:</strong> target correlations guide investigation, but final "
+            "feature selection is based on leakage logic, preprocessing constraints, and model validation."
+        )
+
+
+def render_modeling_page() -> None:
+    render_section_header(
+        title="Preprocessing and Modeling",
+        caption="Final preprocessing schema, model comparison, threshold selection, and final LightGBM performance.",
+        kicker="Part 2",
+    )
+
+    st.markdown(
+        """
+        <div class="step-box">
+        <strong>Final preprocessing logic</strong><br>
+        ID/location columns and leakage-prone APACHE death probability columns are removed.
+        Numeric features are median-imputed with missingness indicators, binary features are ordinal-encoded,
+        and categorical variables are one-hot encoded with infrequent-category handling.
+        Numeric scaling is omitted because the final model is tree-based LightGBM.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    cols = st.columns(4)
+    metrics = load_csv(str(MODELING_DIR / "selected_lgbm_test_metrics.csv"))
+    metric_map = {
+        column.lower(): metrics[column].iloc[0]
+        for column in metrics.columns
+    }
+    cols[0].metric("AUROC", format_probability(metric_map.get("auroc")))
+    cols[1].metric("AUPRC", format_probability(metric_map.get("auprc")))
+    cols[2].metric("F1", format_probability(metric_map.get("f1")))
+    cols[3].metric("Threshold", format_probability(metric_map.get("threshold")))
+
+    left, right = st.columns(2)
+    with left:
+        render_image(
+            MODELING_DIR / "figures" / "model_comparison_metrics.png",
+            "<strong>Model comparison:</strong> LightGBM was selected after comparing multiple model families "
+            "rather than defaulting to a single algorithm."
+        )
+    with right:
+        render_image(
+            MODELING_DIR / "figures" / "native_lgbm_feature_importance_gain_top20.png",
+            "<strong>Native importance:</strong> LightGBM gain importance provides a black-box model view, "
+            "which complements SHAP's local and global explanations."
+        )
+
+    left, right = st.columns(2)
+    with left:
+        render_image(
+            MODELING_DIR / "figures" / "selected_lgbm_confusion_matrix.png",
+            "<strong>Confusion matrix:</strong> the selected threshold balances false positives and false negatives "
+            "for an imbalanced mortality prediction task."
+        )
+    with right:
+        render_image(
+            MODELING_DIR / "figures" / "threshold_sweep_precision_recall_f1.png",
+            "<strong>Threshold tuning:</strong> the final threshold is tuned instead of assuming 0.50, "
+            "because the class distribution is imbalanced."
+        )
+
+    left, right = st.columns(2)
+    with left:
+        render_image(
+            MODELING_DIR / "figures" / "threshold_sweep_fp_fn.png",
+            "<strong>Error trade-off:</strong> threshold selection changes the balance between false positives "
+            "and false negatives, which matters in a clinical risk setting."
+        )
+    with right:
+        render_table(
+            MODELING_DIR / "final_model_comparison.csv",
+            n_rows=12,
+        )
+
+
+def render_shap_page() -> None:
+    render_section_header(
+        title="SHAP Explainability",
+        caption="Global importance, local patient explanations, dependence plots, and exploratory interaction checks.",
+        kicker="Part 3",
+    )
+
+    left, right = st.columns(2)
+    with left:
+        render_image(
+            EXPLAINABILITY_DIR / "figures" / "global_shap_importance_top20.png",
+            "<strong>Global SHAP importance:</strong> shows which features most strongly affect model output "
+            "on average across patients."
+        )
+    with right:
+        render_image(
+            EXPLAINABILITY_DIR / "figures" / "shap_summary_top20.png",
+            "<strong>SHAP summary:</strong> combines feature importance with direction and value patterns, "
+            "helping explain how high or low values influence risk."
+        )
+
+    left, right = st.columns(2)
+    with left:
+        render_image(
+            EXPLAINABILITY_DIR / "figures" / "shap_dependence_age.png",
+            "<strong>Age dependence:</strong> shows how the contribution of age changes across patient ages."
+        )
+    with right:
+        render_image(
+            EXPLAINABILITY_DIR / "figures" / "shap_dependence_d1_spo2_min.png",
+            "<strong>Oxygenation dependence:</strong> minimum oxygen saturation is clinically meaningful and "
+            "helps reveal how hypoxemia affects mortality risk."
+        )
+
+    left, right = st.columns(2)
+    with left:
+        render_image(
+            EXPLAINABILITY_DIR / "figures" / "shap_dependence_gcs_motor_apache.png",
+            "<strong>Neurological response:</strong> GCS motor score helps explain how impaired neurological "
+            "status contributes to risk."
+        )
+    with right:
+        render_image(
+            EXPLAINABILITY_DIR / "figures" / "shap_effect_ventilated_apache.png",
+            "<strong>Mechanical ventilation:</strong> ventilation status is interpreted as a severity marker "
+            "and is evaluated through SHAP effects."
+        )
+
+    st.markdown("#### Local case explanations")
+    local_cols = st.columns(4)
+    local_cases = [
+        ("True positive", "local_waterfall_tp.png"),
+        ("False negative", "local_waterfall_fn.png"),
+        ("False positive", "local_waterfall_fp.png"),
+        ("True negative", "local_waterfall_tn.png"),
+    ]
+    for column, (title, filename) in zip(local_cols, local_cases):
+        with column:
+            st.markdown(f"**{title}**")
+            render_image(EXPLAINABILITY_DIR / "figures" / filename)
+
+    render_insight(
+        "<strong>Local SHAP role:</strong> each patient explanation is built from the top risk-increasing "
+        "and risk-decreasing SHAP contributions, then converted into a structured evidence packet."
+    )
+
+    left, right = st.columns(2)
+    with left:
+        render_image(
+            EXPLAINABILITY_DIR / "figures" / "top20_shap_interaction_heatmap.png",
+            "<strong>Exploratory interactions:</strong> top-feature SHAP interaction checks were added as "
+            "analysis support, not as direct input to the LLM explanation pipeline."
+        )
+    with right:
+        render_image(
+            EXPLAINABILITY_DIR / "figures" / "top20_feature_correlation_heatmap.png",
+            "<strong>Feature correlation:</strong> correlation checks help distinguish related inputs from "
+            "true interaction effects."
+        )
+
+
+def render_architecture_page() -> None:
+    render_section_header(
+        title="LLM Explanation and Validation Architecture",
+        caption="How SHAP evidence becomes a validated narrative explanation.",
+        kicker="Part 4",
+    )
+
+    cols = st.columns(5)
+    steps = [
+        ("1. Local SHAP", "For one patient, SHAP separates risk-increasing and risk-decreasing model evidence."),
+        ("2. Evidence packet", "The raw SHAP table is converted into structured JSON with values, meanings, and caution flags."),
+        ("3. Prompt", "Only the evidence packet is sent to the explanation model; true labels are excluded."),
+        ("4. Validator", "Deterministic checks catch leakage, unsupported wording, probability errors, and direction issues."),
+        ("5. Revision/evaluation", "LLM revision is triggered only when validation fails; GPT-4o is advisory for clarity and plausibility."),
+    ]
+    for column, (title, body) in zip(cols, steps):
+        with column:
+            st.markdown(
+                f"""
+                <div class="step-box">
+                <strong>{title}</strong><br>
+                {body}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    render_insight(
+        "<strong>Main contribution:</strong> the project does not accept LLM explanations blindly. "
+        "Objective safety checks are deterministic and reproducible; GPT-4o is limited to subjective quality review."
+    )
+
+    left, right = st.columns(2)
+    with left:
+        st.markdown("#### Deterministic validation audit")
+        render_table(VALIDATION_AUDIT_PATH, n_rows=12)
+    with right:
+        st.markdown("#### GPT-4o subjective evaluation")
+        render_table(GPT4O_EVALUATION_PATH, n_rows=12)
+
+    st.markdown("#### Validator checks")
+    check_rows = pd.DataFrame(
+        [
+            {"check": "Forbidden phrases", "purpose": "Avoid unsupported wording such as normal, stable, favorable."},
+            {"check": "True-label leakage", "purpose": "Prevent explanations from using actual outcomes or correctness."},
+            {"check": "Section structure", "purpose": "Keep the explanation consistent and presentation-ready."},
+            {"check": "Prediction consistency", "purpose": "Ensure the probability stated by the LLM matches model output."},
+            {"check": "Caution mention", "purpose": "Require careful language for flagged evidence values."},
+            {"check": "Feature grounding", "purpose": "Detect exact feature names that are not in the evidence packet."},
+            {"check": "Direction consistency", "purpose": "Check that risk-increasing/decreasing claims match SHAP direction."},
+        ]
+    )
+    st.dataframe(check_rows, use_container_width=True, hide_index=True)
 
 
 def evidence_to_frame(records: list[dict[str, Any]]) -> pd.DataFrame:
@@ -697,7 +1038,30 @@ def main() -> None:
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
     render_hero()
 
-    render_live_mode()
+    tabs = st.tabs(
+        [
+            "EDA",
+            "Preprocessing & Modeling",
+            "SHAP Explainability",
+            "LLM & Validation",
+            "Live Patient Demo",
+        ]
+    )
+
+    with tabs[0]:
+        render_eda_page()
+
+    with tabs[1]:
+        render_modeling_page()
+
+    with tabs[2]:
+        render_shap_page()
+
+    with tabs[3]:
+        render_architecture_page()
+
+    with tabs[4]:
+        render_live_mode()
 
 
 if __name__ == "__main__":
