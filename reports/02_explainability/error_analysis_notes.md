@@ -66,7 +66,9 @@ Key tables:
 - `tables/top20_shap_interactions.csv`
 - `tables/top20_feature_correlations.csv`
 
-Root-level CSV files are retained for compatibility with earlier scripts.
+The refreshed structure keeps tables under `reports/02_explainability/tables/`
+and figures under `reports/02_explainability/figures/`. Older root-level
+duplicate copies were removed to keep the report directory easier to navigate.
 
 ## Prediction Type Counts
 

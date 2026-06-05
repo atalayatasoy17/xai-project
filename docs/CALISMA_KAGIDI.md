@@ -192,7 +192,7 @@ Kullandigimiz iki temel seviye:
 
 Final SHAP outputs:
 
-- `reports/02_explainability/global_shap_importance.csv`
+- `reports/02_explainability/tables/global_shap_importance.csv`
 - `reports/02_explainability/figures/shap_summary_top20.png`
 - `reports/02_explainability/figures/local_waterfall_tp.png`
 - `reports/02_explainability/figures/local_waterfall_fn.png`

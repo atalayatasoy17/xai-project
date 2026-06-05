@@ -26,11 +26,6 @@ from src.prediction import load_threshold
 SEED = 42
 
 
-def save_csv_to_both(df: pd.DataFrame, path: Path, tables_dir: Path, index: bool = False) -> None:
-    df.to_csv(path, index=index)
-    df.to_csv(tables_dir / path.name, index=index)
-
-
 def make_prediction_types(y_test: pd.Series, y_proba: np.ndarray, threshold: float) -> pd.DataFrame:
     y_pred = (y_proba >= threshold).astype(int)
     prediction_df = pd.DataFrame(
@@ -153,16 +148,11 @@ def main() -> None:
     )
     shap_importance["rank"] = shap_importance.index + 1
 
-    save_csv_to_both(
-        shap_importance[["feature", "mean_abs_shap", "rank"]],
-        explainability_dir / "global_shap_importance.csv",
-        tables_dir,
+    shap_importance[["feature", "mean_abs_shap", "rank"]].to_csv(
+        tables_dir / "global_shap_importance.csv",
+        index=False,
     )
-    save_csv_to_both(
-        prediction_df,
-        explainability_dir / "prediction_types.csv",
-        tables_dir,
-    )
+    prediction_df.to_csv(tables_dir / "prediction_types.csv", index=False)
 
     plt.figure(figsize=(8, 5))
     plt.hist(y_proba, bins=50)
@@ -292,7 +282,7 @@ def main() -> None:
             vent_summary.loc[vent_summary["ventilated_apache"] == 0, "vent_shap"],
             vent_summary.loc[vent_summary["ventilated_apache"] == 1, "vent_shap"],
         ],
-        labels=["Not ventilated", "Ventilated"],
+        tick_labels=["Not ventilated", "Ventilated"],
     )
     plt.axhline(0, color="black", linestyle="--", linewidth=1)
     plt.ylabel("SHAP value")
@@ -319,7 +309,7 @@ def main() -> None:
         local_df = local_explanation(index, X_test, shap_values)
         local_tables[case_type] = local_df
         filename = f"local_explanation_{case_type.lower()}.csv"
-        save_csv_to_both(local_df, explainability_dir / filename, tables_dir)
+        local_df.to_csv(tables_dir / filename, index=False)
         save_waterfall(
             explainer=explainer,
             shap_values=shap_values,
@@ -339,18 +329,8 @@ def main() -> None:
         .groupby("prediction_type")
         .mean()
     )
-    save_csv_to_both(
-        group_mean_shap,
-        explainability_dir / "group_mean_shap.csv",
-        tables_dir,
-        index=True,
-    )
-    save_csv_to_both(
-        group_mean_abs_shap,
-        explainability_dir / "group_mean_abs_shap.csv",
-        tables_dir,
-        index=True,
-    )
+    group_mean_shap.to_csv(tables_dir / "group_mean_shap.csv", index=True)
+    group_mean_abs_shap.to_csv(tables_dir / "group_mean_abs_shap.csv", index=True)
 
     group_rows = []
     for group_name in ["TP", "FN", "FP", "TN"]:
@@ -395,11 +375,7 @@ def main() -> None:
 
     top20_features = shap_importance.head(20)["feature"].tolist()
     top20_features_df = shap_importance.head(20)[["rank", "feature", "mean_abs_shap"]]
-    save_csv_to_both(
-        top20_features_df,
-        explainability_dir / "top20_shap_features.csv",
-        tables_dir,
-    )
+    top20_features_df.to_csv(tables_dir / "top20_shap_features.csv", index=False)
 
     interaction_sample = X_test.sample(n=min(300, len(X_test)), random_state=SEED)
     interaction_values = explainer.shap_interaction_values(interaction_sample)
@@ -414,7 +390,6 @@ def main() -> None:
         index=top20_features,
         columns=top20_features,
     )
-    interaction_matrix_df.to_csv(explainability_dir / "top20_shap_interaction_matrix.csv")
     interaction_matrix_df.to_csv(tables_dir / "top20_shap_interaction_matrix.csv")
 
     interaction_rows = []
@@ -446,11 +421,7 @@ def main() -> None:
             "median_signed_interaction",
         ]
     ]
-    save_csv_to_both(
-        top_interactions,
-        explainability_dir / "top20_shap_interactions.csv",
-        tables_dir,
-    )
+    top_interactions.to_csv(tables_dir / "top20_shap_interactions.csv", index=False)
 
     plt.figure(figsize=(12, 10))
     im = plt.imshow(interaction_matrix_df, cmap="viridis", aspect="auto")
@@ -460,11 +431,9 @@ def main() -> None:
     plt.title("Top 20 SHAP Interaction Heatmap")
     plt.tight_layout()
     plt.savefig(figures_dir / "top20_shap_interaction_heatmap.png", dpi=150, bbox_inches="tight")
-    plt.savefig(explainability_dir / "top20_shap_interaction_heatmap.png", dpi=150, bbox_inches="tight")
     plt.close()
 
     top20_corr = X_test[top20_features].corr(method="spearman")
-    top20_corr.to_csv(explainability_dir / "top20_feature_correlations.csv")
     top20_corr.to_csv(tables_dir / "top20_feature_correlations.csv")
     plt.figure(figsize=(12, 10))
     im = plt.imshow(top20_corr, cmap="coolwarm", vmin=-1, vmax=1, aspect="auto")
@@ -474,7 +443,6 @@ def main() -> None:
     plt.title("Top 20 Feature Correlation Heatmap")
     plt.tight_layout()
     plt.savefig(figures_dir / "top20_feature_correlation_heatmap.png", dpi=150, bbox_inches="tight")
-    plt.savefig(explainability_dir / "top20_feature_correlation_heatmap.png", dpi=150, bbox_inches="tight")
     plt.close()
 
     print("=== Explainability Reports Refreshed ===")

@@ -158,7 +158,7 @@ dayandigini gosterir.
 
 Ana dosyalar:
 
-- `reports/02_explainability/global_shap_importance.csv`
+- `reports/02_explainability/tables/global_shap_importance.csv`
 - `reports/02_explainability/figures/shap_summary_top20.png`
 
 ### E.2. Local SHAP
