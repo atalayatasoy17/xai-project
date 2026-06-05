@@ -92,6 +92,15 @@ CUSTOM_CSS = """
 h1, h2, h3 {
     color: #183331;
 }
+h4, h5, h6,
+[data-testid="stMarkdownContainer"] h1,
+[data-testid="stMarkdownContainer"] h2,
+[data-testid="stMarkdownContainer"] h3,
+[data-testid="stMarkdownContainer"] h4,
+[data-testid="stMarkdownContainer"] h5,
+[data-testid="stMarkdownContainer"] h6 {
+    color: #183331 !important;
+}
 p, li, label, span {
     color: #203432;
 }
@@ -230,6 +239,33 @@ hr {
     border-radius: 8px;
     padding: 1rem;
     min-height: 145px;
+    color: #334946;
+    line-height: 1.45;
+}
+.step-box strong {
+    color: #16312f;
+    font-weight: 800;
+}
+.narrative-card {
+    background: #fbfdfc;
+    border: 1px solid #c7d8d2;
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 8px 18px rgba(31, 77, 74, 0.06);
+}
+.narrative-card h4 {
+    color: #16312f;
+    margin: 0 0 0.45rem 0;
+    font-size: 1rem;
+}
+.narrative-card p {
+    margin: 0;
+    color: #435b57;
+}
+.subsection-rule {
+    border-top: 1px solid #c7d8d2;
+    margin: 1.4rem 0 1rem 0;
 }
 </style>
 """
@@ -326,251 +362,1007 @@ def render_table(path: Path, columns: list[str] | None = None, n_rows: int = 10)
     st.dataframe(df.head(n_rows), use_container_width=True, hide_index=True)
 
 
+def render_target_correlation_chart(path: Path, n_rows: int = 12) -> None:
+    """Render signed target correlations as a presentation-friendly bar chart."""
+    if not path.exists():
+        st.warning(f"Missing table: {path.relative_to(ROOT)}")
+        return
+
+    import matplotlib.pyplot as plt
+
+    df = load_csv(str(path)).head(n_rows).copy()
+    df = df.sort_values("pearson_corr_with_hospital_death", ascending=True)
+    colors = [
+        "#b7653f" if value > 0 else "#2f8077"
+        for value in df["pearson_corr_with_hospital_death"]
+    ]
+
+    fig, ax = plt.subplots(figsize=(9, 5.4))
+    ax.barh(
+        df["feature"],
+        df["pearson_corr_with_hospital_death"],
+        color=colors,
+    )
+    ax.axvline(0, color="#526661", linewidth=1)
+    ax.set_xlabel("Pearson correlation with hospital_death")
+    ax.set_ylabel("")
+    ax.set_title("Top Target Correlations", loc="left", fontweight="bold")
+    ax.grid(axis="x", color="#d6e2de", linewidth=0.8)
+    ax.set_facecolor("#fbfdfc")
+    fig.patch.set_facecolor("#eef4f2")
+    for spine in ["top", "right", "left"]:
+        ax.spines[spine].set_visible(False)
+    ax.spines["bottom"].set_color("#9bb4ad")
+    plt.tight_layout()
+    st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
+
+
+def get_baseline_cv_results() -> pd.DataFrame:
+    """Return baseline CV summaries from notebook 09 model experiment."""
+    return pd.DataFrame(
+        [
+            {
+                "model": "Logistic Regression",
+                "cv_f1": 0.5038,
+                "cv_recall": 0.5335,
+                "cv_precision": 0.4786,
+                "cv_auroc": 0.8838,
+                "cv_auprc": 0.5153,
+                "mean_threshold": 0.2404,
+            },
+            {
+                "model": "Decision Tree",
+                "cv_f1": 0.4219,
+                "cv_recall": 0.4810,
+                "cv_precision": 0.3777,
+                "cv_auroc": 0.8161,
+                "cv_auprc": 0.3937,
+                "mean_threshold": 0.1758,
+            },
+            {
+                "model": "Random Forest",
+                "cv_f1": 0.4835,
+                "cv_recall": 0.4949,
+                "cv_precision": 0.4735,
+                "cv_auroc": 0.8644,
+                "cv_auprc": 0.4925,
+                "mean_threshold": 0.1940,
+            },
+        ]
+    )
+
+
+def get_rf_lgbm_test_comparison() -> pd.DataFrame:
+    """Return Random Forest baseline and final tuned LightGBM test results."""
+    lgbm = load_csv(str(MODELING_DIR / "selected_lgbm_test_metrics.csv")).iloc[0]
+    return pd.DataFrame(
+        [
+            {
+                "model": "Random Forest baseline",
+                "threshold": 0.189,
+                "AUROC": 0.8725,
+                "AUPRC": 0.5282,
+                "Precision": 0.4693,
+                "Recall": 0.5357,
+                "F1": 0.5003,
+                "TN": 15801,
+                "FP": 959,
+                "FN": 735,
+                "TP": 848,
+            },
+            {
+                "model": "Tuned LightGBM final",
+                "threshold": float(lgbm["threshold"]),
+                "AUROC": float(lgbm["AUROC"]),
+                "AUPRC": float(lgbm["AUPRC"]),
+                "Precision": float(lgbm["Precision"]),
+                "Recall": float(lgbm["Recall"]),
+                "F1": float(lgbm["F1"]),
+                "TN": int(lgbm["TN"]),
+                "FP": int(lgbm["FP"]),
+                "FN": int(lgbm["FN"]),
+                "TP": int(lgbm["TP"]),
+            },
+        ]
+    )
+
+
+def render_metric_bar_chart(
+    df: pd.DataFrame,
+    metrics: list[str],
+    title: str,
+    model_column: str = "model",
+) -> None:
+    """Render a compact grouped metric comparison chart."""
+    import matplotlib.pyplot as plt
+
+    plot_df = df[[model_column] + metrics].set_index(model_column)
+    ax = plot_df.plot(
+        kind="bar",
+        figsize=(9, 4.8),
+        color=["#2f8077", "#8f6f3e", "#b7653f", "#4b6f91", "#6f6f6f"][: len(metrics)],
+        rot=0,
+    )
+    ax.set_ylim(0, 1)
+    ax.set_title(title, loc="left", fontweight="bold")
+    ax.set_ylabel("Score")
+    ax.grid(axis="y", color="#d6e2de", linewidth=0.8)
+    ax.set_facecolor("#fbfdfc")
+    legend_labels = [metric.replace("cv_", "CV ").replace("_", " ").title() for metric in metrics]
+    ax.legend(
+        legend_labels,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.16),
+        ncol=min(len(metrics), 5),
+        frameon=False,
+    )
+    for spine in ["top", "right"]:
+        ax.spines[spine].set_visible(False)
+    ax.spines["left"].set_color("#9bb4ad")
+    ax.spines["bottom"].set_color("#9bb4ad")
+    fig = ax.get_figure()
+    fig.patch.set_facecolor("#eef4f2")
+    plt.tight_layout(rect=[0, 0.08, 1, 1])
+    st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
+
+
+def render_confusion_matrix_chart(
+    title: str,
+    tn: int,
+    fp: int,
+    fn: int,
+    tp: int,
+) -> None:
+    """Render a compact confusion matrix for presentation comparison."""
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    matrix = np.array([[tn, fp], [fn, tp]])
+    fig, ax = plt.subplots(figsize=(5.2, 4.6))
+    image = ax.imshow(matrix, cmap="Blues")
+
+    ax.set_title(title, fontweight="bold")
+    ax.set_xlabel("Predicted label")
+    ax.set_ylabel("True label")
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(["Survived", "Died"])
+    ax.set_yticks([0, 1])
+    ax.set_yticklabels(["Survived", "Died"])
+
+    threshold = matrix.max() / 2
+    for row in range(2):
+        for col in range(2):
+            color = "white" if matrix[row, col] > threshold else "#16312f"
+            ax.text(
+                col,
+                row,
+                f"{matrix[row, col]:,}",
+                ha="center",
+                va="center",
+                color=color,
+                fontweight="bold",
+            )
+
+    fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
+    fig.patch.set_facecolor("#eef4f2")
+    ax.set_facecolor("#fbfdfc")
+    plt.tight_layout()
+    st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
+
+
+def render_shap_group_chart(
+    path: Path,
+    category_column: str,
+    value_column: str,
+    title: str,
+    x_label: str = "",
+) -> None:
+    """Render grouped mean SHAP effects as a compact bar chart."""
+    if not path.exists():
+        st.warning(f"Missing table: {path.relative_to(ROOT)}")
+        return
+
+    import matplotlib.pyplot as plt
+
+    df = load_csv(str(path)).copy()
+    df[category_column] = df[category_column].astype(str)
+    colors = [
+        "#b7653f" if value > 0 else "#2f8077"
+        for value in df[value_column]
+    ]
+
+    fig, ax = plt.subplots(figsize=(8.4, 4.2))
+    ax.bar(df[category_column], df[value_column], color=colors)
+    ax.axhline(0, color="#526661", linewidth=1)
+    ax.set_title(title, loc="left", fontweight="bold")
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Mean SHAP contribution")
+    ax.grid(axis="y", color="#d6e2de", linewidth=0.8)
+    ax.set_facecolor("#fbfdfc")
+    fig.patch.set_facecolor("#eef4f2")
+    for spine in ["top", "right"]:
+        ax.spines[spine].set_visible(False)
+    ax.spines["left"].set_color("#9bb4ad")
+    ax.spines["bottom"].set_color("#9bb4ad")
+    plt.xticks(rotation=0)
+    plt.tight_layout()
+    st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
+
+
+def render_top_interaction_chart(path: Path, n_rows: int = 8) -> None:
+    """Render strongest SHAP interaction pairs as a horizontal chart."""
+    if not path.exists():
+        st.warning(f"Missing table: {path.relative_to(ROOT)}")
+        return
+
+    import matplotlib.pyplot as plt
+
+    df = load_csv(str(path)).head(n_rows).copy()
+    df["pair"] = df["feature_1"] + " x " + df["feature_2"]
+    df = df.sort_values("mean_abs_interaction", ascending=True)
+
+    fig, ax = plt.subplots(figsize=(9, 4.8))
+    ax.barh(df["pair"], df["mean_abs_interaction"], color="#4b6f91")
+    ax.set_title("Top SHAP Interaction Pairs", loc="left", fontweight="bold")
+    ax.set_xlabel("Mean absolute interaction strength")
+    ax.set_ylabel("")
+    ax.grid(axis="x", color="#d6e2de", linewidth=0.8)
+    ax.set_facecolor("#fbfdfc")
+    fig.patch.set_facecolor("#eef4f2")
+    for spine in ["top", "right", "left"]:
+        ax.spines[spine].set_visible(False)
+    ax.spines["bottom"].set_color("#9bb4ad")
+    plt.tight_layout()
+    st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
+
+
 def render_eda_page() -> None:
     render_section_header(
         title="Exploratory Data Analysis",
-        caption="Data understanding, target imbalance, missingness, leakage checks, and early feature patterns.",
+        caption="A presentation walkthrough of how the raw ICU data was understood before modeling.",
         kicker="Part 1",
-    )
-
-    cols = st.columns(3)
-    with cols[0]:
-        render_table(EDA_DIR / "tables" / "dataset_overview.csv", n_rows=8)
-    with cols[1]:
-        render_table(EDA_DIR / "tables" / "target_distribution.csv", n_rows=5)
-    with cols[2]:
-        render_table(EDA_DIR / "tables" / "duplicate_summary.csv", n_rows=5)
-
-    render_insight(
-        "<strong>Presentation point:</strong> the project starts with a real ICU mortality task, "
-        "not a toy dataset. The positive class is rare, so later modeling cannot rely on accuracy alone."
-    )
-
-    left, right = st.columns(2)
-    with left:
-        render_image(
-            EDA_DIR / "figures" / "target_distribution.png",
-            "<strong>Target imbalance:</strong> hospital death is a minority outcome. "
-            "This motivates AUROC, AUPRC, recall, precision, F1, and threshold analysis."
-        )
-    with right:
-        render_image(
-            EDA_DIR / "figures" / "feature_groups_summary.png",
-            "<strong>Feature structure:</strong> the data combines vital signs, labs, APACHE variables, "
-            "demographics, and categorical hospital/ICU descriptors."
-        )
-
-    left, right = st.columns(2)
-    with left:
-        render_image(
-            EDA_DIR / "figures" / "missingness_top20.png",
-            "<strong>Missingness is informative:</strong> many ICU variables have substantial missing values, "
-            "so preprocessing keeps missingness indicators for numeric features."
-        )
-    with right:
-        render_image(
-            EDA_DIR / "figures" / "missingness_by_target.png",
-            "<strong>Missingness by outcome:</strong> missing patterns can differ across mortality groups, "
-            "so imputation decisions are learned on the training split only."
-        )
-
-    left, right = st.columns(2)
-    with left:
-        render_image(
-            EDA_DIR / "figures" / "feature_distributions_by_target.png",
-            "<strong>Clinical separation:</strong> several numeric variables show different distributions "
-            "between survivors and non-survivors, supporting predictive modeling."
-        )
-    with right:
-        render_image(
-            EDA_DIR / "figures" / "categorical_mortality_top_groups.png",
-            "<strong>Categorical risk patterns:</strong> categorical variables have mortality-rate variation, "
-            "but high-cardinality fields are handled carefully during preprocessing."
-        )
-
-    left, right = st.columns(2)
-    with left:
-        render_image(
-            EDA_DIR / "figures" / "apache_leakage_by_target.png",
-            "<strong>Leakage check:</strong> APACHE death probability columns are strongly target-related. "
-            "They are removed from the final feature set to avoid using precomputed mortality scores."
-        )
-    with right:
-        render_image(
-            EDA_DIR / "figures" / "top_target_correlations.png",
-            "<strong>Correlation screening:</strong> target correlations guide investigation, but final "
-            "feature selection is based on leakage logic, preprocessing constraints, and model validation."
-        )
-
-
-def render_modeling_page() -> None:
-    render_section_header(
-        title="Preprocessing and Modeling",
-        caption="Final preprocessing schema, model comparison, threshold selection, and final LightGBM performance.",
-        kicker="Part 2",
     )
 
     st.markdown(
         """
-        <div class="step-box">
-        <strong>Final preprocessing logic</strong><br>
-        ID/location columns and leakage-prone APACHE death probability columns are removed.
-        Numeric features are median-imputed with missingness indicators, binary features are ordinal-encoded,
-        and categorical variables are one-hot encoded with infrequent-category handling.
-        Numeric scaling is omitted because the final model is tree-based LightGBM.
+        <div class="narrative-card">
+        <h4>EDA goal</h4>
+        <p>
+        Before training a model, the analysis checked the target distribution, feature families,
+        missingness, leakage-prone variables, descriptive feature patterns, categorical mortality rates,
+        and outliers. The purpose was not only to describe the data, but to justify later preprocessing
+        and evaluation decisions.
+        </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    cols = st.columns(4)
-    metrics = load_csv(str(MODELING_DIR / "selected_lgbm_test_metrics.csv"))
-    metric_map = {
-        column.lower(): metrics[column].iloc[0]
-        for column in metrics.columns
-    }
-    cols[0].metric("AUROC", format_probability(metric_map.get("auroc")))
-    cols[1].metric("AUPRC", format_probability(metric_map.get("auprc")))
-    cols[2].metric("F1", format_probability(metric_map.get("f1")))
-    cols[3].metric("Threshold", format_probability(metric_map.get("threshold")))
+    question_cols = st.columns(4)
+    questions = [
+        ("Data shape", "How large is the ICU dataset and what types of variables are present?"),
+        ("Target", "Is hospital mortality balanced enough for accuracy to be meaningful?"),
+        ("Data quality", "Which variables have missing values, outliers, or leakage risk?"),
+        ("Modeling impact", "Which EDA findings should change preprocessing and evaluation?"),
+    ]
+    for column, (title, body) in zip(question_cols, questions):
+        with column:
+            st.markdown(
+                f"""
+                <div class="step-box">
+                <strong>{title}</strong><br>
+                {body}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
-    left, right = st.columns(2)
+    overview = load_csv(str(EDA_DIR / "tables" / "dataset_overview.csv"))
+    overview_map = dict(zip(overview["metric"], overview["value"]))
+    target_distribution = load_csv(str(EDA_DIR / "tables" / "target_distribution.csv"))
+    missing_thresholds = load_csv(str(EDA_DIR / "tables" / "missingness_threshold_summary.csv"))
+    duplicate_summary = load_csv(str(EDA_DIR / "tables" / "duplicate_summary.csv"))
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### Dataset snapshot")
+    metric_cols = st.columns(6)
+    metric_cols[0].metric("Patients", f"{int(overview_map.get('n_rows', 0)):,}")
+    metric_cols[1].metric("Raw columns", str(overview_map.get("n_columns", "N/A")))
+    metric_cols[2].metric("Target", str(overview_map.get("target_column", "N/A")))
+    metric_cols[3].metric("Death rate", f"{float(overview_map.get('positive_rate_percent', 0)):.2f}%")
+    metric_cols[4].metric(
+        "Columns >50% missing",
+        str(int(missing_thresholds.loc[
+            missing_thresholds["missing_pct_threshold"] == 50,
+            "n_columns_above_threshold",
+        ].iloc[0])),
+    )
+    duplicate_value = duplicate_summary["duplicate_rows"].iloc[0]
+    metric_cols[5].metric("Duplicate rows", str(duplicate_value))
+
+    left, right = st.columns([1.1, 1])
     with left:
         render_image(
-            MODELING_DIR / "figures" / "model_comparison_metrics.png",
-            "<strong>Model comparison:</strong> LightGBM was selected after comparing multiple model families "
-            "rather than defaulting to a single algorithm."
+            EDA_DIR / "figures" / "target_distribution.png",
+            "<strong>Finding:</strong> only 8.63% of patients died in hospital. "
+            "This class imbalance directly motivates stratified splitting and metrics beyond accuracy."
+        )
+    with right:
+        st.markdown("**Target distribution table**")
+        st.dataframe(target_distribution, use_container_width=True, hide_index=True)
+        render_table(EDA_DIR / "tables" / "feature_groups_summary.csv", columns=["group", "n_columns"], n_rows=10)
+        render_insight(
+            "<strong>Feature families:</strong> the dataset includes demographics, APACHE variables, "
+            "hour-1 measurements, day-1 measurements, ICU information, labs, and vital signs."
+        )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### Missingness and measurement patterns")
+    left, right = st.columns([1, 1])
+    with left:
+        render_image(
+            EDA_DIR / "figures" / "missingness_top20.png",
+            "<strong>Finding:</strong> missingness is common in ICU data. It is not treated as simple noise, "
+            "because whether a measurement was ordered can reflect patient state or clinical workflow."
         )
     with right:
         render_image(
-            MODELING_DIR / "figures" / "native_lgbm_feature_importance_gain_top20.png",
-            "<strong>Native importance:</strong> LightGBM gain importance provides a black-box model view, "
-            "which complements SHAP's local and global explanations."
+            EDA_DIR / "figures" / "missingness_by_target.png",
+            "<strong>Finding:</strong> some key labs are less missing among patients who died. "
+            "This supports adding missingness indicators instead of only imputing values."
         )
+    st.dataframe(missing_thresholds, use_container_width=True, hide_index=True)
 
-    left, right = st.columns(2)
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### Numeric signals and target-associated features")
+    left, right = st.columns([1.1, 1])
     with left:
         render_image(
-            MODELING_DIR / "figures" / "selected_lgbm_confusion_matrix.png",
-            "<strong>Confusion matrix:</strong> the selected threshold balances false positives and false negatives "
-            "for an imbalanced mortality prediction task."
+            EDA_DIR / "figures" / "feature_distributions_by_target.png",
+            "<strong>Finding:</strong> several vital signs and lab values differ by outcome group. "
+            "These descriptive differences support predictive modeling, but they are not causal claims."
         )
     with right:
         render_image(
-            MODELING_DIR / "figures" / "threshold_sweep_precision_recall_f1.png",
-            "<strong>Threshold tuning:</strong> the final threshold is tuned instead of assuming 0.50, "
-            "because the class distribution is imbalanced."
+            EDA_DIR / "figures" / "top_target_correlations.png",
+            "<strong>Finding:</strong> high lactate, ventilation-related variables, lower GCS, lower blood pressure, "
+            "and lower pH appear among the strongest simple associations."
         )
-
-    left, right = st.columns(2)
-    with left:
-        render_image(
-            MODELING_DIR / "figures" / "threshold_sweep_fp_fn.png",
-            "<strong>Error trade-off:</strong> threshold selection changes the balance between false positives "
-            "and false negatives, which matters in a clinical risk setting."
-        )
-    with right:
+    st.markdown("**Top target correlations**")
+    render_target_correlation_chart(
+        EDA_DIR / "tables" / "top_target_correlations.csv",
+        n_rows=12,
+    )
+    with st.expander("Show correlation table"):
         render_table(
-            MODELING_DIR / "final_model_comparison.csv",
+            EDA_DIR / "tables" / "top_target_correlations.csv",
+            columns=["feature", "pearson_corr_with_hospital_death", "abs_corr"],
             n_rows=12,
         )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### Leakage investigation")
+    left, right = st.columns([1, 1])
+    with left:
+        render_image(
+            EDA_DIR / "figures" / "apache_leakage_by_target.png",
+            "<strong>Finding:</strong> APACHE mortality probability columns already encode risk estimates. "
+            "Keeping them would make the task less fair and less educational."
+        )
+    with right:
+        st.markdown("**Leakage-prone APACHE score columns**")
+        render_table(
+            EDA_DIR / "tables" / "apache_leakage_by_target.csv",
+            n_rows=8,
+        )
+        render_insight(
+            "<strong>Decision:</strong> remove <code>apache_4a_hospital_death_prob</code> and "
+            "<code>apache_4a_icu_death_prob</code> from the final model inputs."
+        )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### Categorical patterns and outliers")
+    left, right = st.columns([1, 1])
+    with left:
+        render_image(
+            EDA_DIR / "figures" / "categorical_mortality_top_groups.png",
+            "<strong>Finding:</strong> mortality rates differ across admission source, ICU type, and APACHE body-system groups. "
+            "Categorical variables are therefore retained with controlled encoding."
+        )
+    with right:
+        st.markdown("**Outlier review**")
+        render_table(
+            EDA_DIR / "tables" / "outlier_summary.csv",
+            columns=["feature", "min", "max", "mean", "iqr_outlier_pct"],
+            n_rows=10,
+        )
+        render_insight(
+            "<strong>Decision:</strong> extreme ICU values were not blindly removed. In critical care, extremes can be clinically meaningful."
+        )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### EDA decisions carried into the final pipeline")
+    eda_decisions = pd.DataFrame(
+        [
+            {
+                "EDA finding": "Hospital death is rare",
+                "Pipeline decision": "Use stratified split and AUROC/AUPRC/precision/recall/F1 instead of accuracy alone.",
+            },
+            {
+                "EDA finding": "Many ICU variables are missing",
+                "Pipeline decision": "Median-impute numeric features and add missingness indicators.",
+            },
+            {
+                "EDA finding": "APACHE death probability columns are leakage-prone",
+                "Pipeline decision": "Remove APACHE precomputed death probability columns before modeling.",
+            },
+            {
+                "EDA finding": "Categorical groups show mortality-rate variation",
+                "Pipeline decision": "Retain categorical variables with one-hot encoding and infrequent-category handling.",
+            },
+            {
+                "EDA finding": "Outliers may represent true critical illness",
+                "Pipeline decision": "Do not blindly remove extreme values; interpret unusual values cautiously in explanation.",
+            },
+        ]
+    )
+    st.dataframe(eda_decisions, use_container_width=True, hide_index=True)
+
+
+def render_modeling_page() -> None:
+    render_section_header(
+        title="Preprocessing and Modeling",
+        caption="Notebook 09-style walkthrough: preprocessing pipeline, baseline models, Random Forest baseline, optimized LightGBM, and final selection.",
+        kicker="Part 2",
+    )
+
+    st.markdown(
+        """
+        <div class="narrative-card">
+        <h4>Modeling goal</h4>
+        <p>
+        The modeling stage tests several predictive approaches for ICU mortality, using a full
+        preprocessing + model pipeline so that preprocessing is learned only from training folds.
+        The final model is selected using imbalanced-class metrics and threshold tuning rather than
+        accuracy or the default 0.50 decision threshold.
+        </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("#### 1. Preprocessing pipeline")
+    prep_cols = st.columns(5)
+    prep_steps = [
+        (
+            "Drop columns",
+            "Remove identifiers/location-like fields and APACHE precomputed death probability columns.",
+        ),
+        (
+            "Numeric features",
+            "Median imputation with missingness indicators; no StandardScaler for final LightGBM.",
+        ),
+        (
+            "Binary features",
+            "Most-frequent imputation followed by ordinal encoding with unknown handling.",
+        ),
+        (
+            "Categorical features",
+            "Most-frequent imputation and one-hot encoding with infrequent-category handling.",
+        ),
+        (
+            "Final schema",
+            "Saved preprocessor produces 379 aligned model features for train, test, and new patients.",
+        ),
+    ]
+    for column, (title, body) in zip(prep_cols, prep_steps):
+        with column:
+            st.markdown(
+                f"""
+                <div class="step-box">
+                <strong>{title}</strong><br>
+                {body}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    render_insight(
+        "<strong>Why a pipeline?</strong> preprocessing is fit inside the training fold and then applied to validation/test data. "
+        "This prevents train-test leakage from imputation, encoding, or feature alignment."
+    )
+
+    feature_names = load_csv(str(MODELING_DIR / "final_feature_names.csv"))
+    metric_cols = st.columns(4)
+    metric_cols[0].metric("Final features", f"{len(feature_names):,}")
+    metric_cols[1].metric("Removed ID/location", "4")
+    metric_cols[2].metric("Removed leakage columns", "2")
+    metric_cols[3].metric("Scaling", "Omitted")
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### 2. Baseline model experiment with cross-validation")
+    st.markdown(
+        """
+        <div class="narrative-card">
+        <h4>Baseline setup</h4>
+        <p>
+        Notebook 09 first compared Logistic Regression, Decision Tree, and Random Forest using
+        StratifiedKFold cross-validation. Stratification keeps the rare mortality class proportion
+        stable across folds. Each model used threshold tuning to maximize F1, because mortality
+        prediction needs a balance between catching deaths and avoiding too many false alarms.
+        </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    baseline_cv = get_baseline_cv_results()
+    render_metric_bar_chart(
+        baseline_cv,
+        metrics=["cv_f1", "cv_recall", "cv_precision", "cv_auroc"],
+        title="Baseline Cross-Validation Metrics",
+    )
+    st.dataframe(
+        baseline_cv,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "cv_f1": st.column_config.NumberColumn("CV F1", format="%.4f"),
+            "cv_recall": st.column_config.NumberColumn("CV Recall", format="%.4f"),
+            "cv_precision": st.column_config.NumberColumn("CV Precision", format="%.4f"),
+            "cv_auroc": st.column_config.NumberColumn("CV AUROC", format="%.4f"),
+            "cv_auprc": st.column_config.NumberColumn("CV AUPRC", format="%.4f"),
+            "mean_threshold": st.column_config.NumberColumn("Mean threshold", format="%.4f"),
+        },
+    )
+    render_insight(
+        "<strong>Baseline interpretation:</strong> Logistic Regression was competitive, Decision Tree was weaker, "
+        "and Random Forest became the strongest non-boosted baseline to compare against optimized LightGBM."
+    )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### 3. Optimized LightGBM and final comparison")
+    comparison = get_rf_lgbm_test_comparison()
+    lgbm_row = comparison[comparison["model"] == "Tuned LightGBM final"].iloc[0]
+    rf_row = comparison[comparison["model"] == "Random Forest baseline"].iloc[0]
+    cols = st.columns(5)
+    cols[0].metric("Final AUROC", format_probability(lgbm_row["AUROC"]))
+    cols[1].metric("Final AUPRC", format_probability(lgbm_row["AUPRC"]))
+    cols[2].metric("Final F1", format_probability(lgbm_row["F1"]))
+    cols[3].metric("Final threshold", format_probability(lgbm_row["threshold"]))
+    cols[4].metric("FP reduction vs RF", f"{int(rf_row['FP'] - lgbm_row['FP'])}")
+
+    render_metric_bar_chart(
+        comparison,
+        metrics=["AUROC", "AUPRC", "Precision", "Recall", "F1"],
+        title="Random Forest Baseline vs Tuned LightGBM",
+    )
+    st.dataframe(
+        comparison,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "threshold": st.column_config.NumberColumn("Threshold", format="%.4f"),
+            "AUROC": st.column_config.NumberColumn("AUROC", format="%.4f"),
+            "AUPRC": st.column_config.NumberColumn("AUPRC", format="%.4f"),
+            "Precision": st.column_config.NumberColumn("Precision", format="%.4f"),
+            "Recall": st.column_config.NumberColumn("Recall", format="%.4f"),
+            "F1": st.column_config.NumberColumn("F1", format="%.4f"),
+        },
+    )
+    render_insight(
+        "<strong>Final choice:</strong> tuned LightGBM improves AUROC, AUPRC, precision, F1, TP count, "
+        "and reduces false positives compared with the Random Forest baseline. Recall is also slightly higher."
+    )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### 4. Final model diagnostics")
+    left, right = st.columns(2)
+    with left:
+        render_confusion_matrix_chart(
+            title="Random Forest Baseline",
+            tn=int(rf_row["TN"]),
+            fp=int(rf_row["FP"]),
+            fn=int(rf_row["FN"]),
+            tp=int(rf_row["TP"]),
+        )
+        render_insight(
+            "<strong>Random Forest baseline:</strong> predicts 848 true deaths, "
+            "with 959 false positives and 735 false negatives."
+        )
+    with right:
+        render_confusion_matrix_chart(
+            title="Tuned LightGBM Final",
+            tn=int(lgbm_row["TN"]),
+            fp=int(lgbm_row["FP"]),
+            fn=int(lgbm_row["FN"]),
+            tp=int(lgbm_row["TP"]),
+        )
+        render_insight(
+            "<strong>LightGBM final:</strong> predicts 903 true deaths, "
+            "with 808 false positives and 680 false negatives. Compared with Random Forest, it catches more deaths and reduces false positives."
+        )
+
+    left, right = st.columns(2)
+    with left:
+        render_image(
+            MODELING_DIR / "figures" / "threshold_sweep_precision_recall_f1.png",
+            "<strong>Threshold tuning:</strong> threshold is tuned explicitly because the best operating point "
+            "for imbalanced classification is not necessarily 0.50."
+        )
+    with right:
+        render_image(
+            MODELING_DIR / "figures" / "threshold_sweep_fp_fn.png",
+            "<strong>Error trade-off:</strong> as threshold changes, false positives and false negatives move in opposite directions."
+        )
+
+    with st.container():
+        render_image(
+            MODELING_DIR / "figures" / "native_lgbm_feature_importance_gain_top20.png",
+            "<strong>Native LightGBM importance:</strong> gain importance shows which features most improve tree splits. "
+            "This is a model diagnostic; SHAP is used later for explanation."
+        )
+
+    with st.expander("Show final feature names"):
+        render_table(MODELING_DIR / "final_feature_names.csv", n_rows=30)
 
 
 def render_shap_page() -> None:
     render_section_header(
         title="SHAP Explainability",
-        caption="Global importance, local patient explanations, dependence plots, and exploratory interaction checks.",
+        caption="Notebook 04-style walkthrough: global SHAP, feature effect patterns, local patient explanations, caution findings, and interaction checks.",
         kicker="Part 3",
+    )
+
+    st.markdown(
+        """
+        <div class="narrative-card">
+        <h4>SHAP goal</h4>
+        <p>
+        SHAP was used after model selection to explain how the final LightGBM model uses patient-level
+        evidence. Positive SHAP values push the prediction toward higher mortality risk; negative values
+        push it toward lower mortality risk. The analysis has two levels: global patterns across the test
+        set and local explanations for individual patients.
+        </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    prediction_types = load_csv(str(EXPLAINABILITY_DIR / "tables" / "prediction_types.csv"))
+    type_counts = prediction_types["prediction_type"].value_counts().to_dict()
+    selected_cases = load_csv(str(EXPLAINABILITY_DIR / "tables" / "selected_local_cases.csv"))
+
+    metric_cols = st.columns(4)
+    metric_cols[0].metric("True negatives", f"{type_counts.get('TN', 0):,}")
+    metric_cols[1].metric("True positives", f"{type_counts.get('TP', 0):,}")
+    metric_cols[2].metric("False positives", f"{type_counts.get('FP', 0):,}")
+    metric_cols[3].metric("False negatives", f"{type_counts.get('FN', 0):,}")
+
+    render_insight(
+        "<strong>Explanation context:</strong> SHAP is examined across all prediction types, not only successful cases. "
+        "This helps show where the model is clinically plausible, where it is cautious, and where it misses risk."
+    )
+
+    left, right = st.columns([1.15, 1])
+    with left:
+        render_image(
+            EXPLAINABILITY_DIR / "figures" / "predicted_probability_distribution.png",
+            "<strong>Probability distribution:</strong> most patients receive low predicted mortality probabilities, "
+            "while a smaller group is assigned high risk. This reflects the imbalanced ICU mortality target."
+        )
+    with right:
+        st.markdown("**Selected local cases used for interpretation**")
+        st.dataframe(selected_cases, use_container_width=True, hide_index=True)
+        render_insight(
+            "<strong>Local case design:</strong> one true positive, false negative, false positive, and true negative "
+            "were selected so the presentation includes both correct and incorrect model behavior."
+        )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### 1. Global SHAP importance")
+    left, right = st.columns(2)
+    with left:
+        render_image(
+            EXPLAINABILITY_DIR / "figures" / "global_shap_importance_top20.png",
+            "<strong>Mean absolute SHAP:</strong> age, ventilation, diagnosis category, BUN, oxygen saturation, "
+            "GCS scores, heart rate, respiratory rate, and urine output are among the strongest global drivers."
+        )
+    with right:
+        render_image(
+            EXPLAINABILITY_DIR / "figures" / "shap_summary_top20.png",
+            "<strong>Summary plot:</strong> the color distribution shows whether high or low feature values tend "
+            "to increase or decrease predicted risk. This is stronger than a plain feature-importance table."
+        )
+
+    top_features = load_csv(str(EXPLAINABILITY_DIR / "tables" / "global_shap_importance.csv")).head(12)
+    st.markdown("**Top global SHAP features**")
+    st.dataframe(
+        top_features[["rank", "feature", "mean_abs_shap"]],
+        use_container_width=True,
+        hide_index=True,
+    )
+    render_insight(
+        "<strong>Interpretation:</strong> global SHAP tells us what the model relies on most often. "
+        "It does not say that a feature causes mortality; it says the feature changes the model output."
+    )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### 2. Feature effect patterns")
+    st.markdown(
+        """
+        These plots answer a second question: after a feature is globally important, how does its value
+        change the model prediction? This is why dependence plots and grouped SHAP summaries were added.
+        """
     )
 
     left, right = st.columns(2)
     with left:
         render_image(
-            EXPLAINABILITY_DIR / "figures" / "global_shap_importance_top20.png",
-            "<strong>Global SHAP importance:</strong> shows which features most strongly affect model output "
-            "on average across patients."
-        )
-    with right:
-        render_image(
-            EXPLAINABILITY_DIR / "figures" / "shap_summary_top20.png",
-            "<strong>SHAP summary:</strong> combines feature importance with direction and value patterns, "
-            "helping explain how high or low values influence risk."
-        )
-
-    left, right = st.columns(2)
-    with left:
-        render_image(
             EXPLAINABILITY_DIR / "figures" / "shap_dependence_age.png",
-            "<strong>Age dependence:</strong> shows how the contribution of age changes across patient ages."
+            "<strong>Age dependence:</strong> older ages generally move SHAP upward. The grouped summary below "
+            "shows the same monotonic pattern in a presentation-friendly chart."
+        )
+        render_shap_group_chart(
+            EXPLAINABILITY_DIR / "tables" / "age_shap_grouped.csv",
+            category_column="age_group",
+            value_column="mean_shap",
+            title="Age Group Mean SHAP",
+            x_label="Age group",
         )
     with right:
         render_image(
             EXPLAINABILITY_DIR / "figures" / "shap_dependence_d1_spo2_min.png",
-            "<strong>Oxygenation dependence:</strong> minimum oxygen saturation is clinically meaningful and "
-            "helps reveal how hypoxemia affects mortality risk."
+            "<strong>Minimum oxygen saturation:</strong> very low SpO2 values increase predicted risk, while "
+            "values above roughly 90 tend to reduce or only weakly affect risk."
+        )
+        render_shap_group_chart(
+            EXPLAINABILITY_DIR / "tables" / "spo2_shap_grouped.csv",
+            category_column="spo2_group",
+            value_column="mean_shap",
+            title="SpO2 Group Mean SHAP",
+            x_label="Minimum SpO2 group",
         )
 
     left, right = st.columns(2)
     with left:
         render_image(
             EXPLAINABILITY_DIR / "figures" / "shap_dependence_gcs_motor_apache.png",
-            "<strong>Neurological response:</strong> GCS motor score helps explain how impaired neurological "
-            "status contributes to risk."
+            "<strong>GCS motor score:</strong> lower motor scores have positive SHAP effects, while score 6 is "
+            "risk-decreasing on average. This matches the clinical meaning of impaired neurological response."
+        )
+        render_shap_group_chart(
+            EXPLAINABILITY_DIR / "tables" / "gcs_motor_shap_grouped.csv",
+            category_column="gcs_motor_apache",
+            value_column="mean_shap",
+            title="GCS Motor Mean SHAP",
+            x_label="GCS motor score",
         )
     with right:
         render_image(
             EXPLAINABILITY_DIR / "figures" / "shap_effect_ventilated_apache.png",
-            "<strong>Mechanical ventilation:</strong> ventilation status is interpreted as a severity marker "
-            "and is evaluated through SHAP effects."
+            "<strong>Mechanical ventilation:</strong> ventilated patients have a positive mean SHAP effect, "
+            "while non-ventilated patients have a negative effect. The model treats ventilation as a severity marker."
+        )
+        render_shap_group_chart(
+            EXPLAINABILITY_DIR / "tables" / "ventilated_shap_grouped.csv",
+            category_column="ventilated_apache",
+            value_column="mean_shap",
+            title="Ventilation Mean SHAP",
+            x_label="ventilated_apache",
         )
 
-    st.markdown("#### Local case explanations")
-    local_cols = st.columns(4)
-    local_cases = [
-        ("True positive", "local_waterfall_tp.png"),
-        ("False negative", "local_waterfall_fn.png"),
-        ("False positive", "local_waterfall_fp.png"),
-        ("True negative", "local_waterfall_tn.png"),
-    ]
-    for column, (title, filename) in zip(local_cols, local_cases):
-        with column:
-            st.markdown(f"**{title}**")
-            render_image(EXPLAINABILITY_DIR / "figures" / filename)
-
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### 3. Local patient explanations")
     render_insight(
-        "<strong>Local SHAP role:</strong> each patient explanation is built from the top risk-increasing "
-        "and risk-decreasing SHAP contributions, then converted into a structured evidence packet."
+        "<strong>Waterfall plots:</strong> each plot starts from the model baseline and adds feature contributions "
+        "until it reaches the patient-level prediction. These are the local SHAP values later used to build evidence packets."
     )
 
+    local_cases = [
+        (
+            "True positive",
+            "TP",
+            "local_waterfall_tp.png",
+            "Very high risk was driven by severe instability signals such as zero heart rate, high lactate, low SpO2, low GCS, ventilation, and low blood pressure.",
+        ),
+        (
+            "False negative",
+            "FN",
+            "local_waterfall_fn.png",
+            "The model missed a death because several low-risk signals, especially younger age, no ventilation, low BUN, and urine output, pulled the score downward.",
+        ),
+        (
+            "False positive",
+            "FP",
+            "local_waterfall_fp.png",
+            "The patient survived, but the model assigned high risk because the physiological profile resembled severe illness. This is a clinically understandable false alarm.",
+        ),
+        (
+            "True negative",
+            "TN",
+            "local_waterfall_tn.png",
+            "Low predicted risk was supported by younger age, no ventilation, and generally lower-risk vital/lab patterns.",
+        ),
+    ]
+    tab_tp, tab_fn, tab_fp, tab_tn = st.tabs([case[0] for case in local_cases])
+    for tab, (title, case_code, filename, summary) in zip(
+        [tab_tp, tab_fn, tab_fp, tab_tn],
+        local_cases,
+    ):
+        with tab:
+            left, right = st.columns([1.25, 1])
+            with left:
+                render_image(EXPLAINABILITY_DIR / "figures" / filename)
+            with right:
+                render_insight(f"<strong>{title} interpretation:</strong> {summary}")
+                st.markdown("**Top local SHAP contributions**")
+                render_table(
+                    EXPLAINABILITY_DIR / "tables" / f"local_explanation_{case_code.lower()}.csv",
+                    columns=["feature", "value", "shap_value", "abs_shap"],
+                    n_rows=8,
+                )
+
+    render_insight(
+        "<strong>Bridge to the LLM:</strong> the production-style pipeline selects top local risk-increasing and "
+        "risk-decreasing SHAP evidence, attaches feature values and clinical meanings, then sends only that structured "
+        "evidence packet to the explanation model."
+    )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### 4. Caution findings from SHAP analysis")
+    left, right = st.columns([1.05, 1])
+    with left:
+        st.markdown("**Zero-valued vital sign review**")
+        zero_vitals = load_csv(str(EXPLAINABILITY_DIR / "tables" / "zero_vital_summary.csv")).copy()
+        zero_vitals["zero_rate"] = zero_vitals["zero_rate"].map(lambda value: f"{value:.2%}")
+        zero_vitals["death_rate_zero"] = zero_vitals["death_rate_zero"].map(lambda value: f"{value:.2%}")
+        zero_vitals["death_rate_nonzero"] = zero_vitals["death_rate_nonzero"].map(lambda value: f"{value:.2%}")
+        st.dataframe(zero_vitals, use_container_width=True, hide_index=True)
+    with right:
+        render_insight(
+            "<strong>Why caution flags exist:</strong> some extreme values are rare but highly influential. "
+            "For example, zero-valued heart rate can represent a true extreme clinical event or a data quality issue. "
+            "The project does not automatically remove it; it marks it for careful explanation."
+        )
+        render_insight(
+            "<strong>ID/location decision:</strong> <code>icu_id</code> was removed from the final model inputs. "
+            "The final SHAP analysis therefore focuses on patient-level clinical variables rather than unit identifiers."
+        )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### 5. Interaction and correlation checks")
     left, right = st.columns(2)
     with left:
         render_image(
             EXPLAINABILITY_DIR / "figures" / "top20_shap_interaction_heatmap.png",
-            "<strong>Exploratory interactions:</strong> top-feature SHAP interaction checks were added as "
-            "analysis support, not as direct input to the LLM explanation pipeline."
+            "<strong>SHAP interaction heatmap:</strong> checks whether pairs of important features jointly change "
+            "the model output beyond their separate effects."
+        )
+        render_top_interaction_chart(
+            EXPLAINABILITY_DIR / "tables" / "top20_shap_interactions.csv",
+            n_rows=8,
         )
     with right:
         render_image(
             EXPLAINABILITY_DIR / "figures" / "top20_feature_correlation_heatmap.png",
-            "<strong>Feature correlation:</strong> correlation checks help distinguish related inputs from "
-            "true interaction effects."
+            "<strong>Feature correlation heatmap:</strong> identifies related input families, such as BUN min/max, "
+            "GCS components, and vital-sign measurements. Correlation is not the same as SHAP interaction."
         )
+        render_table(
+            EXPLAINABILITY_DIR / "tables" / "top20_shap_interactions.csv",
+            columns=["rank", "feature_1", "feature_2", "mean_abs_interaction"],
+            n_rows=8,
+        )
+
+    render_insight(
+        "<strong>Design decision:</strong> interaction analysis was kept as exploratory model understanding. "
+        "It was not added to the LLM evidence packet because patient explanations should remain concise, local, "
+        "and easy to validate deterministically."
+    )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### 6. What SHAP contributed to the final system")
+    shap_decisions = pd.DataFrame(
+        [
+            {
+                "SHAP finding": "Global drivers were clinically plausible",
+                "Project use": "Used as evidence that the final LightGBM model relies on meaningful ICU variables.",
+            },
+            {
+                "SHAP finding": "Age, SpO2, GCS motor, and ventilation showed interpretable effect patterns",
+                "Project use": "These became key examples for explaining model behavior in the report and dashboard.",
+            },
+            {
+                "SHAP finding": "Local waterfall plots expose TP, FN, FP, and TN behavior",
+                "Project use": "Supported error analysis and justified patient-level evidence packets.",
+            },
+            {
+                "SHAP finding": "Rare extreme values can be influential",
+                "Project use": "Added caution language for values that require careful interpretation.",
+            },
+            {
+                "SHAP finding": "Interactions exist but are harder to validate in natural language",
+                "Project use": "Kept interactions in exploratory analysis, not in the LLM prompt.",
+            },
+        ]
+    )
+    st.dataframe(shap_decisions, use_container_width=True, hide_index=True)
 
 
 def render_architecture_page() -> None:
     render_section_header(
         title="LLM Explanation and Validation Architecture",
-        caption="How SHAP evidence becomes a validated narrative explanation.",
+        caption="Presentation flow before the live demo: evidence packet, prompt, deterministic validator, revision loop, and GPT-4o subjective evaluation.",
         kicker="Part 4",
     )
 
+    st.markdown(
+        """
+        <div class="narrative-card">
+        <h4>Why this layer exists</h4>
+        <p>
+        The model prediction and SHAP values are numerical. The LLM turns them into readable language,
+        but the project does not accept that language blindly. Every generated explanation is checked
+        against the structured evidence before it is used in the patient demo.
+        </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    audit_df = load_csv(str(VALIDATION_AUDIT_PATH))
+    gpt4o_df = load_csv(str(GPT4O_EVALUATION_PATH))
+    passed_count = int(audit_df["passed"].sum())
+    audited_count = len(audit_df)
+    revision_count = int(audit_df["revision_required"].sum())
+    mean_det_score = float(audit_df["deterministic_validation_score"].mean())
+    mean_hybrid_score = float(gpt4o_df["hybrid_quality_score"].mean())
+    mean_plausibility = float(gpt4o_df["clinical_plausibility"].mean())
+    mean_clarity = float(gpt4o_df["clarity"].mean())
+
+    metric_cols = st.columns(5)
+    metric_cols[0].metric("Audited explanations", f"{audited_count}")
+    metric_cols[1].metric("Passed validator", f"{passed_count}/{audited_count}")
+    metric_cols[2].metric("Revision required", f"{revision_count}")
+    metric_cols[3].metric("Mean deterministic score", f"{mean_det_score:.2f}/5")
+    metric_cols[4].metric("Mean hybrid score", f"{mean_hybrid_score:.2f}/5")
+
+    render_insight(
+        "<strong>Presentation point:</strong> the explanation system has two gates. "
+        "Deterministic validation handles objective safety and faithfulness checks; GPT-4o is used only after that, "
+        "for subjective clinical plausibility and clarity review."
+    )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### 1. Explanation pipeline")
     cols = st.columns(5)
     steps = [
-        ("1. Local SHAP", "For one patient, SHAP separates risk-increasing and risk-decreasing model evidence."),
-        ("2. Evidence packet", "The raw SHAP table is converted into structured JSON with values, meanings, and caution flags."),
-        ("3. Prompt", "Only the evidence packet is sent to the explanation model; true labels are excluded."),
-        ("4. Validator", "Deterministic checks catch leakage, unsupported wording, probability errors, and direction issues."),
-        ("5. Revision/evaluation", "LLM revision is triggered only when validation fails; GPT-4o is advisory for clarity and plausibility."),
+        (
+            "Evidence packet",
+            "Local SHAP is converted into structured JSON: prediction, threshold, top risk-increasing features, top risk-decreasing features, clinical meanings, and caution flags.",
+        ),
+        (
+            "Prompt",
+            "The prompt receives only the evidence packet. True labels and correctness are excluded so the explanation cannot leak the real outcome.",
+        ),
+        (
+            "LLM explanation",
+            "The LLM writes the explanation in five fixed sections: prediction summary, risk-increasing factors, risk-decreasing factors, caution notes, and interpretation.",
+        ),
+        (
+            "Validator",
+            "The deterministic validator checks whether the explanation stayed faithful to the evidence and whether revision is required.",
+        ),
+        (
+            "Revision + evaluation",
+            "If validation fails, the LLM receives targeted feedback and revises. GPT-4o then reviews only subjective quality dimensions.",
+        ),
     ]
     for column, (title, body) in zip(cols, steps):
         with column:
@@ -584,32 +1376,194 @@ def render_architecture_page() -> None:
                 unsafe_allow_html=True,
             )
 
-    render_insight(
-        "<strong>Main contribution:</strong> the project does not accept LLM explanations blindly. "
-        "Objective safety checks are deterministic and reproducible; GPT-4o is limited to subjective quality review."
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### 2. What the evidence packet contains")
+    evidence_rows = pd.DataFrame(
+        [
+            {
+                "field": "prediction",
+                "what it stores": "death probability, binary prediction, and tuned threshold",
+                "why it matters": "forces the LLM to report the model output accurately",
+            },
+            {
+                "field": "risk_increasing_evidence",
+                "what it stores": "top positive local SHAP features with values",
+                "why it matters": "shows which patient factors pushed risk upward",
+            },
+            {
+                "field": "risk_decreasing_evidence",
+                "what it stores": "top negative local SHAP features with values",
+                "why it matters": "shows which patient factors pushed risk downward",
+            },
+            {
+                "field": "clinical_meaning",
+                "what it stores": "short interpretation for known clinical variables",
+                "why it matters": "keeps the explanation readable without inventing new facts",
+            },
+            {
+                "field": "caution_flags",
+                "what it stores": "warnings for values/features needing careful interpretation",
+                "why it matters": "prevents non-clinical or data-quality signals from being overclaimed",
+            },
+        ]
     )
+    st.dataframe(evidence_rows, use_container_width=True, hide_index=True)
 
     left, right = st.columns(2)
     with left:
-        st.markdown("#### Deterministic validation audit")
-        render_table(VALIDATION_AUDIT_PATH, n_rows=12)
+        render_insight(
+            "<strong>Evidence packet idea:</strong> it is the contract between SHAP and the LLM. "
+            "The LLM is not asked to rediscover the model; it is asked to explain only the provided evidence."
+        )
     with right:
-        st.markdown("#### GPT-4o subjective evaluation")
-        render_table(GPT4O_EVALUATION_PATH, n_rows=12)
+        render_insight(
+            "<strong>Prompt idea:</strong> the prompt adds strict rules: do not mention true labels, do not invent units, "
+            "do not invent clinical mechanisms, preserve the five-section structure, and mention caution flags."
+        )
 
-    st.markdown("#### Validator checks")
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### 3. Deterministic validator checks")
     check_rows = pd.DataFrame(
         [
-            {"check": "Forbidden phrases", "purpose": "Avoid unsupported wording such as normal, stable, favorable."},
-            {"check": "True-label leakage", "purpose": "Prevent explanations from using actual outcomes or correctness."},
-            {"check": "Section structure", "purpose": "Keep the explanation consistent and presentation-ready."},
-            {"check": "Prediction consistency", "purpose": "Ensure the probability stated by the LLM matches model output."},
-            {"check": "Caution mention", "purpose": "Require careful language for flagged evidence values."},
-            {"check": "Feature grounding", "purpose": "Detect exact feature names that are not in the evidence packet."},
-            {"check": "Direction consistency", "purpose": "Check that risk-increasing/decreasing claims match SHAP direction."},
+            {
+                "check": "Forbidden phrases",
+                "what it catches": "unsupported wording such as stable, adequate, normal, favorable",
+                "example action": "revise wording into neutral evidence-grounded language",
+            },
+            {
+                "check": "True-label leakage",
+                "what it catches": "mentions of true outcome, survival/death, or correct/incorrect prediction",
+                "example action": "remove outcome information from the explanation",
+            },
+            {
+                "check": "Prediction consistency",
+                "what it catches": "wrong probability or threshold statement",
+                "example action": "correct probability within the evidence tolerance",
+            },
+            {
+                "check": "Caution mention",
+                "what it catches": "missing caution language for flagged features",
+                "example action": "add careful interpretation in the Caution notes section",
+            },
+            {
+                "check": "Feature grounding",
+                "what it catches": "exact feature names not present in the evidence packet",
+                "example action": "remove unsupported feature claims",
+            },
+            {
+                "check": "Direction consistency",
+                "what it catches": "feature described as increasing risk when SHAP says decreasing risk, or vice versa",
+                "example action": "fix risk direction",
+            },
+            {
+                "check": "Section structure",
+                "what it catches": "missing required explanation sections",
+                "example action": "restore the five-section explanation format",
+            },
         ]
     )
     st.dataframe(check_rows, use_container_width=True, hide_index=True)
+
+    weights = pd.DataFrame(
+        [
+            {"dimension": "faithfulness_no_hallucination", "measured by": "deterministic validator", "weight": 0.30},
+            {"dimension": "clinical_plausibility", "measured by": "GPT-4o subjective evaluator", "weight": 0.25},
+            {"dimension": "caution_awareness", "measured by": "deterministic validator", "weight": 0.20},
+            {"dimension": "completeness", "measured by": "deterministic validator", "weight": 0.15},
+            {"dimension": "clarity", "measured by": "GPT-4o subjective evaluator", "weight": 0.10},
+        ]
+    )
+    left, right = st.columns([1.15, 1])
+    with left:
+        st.markdown("**Rubric split**")
+        st.dataframe(weights, use_container_width=True, hide_index=True)
+    with right:
+        st.markdown("**Score formula**")
+        st.latex(
+            r"""
+            Hybrid =
+            0.30F + 0.25P + 0.20C_a + 0.15C_o + 0.10K
+            """
+        )
+        st.markdown(
+            """
+            F = faithfulness, P = clinical plausibility, C_a = caution awareness,
+            C_o = completeness, K = clarity.
+            """
+        )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### 4. Revision loop")
+    revision_rows = pd.DataFrame(
+        [
+            {
+                "validator finding": "forbidden phrase",
+                "feedback sent to LLM": "Remove or rephrase unsupported wording.",
+            },
+            {
+                "validator finding": "wrong probability",
+                "feedback sent to LLM": "Correct the predicted mortality probability to match the evidence.",
+            },
+            {
+                "validator finding": "missing caution",
+                "feedback sent to LLM": "Mention caution for the flagged feature in the Caution notes section.",
+            },
+            {
+                "validator finding": "direction error",
+                "feedback sent to LLM": "Fix whether the feature increased or decreased model risk.",
+            },
+            {
+                "validator finding": "missing section",
+                "feedback sent to LLM": "Restore the required five-section structure.",
+            },
+        ]
+    )
+    left, right = st.columns([1, 1])
+    with left:
+        st.dataframe(revision_rows, use_container_width=True, hide_index=True)
+    with right:
+        render_insight(
+            "<strong>Revision rule:</strong> revision is not triggered because we dislike the wording. "
+            "It is triggered when <code>validation_report['revision_required']</code> is true."
+        )
+        render_insight(
+            "<strong>Why this is safer:</strong> the feedback is targeted. The LLM sees the original evidence, "
+            "the generated explanation, and a concise list of validator findings."
+        )
+
+    st.markdown('<div class="subsection-rule"></div>', unsafe_allow_html=True)
+    st.markdown("#### 5. GPT-4o subjective evaluation")
+    gpt_cols = st.columns(4)
+    gpt_cols[0].metric("Reviewed explanations", f"{len(gpt4o_df)}")
+    gpt_cols[1].metric("Mean plausibility", f"{mean_plausibility:.2f}/5")
+    gpt_cols[2].metric("Mean clarity", f"{mean_clarity:.2f}/5")
+    gpt_cols[3].metric("Evaluator model", str(gpt4o_df["evaluator_model"].iloc[0]))
+
+    subjective_rows = pd.DataFrame(
+        [
+            {
+                "component": "Deterministic validator",
+                "role": "hard gate",
+                "covers": "faithfulness, caution awareness, completeness, leakage, probability consistency",
+            },
+            {
+                "component": "GPT-4o evaluator",
+                "role": "advisory scorer",
+                "covers": "clinical plausibility and clarity only",
+            },
+            {
+                "component": "Human/report interpretation",
+                "role": "final explanation of results",
+                "covers": "why the scores and failures matter for the project",
+            },
+        ]
+    )
+    st.dataframe(subjective_rows, use_container_width=True, hide_index=True)
+
+    render_insight(
+        "<strong>Key message before the live demo:</strong> a patient explanation is generated by an LLM, "
+        "but it is controlled by structured SHAP evidence, deterministic validation, revision feedback, and a narrow GPT-4o quality review."
+    )
 
 
 def evidence_to_frame(records: list[dict[str, Any]]) -> pd.DataFrame:
