@@ -1,33 +1,33 @@
 # ── Temel veri işleme ──────────────────────────────────────────────────────────
-pandas>=2.0
-numpy>=1.26
+pandas==2.3.3
+numpy==2.3.5
 
 # ── Görselleştirme ─────────────────────────────────────────────────────────────
-matplotlib>=3.8
-seaborn>=0.13
-streamlit>=1.35
+matplotlib==3.10.0
+seaborn==0.13.2
+streamlit==1.51.0
 
 # ── Makine öğrenmesi ───────────────────────────────────────────────────────────
-scikit-learn>=1.5
-xgboost>=2.0
-lightgbm>=4.3
-optuna>=3.6
-joblib>=1.4
+scikit-learn==1.7.2
+xgboost==3.2.0
+lightgbm==4.6.0
+optuna==4.8.0
+joblib==1.5.2
 
 # ── XAI / Açıklanabilirlik ─────────────────────────────────────────────────────
-shap>=0.45
+shap==0.51.0
 
 # ── LLM katmanı ────────────────────────────────────────────────────────────────
 # anthropic>=0.30   # Claude API — Katman 4'te etkinleştirilecek
-openai>=1.30       # OpenAI API — LLM explanation generation
+openai==2.38.0       # OpenAI API — LLM explanation generation
 
 # ── Notebook ortamı ────────────────────────────────────────────────────────────
-jupyterlab>=4.0
-ipykernel>=6.29
+jupyterlab==4.4.7
+ipykernel==6.31.0
 
 # ── Veri indirme ───────────────────────────────────────────────────────────────
-gdown>=5.1           # public Google Drive'dan otomatik veri indirme (login gerektirmez)
+gdown==6.1.0           # public Google Drive'dan otomatik veri indirme (login gerektirmez)
 
 # ── Yardımcı ───────────────────────────────────────────────────────────────────
-python-dotenv>=1.0   # API key'leri .env dosyasından yüklemek için
-tqdm>=4.66           # ilerleme çubukları
+python-dotenv==1.1.0   # API key'leri .env dosyasından yüklemek için
+tqdm==4.67.1           # ilerleme çubukları
